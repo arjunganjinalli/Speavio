@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpeakFlow — AI Dialogue Coach</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+    tailwind.config={theme:{extend:{colors:{copper:{300:'#F0CFA8',400:'#E8B88A',500:'#C8956C',600:'#A87A55'},sage:{300:'#A8E0C0',400:'#7EC9A0',500:'#5BB882',600:'#449966'},coral:{400:'#E89590',500:'#D4736E'},sf:{50:'#E8E6E1',100:'#C8C6C1',200:'#8A8885',300:'#6E6D69',700:'#1E1E22',800:'#161619',900:'#0D0D0F'}},fontFamily:{display:['"Space Grotesk"','sans-serif'],body:['"DM Sans"','sans-serif']}}}}
+    </script>
+    <link rel="stylesheet" href="assets/css/base.css">
+</head>
+<body class="min-h-screen">
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
+    <div class="bg-blob blob-3"></div>
+    <div class="dot-grid"></div>
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-3" aria-live="polite"></div>
+
+    <!-- LOGIN -->
+    <div id="login-screen" class="screen active min-h-screen items-center justify-center p-4">
+        <div class="auth-card w-full max-w-md glass rounded-2xl p-6 sm:p-8 text-center">
+            <div class="inline-flex items-center gap-3 mb-4">
+                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-copper-500 to-sage-500 flex items-center justify-center shadow-lg shadow-copper-500/20"><i class="fas fa-comments text-sf-900 text-lg"></i></div>
+                <h1 class="text-3xl sm:text-4xl font-bold gradient-text tracking-tight">SpeakFlow</h1>
+            </div>
+            <p class="text-sf-200 text-sm sm:text-base mb-5">Sign in to continue your dialogue coaching sessions.</p>
+            <button id="google-signin-btn" class="google-btn w-full px-4 py-3 rounded-xl border border-white/12 bg-white/6 hover:bg-white/10 text-sf-50 font-semibold transition-all inline-flex items-center justify-center gap-2">
+                <i class="fa-brands fa-google"></i>
+                <span>Continue with Google</span>
+            </button>
+            <p id="auth-status" class="text-xs text-sf-300 mt-4 min-h-[1rem]" aria-live="polite"></p>
+            <p id="auth-debug" class="text-[11px] text-sf-300 mt-2 min-h-[1rem] hidden" aria-live="polite"></p>
+        </div>
+    </div>
+
+    <!-- SETUP -->
+    <div id="setup-screen" class="screen min-h-screen items-center justify-center p-4">
+        <div class="w-full max-w-6xl">
+            <header class="text-center mb-8">
+                <div class="inline-flex items-center gap-3 mb-4">
+                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-copper-500 to-sage-500 flex items-center justify-center shadow-lg shadow-copper-500/20"><i class="fas fa-comments text-sf-900 text-lg"></i></div>
+                    <h1 class="text-4xl sm:text-5xl font-bold gradient-text tracking-tight">SpeakFlow</h1>
+                </div>
+                <p class="text-sf-200 text-lg font-light">AI-Powered Dialogue Practice Coach</p>
+                <div class="mt-4 flex items-center justify-center gap-2 auth-user-wrap">
+                    <div class="auth-user-chip inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-sf-100 text-xs">
+                        <img id="setup-user-photo" src="" alt="User photo" class="w-6 h-6 rounded-full object-cover hidden">
+                        <span id="setup-user-name" class="font-semibold">Signed in</span>
+                    </div>
+                    <button id="setup-signout-btn" class="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-sf-200 text-xs font-semibold hover:bg-white/10 transition-all">Sign Out</button>
+                </div>
+                <div class="mt-4 flex flex-wrap justify-center gap-2">
+                    <button id="theme-quick-btn" class="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sf-100 text-xs font-semibold hover:bg-white/10 transition-all"><i class="fas fa-circle-half-stroke mr-1"></i>Theme</button>
+                    <button id="replay-onboarding-btn" class="px-3 py-2 rounded-lg bg-copper-500/12 border border-copper-500/20 text-copper-300 text-xs font-semibold hover:bg-copper-500/20 transition-all"><i class="fas fa-compass mr-1"></i>Show Walkthrough</button>
+                </div>
+            </header>
+
+            <div class="glass rounded-2xl p-5 sm:p-7 space-y-6">
+                <div class="setup-nav" role="tablist" aria-label="Main navigation">
+                    <button id="tab-home" class="setup-tab-btn active" data-tab="home" role="tab" aria-selected="true"><i class="fa-solid fa-house mr-1.5"></i><span data-i18n="navHome">Home</span></button>
+                    <button id="tab-practice" class="setup-tab-btn" data-tab="practice" role="tab" aria-selected="false"><i class="fa-solid fa-microphone-lines mr-1.5"></i><span data-i18n="navPractice">Practice</span></button>
+                    <button id="tab-assignment" class="setup-tab-btn" data-tab="assignment" role="tab" aria-selected="false"><i class="fa-solid fa-clipboard-check mr-1.5"></i><span data-i18n="navAssignment">Assignment</span></button>
+                    <button id="tab-presentation" class="setup-tab-btn" data-tab="presentation" role="tab" aria-selected="false"><i class="fa-solid fa-masks-theater mr-1.5"></i><span data-i18n="navPresentation">Presentation</span></button>
+                    <button id="tab-settings" class="setup-tab-btn" data-tab="settings" role="tab" aria-selected="false"><i class="fa-solid fa-gear mr-1.5"></i><span data-i18n="navSettings">Settings</span></button>
+                </div>
+
+                <section id="panel-home" class="setup-panel active" role="tabpanel">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="mini-card">
+                            <h3 class="text-sf-50 font-display font-semibold mb-1" data-i18n="homeQuickTitle">Get Around Quickly</h3>
+                            <p class="text-sm text-sf-300" data-i18n="homeQuickBody">Use the header tabs like GitHub navigation. Start in Practice or Presentation, then tune AI keys in Settings.</p>
+                            <div class="mt-3 flex flex-wrap gap-2">
+                                <button onclick="showSetupTab('practice')" class="px-3 py-2 rounded-lg bg-copper-500/15 border border-copper-500/25 text-copper-400 text-xs font-semibold" data-i18n="homeGoPractice">Go to Practice</button>
+                                <button onclick="showSetupTab('assignment')" class="px-3 py-2 rounded-lg bg-copper-500/10 border border-copper-500/20 text-copper-300 text-xs font-semibold" data-i18n="homeGoAssignment">Go to Assignment</button>
+                                <button onclick="showSetupTab('presentation')" class="px-3 py-2 rounded-lg bg-sage-500/10 border border-sage-500/25 text-sage-400 text-xs font-semibold" data-i18n="homeGoPresentation">Go to Presentation</button>
+                                <button onclick="showSetupTab('settings')" class="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sf-200 text-xs font-semibold" data-i18n="homeOpenSettings">Open Settings</button>
+                            </div>
+                        </div>
+                        <div class="mini-card">
+                            <h3 class="text-sf-50 font-display font-semibold mb-1" data-i18n="homeModeTitle">Basic vs Advanced</h3>
+                            <p class="text-sm text-sf-300" data-i18n="homeModeBody">Basic mode works without API keys. Add any OpenAI-compatible API key in Settings to unlock advanced AI features.</p>
+                            <div id="advanced-badge" class="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-sf-200">
+                                <i class="fas fa-circle text-[8px] text-coral-400"></i>
+                                <span>Basic mode active</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mini-card mt-4">
+                        <h3 class="text-sf-50 font-display font-semibold mb-1" data-i18n="homeHelpTitle">Need Help?</h3>
+                        <p class="text-sm text-sf-300" data-i18n="homeHelpBody">Use the assistant bubble in the bottom-right to ask where features are, what each mode does, and how to configure advanced setup.</p>
+                    </div>
+                    <div class="mini-card mt-4">
+                        <h3 class="text-sf-50 font-display font-semibold mb-1">Progress Snapshot</h3>
+                        <div class="grid grid-cols-3 gap-3 mt-3">
+                            <div class="bg-white/3 rounded-lg p-2 text-center">
+                                <div id="home-streak" class="text-lg font-display font-bold text-sage-400">0</div>
+                                <div class="text-[10px] text-sf-300">Day Streak</div>
+                            </div>
+                            <div class="bg-white/3 rounded-lg p-2 text-center">
+                                <div id="home-last-score" class="text-lg font-display font-bold text-copper-400">0</div>
+                                <div class="text-[10px] text-sf-300">Last Score</div>
+                            </div>
+                            <div class="bg-white/3 rounded-lg p-2 text-center">
+                                <div id="home-history-count" class="text-lg font-display font-bold text-sf-100">0</div>
+                                <div class="text-[10px] text-sf-300">Sessions</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mini-card mt-4">
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <h3 class="text-sf-50 font-display font-semibold">Leaderboard</h3>
+                            <span class="text-[10px] text-sf-300">Per-script average</span>
+                        </div>
+                        <div id="home-leaderboard" class="space-y-2 text-xs">
+                            <div class="text-sf-300">Complete a session to populate leaderboard rankings.</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="panel-mode" class="setup-panel" role="tabpanel">
+                    <div class="flex items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h2 id="mode-title" class="text-xl font-display font-semibold text-sf-50">Practice Setup</h2>
+                            <p id="mode-desc" class="text-sm text-sf-300 mt-0.5">Practice with line-by-line feedback and smooth repetition.</p>
+                        </div>
+                        <span id="mode-mini-badge" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-copper-500/15 text-copper-400">Practice</span>
+                    </div>
+                    <div class="mode-layout">
+                        <div class="space-y-4">
+                            <div id="practice-script-language-wrap">
+                                <label class="block text-sm font-medium text-sf-200 mb-2"><i class="fas fa-globe text-sage-400 mr-1.5"></i><span data-i18n="scriptLanguage">Script Language</span></label>
+                                <select id="language-select-practice" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 outline-none transition-all appearance-none cursor-pointer" aria-label="Script Language">
+                                    <option value="en">English</option><option value="es">Espanol</option><option value="fr">Francais</option><option value="de">Deutsch</option><option value="zh">Chinese</option><option value="ja">Japanese</option><option value="ko">Korean</option><option value="it">Italiano</option><option value="pt">Portugues</option><option value="ru">Russian</option><option value="ar">Arabic</option>
+                                </select>
+                            </div>
+                            <div id="presentation-script-language-wrap" class="hidden">
+                                <label class="block text-sm font-medium text-sf-200 mb-2"><i class="fas fa-globe text-sage-400 mr-1.5"></i><span data-i18n="scriptLanguage">Script Language</span></label>
+                                <select id="language-select-presentation" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 outline-none transition-all appearance-none cursor-pointer" aria-label="Script Language">
+                                    <option value="en">English</option><option value="es">Espanol</option><option value="fr">Francais</option><option value="de">Deutsch</option><option value="zh">Chinese</option><option value="ja">Japanese</option><option value="ko">Korean</option><option value="it">Italiano</option><option value="pt">Portugues</option><option value="ru">Russian</option><option value="ar">Arabic</option>
+                                </select>
+                            </div>
+                            <div id="hint-settings" class="hidden">
+                                <label class="block text-sm font-medium text-sf-200 mb-2"><i class="fas fa-eye-slash text-copper-500 mr-1.5"></i><span data-i18n="hintDifficulty">Hint Difficulty</span></label>
+                                <div class="flex gap-2">
+                                    <button onclick="setHintLevel('full')" data-hl="full" class="hint-opt flex-1 px-3 py-3 rounded-xl text-xs font-semibold border transition-all text-center bg-white/3 border-white/8 text-sf-300 hover:text-sf-100">Full</button>
+                                    <button onclick="setHintLevel('first')" data-hl="first" class="hint-opt flex-1 px-3 py-3 rounded-xl text-xs font-semibold border transition-all text-center bg-copper-500/15 border-copper-500/30 text-copper-400">Word</button>
+                                    <button onclick="setHintLevel('none')" data-hl="none" class="hint-opt flex-1 px-3 py-3 rounded-xl text-xs font-semibold border transition-all text-center bg-white/3 border-white/8 text-sf-300 hover:text-sf-100">Off</button>
+                                </div>
+                            </div>
+                            <div id="role-section" class="hidden mt-1">
+                                <label class="block text-sm font-medium text-sf-200 mb-3"><i class="fas fa-user-tag text-copper-500 mr-1.5"></i>Choose Your Role</label>
+                                <div id="role-pills" class="flex flex-wrap gap-2"></div>
+                            </div>
+                            <button id="start-btn" disabled class="w-full py-3.5 rounded-xl font-display font-semibold text-base transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 hover:from-amber-400 hover:to-yellow-400 hover:shadow-lg hover:shadow-amber-500/20">Start Practice</button>
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="text-sm font-medium text-sf-200"><i class="fas fa-scroll text-copper-500 mr-1.5"></i><span data-i18n="dialogueScript">Dialogue Script</span></label>
+                                <div class="flex gap-3">
+                                    <button id="auto-detect-btn" onclick="autoDetectScript()" class="text-xs text-sage-400 hover:text-sage-300 transition-colors font-medium"><i class="fas fa-wand-magic-sparkles mr-1"></i><span data-i18n="autoDetect">Auto-Detect</span></button>
+                                    <button id="load-example" class="text-xs text-copper-500 hover:text-copper-400 transition-colors font-medium"><i class="fas fa-flask mr-1"></i>Example</button>
+                                    <button id="copy-script-btn" class="text-xs text-sf-200 hover:text-sf-50 transition-colors font-medium"><i class="fas fa-copy mr-1"></i>Copy Script</button>
+                                </div>
+                            </div>
+                            <textarea id="script-input" rows="10" placeholder="Paste dialogue script...&#10;Format: [Role]: dialogue line&#10;&#10;Or paste any text and click Auto-Detect." class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all resize-none leading-relaxed font-body" aria-label="Script"></textarea>
+                            <div id="parse-status" class="mt-2 text-xs text-sf-300 h-5"></div>
+                            <div id="setup-difficulty-badge" class="mt-2 inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-copper-500/10 border border-copper-500/20 text-[11px] text-copper-300 font-semibold">
+                                <i class="fas fa-gauge-high"></i>
+                                <span>Difficulty: Easy (0)</span>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-white/5 space-y-3">
+                                <label class="block text-sm font-medium text-sf-200"><i class="fas fa-book text-copper-500 mr-1.5"></i>Script Library</label>
+                                <div class="flex gap-2">
+                                    <input id="script-save-name" type="text" placeholder="Name this script..." class="input-glow flex-1 bg-sf-800/60 border border-white/8 rounded-lg px-3 py-2 text-sm text-sf-50 outline-none transition-all">
+                                    <button id="save-script-btn" class="px-4 py-2 rounded-lg bg-sage-500/15 border border-sage-500/25 text-sage-400 text-xs font-semibold hover:bg-sage-500/25 transition-all"><i class="fas fa-floppy-disk mr-1"></i>Save</button>
+                                </div>
+                                <div class="flex gap-2">
+                                    <select id="script-library-select" class="input-glow flex-1 bg-sf-800/60 border border-white/8 rounded-lg px-3 py-2 text-sm text-sf-50 outline-none transition-all appearance-none cursor-pointer">
+                                        <option value="">-- Load saved script --</option>
+                                    </select>
+                                    <button id="load-script-btn" class="px-4 py-2 rounded-lg bg-copper-500/15 border border-copper-500/25 text-copper-400 text-xs font-semibold hover:bg-copper-500/25 transition-all"><i class="fas fa-upload mr-1"></i>Load</button>
+                                    <button id="delete-script-btn" class="px-4 py-2 rounded-lg bg-coral-400/15 border border-coral-400/25 text-coral-400 text-xs font-semibold hover:bg-coral-400/25 transition-all"><i class="fas fa-trash mr-1"></i>Delete</button>
+                                </div>
+                                <div class="flex flex-col sm:flex-row gap-2">
+                                    <button id="create-assignment-link-btn" class="px-4 py-2 rounded-lg bg-sage-500/15 border border-sage-500/25 text-sage-400 text-xs font-semibold hover:bg-sage-500/25 transition-all sm:flex-shrink-0"><i class="fas fa-link mr-1"></i>Create Assignment Link</button>
+                                    <input id="assignment-link-output" type="text" readonly placeholder="Assignment link will appear here" class="input-glow flex-1 bg-sf-800/60 border border-white/8 rounded-lg px-3 py-2 text-xs text-sf-100 outline-none transition-all" aria-label="Assignment link output">
+                                    <button id="copy-assignment-link-btn" class="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-sf-200 text-xs font-semibold hover:bg-white/10 transition-all sm:flex-shrink-0"><i class="fas fa-copy mr-1"></i>Copy Link</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="panel-settings" class="setup-panel" role="tabpanel">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-sf-200 mb-2"><i class="fas fa-language text-sage-400 mr-1.5"></i><span data-i18n="systemLanguage">System Language</span></label>
+                            <select id="system-language-select" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 outline-none transition-all appearance-none cursor-pointer" aria-label="System Language">
+                                <option value="en">English</option>
+                                <option value="es">Espanol</option>
+                            </select>
+                            <p class="text-xs text-sf-300 mt-1.5" data-i18n="systemLanguageDesc">Changes website text language only (not script recognition language).</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-sf-200 mb-2"><i class="fas fa-circle-half-stroke text-copper-500 mr-1.5"></i>Theme</label>
+                            <button id="theme-toggle-btn" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-sf-100 text-sm font-semibold hover:bg-white/10 transition-all text-left">
+                                System
+                            </button>
+                            <p class="text-xs text-sf-300 mt-1.5">Default follows your OS. Toggle to force light or dark mode.</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button onclick="toggleCollapse('ai-api-section')" class="w-full flex items-center justify-between text-sm font-medium text-sf-200">
+                            <span><i class="fas fa-sparkles text-copper-500 mr-1.5"></i>AI &amp; API Settings</span>
+                            <i class="fas fa-chevron-down text-sf-300 text-xs transition-transform" id="ai-api-section-arrow"></i>
+                        </button>
+                        <div id="ai-api-section" class="collapse-content">
+                            <div class="pt-3 space-y-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-sf-200 mb-2"><i class="fas fa-key text-copper-500 mr-1.5"></i>API Key (Optional)</label>
+                                        <div class="relative">
+                                            <input id="api-key" type="password" placeholder="Paste any OpenAI-compatible API key..." class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all pr-20" aria-label="API Key" autocomplete="off">
+                                            <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                                                <button id="test-api-btn" onclick="testAPIConnection()" class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors" title="Test API connection" aria-label="Test API"><i class="fas fa-plug text-xs text-sf-300"></i></button>
+                                                <button onclick="toggleVis('api-key',this)" class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"><i class="fas fa-eye text-xs text-sf-300"></i></button>
+                                            </div>
+                                        </div>
+                                        <p class="text-xs text-sf-300 mt-1.5">No key = Basic mode. Key unlocks AI scoring, auto-detect, and advanced chatbot.</p>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-sf-200 mb-2"><i class="fas fa-cube text-copper-500 mr-1.5"></i>Model</label>
+                                        <input id="model-input" type="text" placeholder="gpt-4o-mini / glm-4-air / deepseek-chat" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all" aria-label="Model name">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-sf-200 mb-2"><i class="fas fa-server text-copper-500 mr-1.5"></i>App Proxy URL</label>
+                                    <input id="api-proxy" type="text" placeholder="/api/chat" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all" aria-label="App proxy URL">
+                                    <p class="text-xs text-sf-300 mt-1.5">URL/path of your backend route that forwards AI requests.</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-sf-200 mb-2"><i class="fas fa-link text-sage-400 mr-1.5"></i>Provider Endpoint</label>
+                                    <input id="api-endpoint" type="text" placeholder="https://api.openai.com/v1/chat/completions" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all" aria-label="Provider endpoint">
+                                    <p class="text-xs text-sf-300 mt-1.5">Use any OpenAI-compatible chat completions endpoint.</p>
+                                </div>
+
+                                <div class="mini-card">
+                                    <label class="flex items-center gap-2 text-sm text-sf-100 font-medium cursor-pointer">
+                                        <input id="premium-toggle" type="checkbox" class="accent-copper-500">
+                                        Enable premium placeholder toggle (future feature)
+                                    </label>
+                                </div>
+
+                                <div>
+                                    <button onclick="toggleCollapse('tts-section')" class="w-full flex items-center justify-between text-sm font-medium text-sf-200">
+                                        <span><i class="fas fa-volume-up text-sage-400 mr-1.5"></i>Voice Settings <span class="text-sf-300 font-normal">(optional)</span></span>
+                                        <i class="fas fa-chevron-down text-sf-300 text-xs transition-transform" id="tts-section-arrow"></i>
+                                    </button>
+                                    <div id="tts-section" class="collapse-content">
+                                        <div class="pt-3 space-y-4">
+                                            <p class="text-xs text-sf-300 bg-white/2 rounded-lg px-3 py-2 border border-white/5"><i class="fas fa-info-circle text-copper-500 mr-1.5"></i>Browser text-to-speech is always available. ElevenLabs needs key setup.</p>
+                                            <div>
+                                                <label class="block text-xs text-sf-300 mb-1.5">Voice Provider</label>
+                                                <div class="flex gap-2">
+                                                    <button onclick="setTTSProvider('browser')" id="tts-br-btn" class="flex-1 px-3 py-2.5 rounded-lg text-xs font-semibold border transition-all bg-copper-500/15 border-copper-500/30 text-copper-400">Browser (Free)</button>
+                                                    <button onclick="setTTSProvider('elevenlabs')" id="tts-el-btn" class="flex-1 px-3 py-2.5 rounded-lg text-xs font-semibold border transition-all bg-white/3 border-white/8 text-sf-300 hover:text-sf-100">ElevenLabs</button>
+                                                </div>
+                                                <label class="flex items-center gap-2 text-xs text-sf-200 font-medium cursor-pointer mt-2">
+                                                    <input id="npc-slow-replay" type="checkbox" class="accent-copper-500">
+                                                    <span>Slow replay for NPC lines (0.5x)</span>
+                                                </label>
+                                            </div>
+                                            <div id="el-settings" class="hidden space-y-3">
+                                                <div>
+                                                    <label class="block text-xs text-sf-300 mb-1.5">ElevenLabs API Key</label>
+                                                    <div class="relative">
+                                                        <input id="el-key" type="password" placeholder="xi-..." class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-2.5 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all pr-10" autocomplete="off">
+                                                        <button onclick="toggleVis('el-key',this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-sf-300 hover:text-sf-50 transition-colors"><i class="fas fa-eye text-sm"></i></button>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs text-sf-300 mb-1.5">Voice</label>
+                                                    <div class="flex gap-2">
+                                                        <select id="el-voice-select" class="input-glow flex-1 bg-sf-800/60 border border-white/8 rounded-xl px-3 py-2.5 text-sm text-sf-50 outline-none transition-all appearance-none cursor-pointer">
+                                                            <option value="21m00Tcm4TlvDq8ikWAM">Rachel</option>
+                                                            <option value="AZnzlk1XvdvUeBnXmlld">Domi</option>
+                                                            <option value="EXAVITQu4vr4xnSDxMaL">Bella</option>
+                                                            <option value="ErXwobaYiN019PkySvjV">Antoni</option>
+                                                            <option value="pNInz6obpgDQGcFmaJgB">Adam</option>
+                                                            <option value="jBpfuIE2acCO8z3wKNLl">Josh</option>
+                                                        </select>
+                                                        <button onclick="fetchELVoices()" class="px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/8 text-sf-200 text-xs font-medium transition-all"><i class="fas fa-sync-alt"></i></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <p class="text-center text-sf-300 text-xs mt-6">Home is key-free &middot; Advanced AI is optional &middot; Keys stay local in your browser</p>
+        </div>
+    </div>
+
+    <!-- SESSION -->
+    <div id="session-screen" class="screen flex-col h-screen">
+        <header class="glass border-b border-white/5 px-4 py-3 flex items-center justify-between flex-shrink-0 z-10 gap-2">
+            <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                <button id="back-btn" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors flex-shrink-0" aria-label="Back"><i class="fas fa-arrow-left text-sm text-sf-200"></i></button>
+                <span id="mode-badge" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-copper-500/15 text-copper-400 flex-shrink-0">Practice</span>
+                <span id="lang-badge" class="px-2.5 py-1 rounded-md text-xs font-medium bg-white/5 text-sf-200 flex-shrink-0">EN</span>
+                <div id="hint-ctrl" class="hidden hint-hdr-group flex items-center gap-1 flex-shrink-0">
+                    <span class="text-[10px] text-sf-300 font-semibold mr-0.5">HINT</span>
+                    <button onclick="setHintLevel('full')" data-hl="full" class="hint-pill">Full</button>
+                    <button onclick="setHintLevel('first')" data-hl="first" class="hint-pill">Word</button>
+                    <button onclick="setHintLevel('none')" data-hl="none" class="hint-pill">Off</button>
+                </div>
+            </div>
+            <div class="flex items-center gap-4 flex-shrink-0">
+                <div id="line-dots" class="hidden sm:flex items-center gap-1.5"></div>
+                <span id="progress-text" class="text-sm font-medium text-sf-200 tabular-nums">1 / 1</span>
+                <div class="session-auth inline-flex items-center gap-2 px-2 py-1 rounded-lg bg-white/5 border border-white/10">
+                    <img id="session-user-photo" src="" alt="User photo" class="w-6 h-6 rounded-full object-cover hidden">
+                    <span id="session-user-name" class="text-xs text-sf-100 font-semibold max-w-[110px] truncate">User</span>
+                    <button id="session-signout-btn" class="text-[11px] px-2 py-1 rounded-md bg-white/6 border border-white/10 text-sf-200 hover:bg-white/12 transition-all">Sign Out</button>
+                </div>
+                <button id="help-btn" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors flex-shrink-0" aria-label="Help" title="How does this work?"><i class="fas fa-question text-sm text-sf-200"></i></button>
+            </div>
+        </header>
+        <div class="progress-track flex-shrink-0"><div id="progress-fill" class="progress-fill" style="width:0%"></div></div>
+        <div id="dialogue-context" class="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-3" role="log" aria-label="Dialogue"></div>
+        <div id="interaction-area" class="flex-shrink-0 glass border-t border-white/5 p-4 min-h-[120px]"></div>
+    </div>
+
+    <!-- REPORT -->
+    <div id="complete-screen" class="screen flex-col min-h-screen">
+        <header class="glass border-b border-white/5 px-4 py-6 flex-shrink-0 no-print">
+            <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center gap-6">
+                <div class="flex-shrink-0">
+                    <svg viewBox="0 0 120 120" width="110" height="110">
+                        <circle cx="60" cy="60" r="52" fill="none" class="score-ring-bg" stroke-width="8"/>
+                        <circle id="final-ring" cx="60" cy="60" r="52" fill="none" stroke="url(#sg)" stroke-width="8" stroke-dasharray="326.73" stroke-dashoffset="326.73" stroke-linecap="round" transform="rotate(-90 60 60)" class="score-ring-fill"/>
+                        <defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#C8956C"/><stop offset="100%" stop-color="#5BB882"/></linearGradient></defs>
+                        <text id="final-score" x="60" y="55" text-anchor="middle" fill="#E8E6E1" font-size="30" font-weight="700" font-family="Space Grotesk">0</text>
+                        <text x="60" y="74" text-anchor="middle" fill="#6E6D69" font-size="11" font-weight="600" letter-spacing="1">AVERAGE</text>
+                    </svg>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 flex-1 w-full hdr-stats">
+                    <div class="bg-white/3 rounded-xl p-3 text-center"><div id="st-lines" class="text-xl font-display font-bold text-sf-50">0</div><div class="text-[10px] text-sf-300 mt-0.5">Lines</div></div>
+                    <div class="bg-white/3 rounded-xl p-3 text-center"><div id="st-eval" class="text-xl font-display font-bold text-sage-400">0</div><div class="text-[10px] text-sf-300 mt-0.5">Evaluated</div></div>
+                    <div class="bg-white/3 rounded-xl p-3 text-center"><div id="st-correct" class="text-xl font-display font-bold text-sage-400">0</div><div class="text-[10px] text-sf-300 mt-0.5">Correct</div></div>
+                    <div class="bg-white/3 rounded-xl p-3 text-center"><div id="st-best" class="text-xl font-display font-bold text-copper-400">0</div><div class="text-[10px] text-sf-300 mt-0.5">Best</div></div>
+                    <div class="bg-white/3 rounded-xl p-3 text-center"><div id="st-time" class="text-xl font-display font-bold text-sf-50">0s</div><div class="text-[10px] text-sf-300 mt-0.5">Time</div></div>
+                </div>
+            </div>
+        </header>
+        <main class="flex-1 overflow-y-auto px-4 py-6">
+            <div class="max-w-4xl mx-auto space-y-6">
+                <div id="report-insights" class="space-y-3"></div>
+                <div><h3 class="font-display font-semibold text-lg text-sf-50 mb-4">Line-by-Line Breakdown</h3><div id="report-lines" class="space-y-2"></div></div>
+                <div class="flex flex-wrap gap-3 pt-4 border-t border-white/5 no-print">
+                    <button onclick="playLatestRecording()" class="px-5 py-2.5 rounded-xl bg-copper-500/12 hover:bg-copper-500/20 border border-copper-500/25 text-copper-300 font-semibold text-sm transition-all"><i class="fas fa-play mr-2"></i>Play Latest Recording</button>
+                    <button onclick="shareScorecardImage()" class="px-5 py-2.5 rounded-xl bg-sage-500/12 hover:bg-sage-500/20 border border-sage-500/25 text-sage-300 font-semibold text-sm transition-all"><i class="fas fa-image mr-2"></i>Share Scorecard</button>
+                    <button onclick="exportJSON()" class="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/8 text-sf-100 font-semibold text-sm transition-all"><i class="fas fa-download mr-2"></i>Export JSON</button>
+                    <button onclick="exportPDF()" class="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/8 text-sf-100 font-semibold text-sm transition-all"><i class="fas fa-file-pdf mr-2"></i>Export PDF</button>
+                    <button onclick="exportPrint()" class="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/8 text-sf-100 font-semibold text-sm transition-all"><i class="fas fa-print mr-2"></i>Print Report</button>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-3 pb-8 no-print">
+                    <button onclick="restartSession()" class="flex-1 py-3 rounded-xl font-display font-semibold text-sm bg-white/5 hover:bg-white/10 border border-white/8 transition-all"><i class="fas fa-rotate-right mr-2"></i>Practice Again</button>
+                    <button onclick="newDialogue()" class="flex-1 py-3 rounded-xl font-display font-semibold text-sm bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 hover:from-amber-400 hover:to-yellow-400 transition-all"><i class="fas fa-house mr-2"></i><span data-i18n="homeButton">Home</span></button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <button id="assist-fab" class="assist-fab no-print hidden" aria-label="Open helper assistant" title="Ask SpeakFlow Assistant">
+        <i class="fas fa-robot text-lg"></i>
+    </button>
+    <section id="assist-panel" class="assist-panel no-print hidden" aria-label="SpeakFlow assistant">
+        <header class="px-4 py-3 border-b border-white/8 flex items-center justify-between">
+            <div>
+                <h3 class="text-sm font-display font-semibold text-sf-50">SpeakFlow Assistant</h3>
+                <p class="text-[11px] text-sf-300" id="assist-mode-label">Basic guide mode</p>
+            </div>
+            <button id="assist-close" class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-sf-300" aria-label="Close assistant"><i class="fas fa-xmark"></i></button>
+        </header>
+        <div id="assist-msgs" class="assist-msgs"></div>
+        <div class="assist-meta">
+            <input id="assist-input" class="assist-input" type="text" placeholder="Ask where to find features, modes, settings..." aria-label="Assistant input">
+            <button id="assist-send" class="assist-send" aria-label="Send assistant message"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </section>
+
+    <section id="onboarding-overlay" class="onboarding-overlay no-print" aria-label="Onboarding walkthrough" aria-hidden="true">
+        <div class="onboarding-modal">
+            <div class="flex items-start justify-between gap-3 mb-3">
+                <div>
+                    <h2 id="onboarding-title" class="text-lg font-display font-semibold text-sf-50">Welcome to SpeakFlow</h2>
+                    <p id="onboarding-step" class="text-xs text-sf-300 mt-1">Step 1 of 4</p>
+                </div>
+                <button id="onboarding-close-btn" class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-sf-300"><i class="fas fa-xmark"></i></button>
+            </div>
+            <p id="onboarding-body" class="text-sm text-sf-200 leading-relaxed min-h-[72px]"></p>
+            <div class="onboarding-dots" id="onboarding-dots"></div>
+            <div class="flex gap-2 mt-4">
+                <button id="onboarding-prev-btn" class="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sf-200 text-sm font-semibold hover:bg-white/10 transition-all">Back</button>
+                <button id="onboarding-next-btn" class="flex-1 px-3 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 text-sm font-semibold hover:from-amber-400 hover:to-yellow-400 transition-all">Next</button>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+    <script>
+    var firebaseConfig={
+        apiKey:"AIzaSyCxTXw3x1K7yoWX2kMbmRt_pyoo3hG5bIM",
+        authDomain:"voqua-app.firebaseapp.com",
+        projectId:"voqua-app",
+        storageBucket:"voqua-app.firebasestorage.app",
+        messagingSenderId:"334254181845",
+        appId:"1:334254181845:web:09836095fed08210f4c15c",
+        measurementId:"G-MJRHWZFC01"
+    };
+    if(typeof firebase!=='undefined'&&!firebase.apps.length){firebase.initializeApp(firebaseConfig)}
+    </script>
+
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/ui-core.js"></script>
+    <script src="assets/js/assistant.js"></script>
+    <script src="assets/js/report.js"></script>
+    <script src="assets/js/api-services.js"></script>
+    <script src="assets/js/script-parser.js"></script>
+    <script src="assets/js/audio.js"></script>
+    <script src="assets/js/session-render.js"></script>
+    <script src="assets/js/help.js"></script>
+    <script src="assets/js/bootstrap.js"></script>
+</body>
+</html>

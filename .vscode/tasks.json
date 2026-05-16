@@ -1,0 +1,17 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Serve SpeakFlow (HTTP 5501)",
+			"type": "shell",
+			"command": "python3",
+			"args": [
+				"-m",
+				"http.server",
+				"5501"
+			],
+			"isBackground": true,
+			"group": "build"
+		}
+	]
+}
