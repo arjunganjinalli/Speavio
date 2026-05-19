@@ -92,6 +92,7 @@ function showSetupTab(tab){
         S.mode=tab;
         var isPres=tab==='presentation';
         var isAssign=tab==='assignment';
+        var startBtn=$('start-btn');
         $('mode-title').textContent=isPres?t('modePresentationTitle'):(isAssign?t('modeAssignmentTitle'):t('modePracticeTitle'));
         $('mode-desc').textContent=isPres?t('modePresentationDesc'):(isAssign?t('modeAssignmentDesc'):t('modePracticeDesc'));
         $('mode-mini-badge').textContent=isPres?t('modePresentationBadge'):(isAssign?t('modeAssignmentBadge'):t('modePracticeBadge'));
@@ -99,7 +100,8 @@ function showSetupTab(tab){
         $('hint-settings').classList.toggle('hidden',!isPres);
         $('practice-script-language-wrap').classList.toggle('hidden',isPres);
         $('presentation-script-language-wrap').classList.toggle('hidden',!isPres);
-        $('start-btn').textContent=isPres?t('startPresentation'):(isAssign?t('startAssignment'):t('startPractice'));
+        startBtn.textContent=isPres?t('startPresentation'):(isAssign?t('startAssignment'):t('startPractice'));
+        startBtn.classList.toggle('start-btn-assignment',isAssign);
     }
     if(tab==='home')refreshHomeProgressSnapshot();
     if(tab==='practice'||tab==='assignment'||tab==='presentation')renderScriptLibraryOptions();

@@ -203,6 +203,23 @@
         .border-white\/10{border-color:rgba(255,255,255,.17)!important}
         .border-white\/12{border-color:rgba(255,255,255,.19)!important}
 
+        /* Dark mode only: make Start Assignment clearly visible */
+        html:not([data-theme='light']) #start-btn.start-btn-assignment{
+            color:#ffffff!important;
+            border:2px solid #ffffff!important;
+            background:linear-gradient(135deg,rgba(28,28,33,.95),rgba(12,12,16,.95))!important;
+            box-shadow:0 0 0 1px rgba(255,255,255,.15),0 10px 22px rgba(0,0,0,.35);
+        }
+        html:not([data-theme='light']) #start-btn.start-btn-assignment:hover{
+            background:linear-gradient(135deg,rgba(40,40,47,.96),rgba(18,18,24,.96))!important;
+            border-color:#ffffff!important;
+        }
+        html:not([data-theme='light']) #start-btn.start-btn-assignment:disabled{
+            color:#ffffff!important;
+            border-color:rgba(255,255,255,.82)!important;
+            opacity:.5!important;
+        }
+
         /* ── LIGHT MODE ── */
         html[data-theme='light'] body{color:#1C1B1A}
         html[data-theme='light'] .glass{background:rgba(255,255,255,.88);border-color:rgba(0,0,0,.1)}
