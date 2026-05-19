@@ -112,9 +112,8 @@ function presentationAutoFlow(){
             if(S.screen!=='session'||S.mode!=='presentation')return;
             if(S.currentLine>=S.lines.length-1){
                 finishPresentation();
-            }else{
-                advanceLine();
             }
+            /* else: stay on the NPC line — user clicks "Next Line" to advance */
         },false);
     }else{
         /* ── User line: show hint, then auto-start recording ── */
@@ -152,7 +151,7 @@ function finishPresentation(){
 
     /* Switch to report screen and show loading */
     switchScreen('complete');
-    $('st-lines').textContent=S.lines.length;
+    $('st-lines').textContent=S.lines.filter(function(l){return l.role===S.userRole}).length;
     $('st-eval').innerHTML='<div class="spinner" style="width:16px;height:16px;display:inline-block;vertical-align:middle;border-width:2px"></div>';
     $('st-correct').textContent='...';
     $('st-best').textContent='...';
@@ -496,7 +495,7 @@ function showPresEvalCard(){
         +'<svg viewBox="0 0 120 120" width="80" height="80">'
         +'<circle cx="60" cy="60" r="52" fill="none" class="score-ring-bg" stroke-width="8"/>'
         +'<circle id="ev-ring" cx="60" cy="60" r="52" fill="none" stroke="'+col+'" stroke-width="8" stroke-dasharray="'+C+'" stroke-dashoffset="'+C+'" stroke-linecap="round" transform="rotate(-90 60 60)" class="score-ring-fill"/>'
-        +'<text x="60" y="52" text-anchor="middle" fill="#E8E6E1" font-size="24" font-weight="700" font-family="Space Grotesk">'+sc+'</text>'
+        +'<text x="60" y="52" text-anchor="middle" fill="var(--sf-fg)" font-size="24" font-weight="700" font-family="Space Grotesk">'+sc+'</text>'
         +'<text x="60" y="68" text-anchor="middle" fill="'+col+'" font-size="7.5" font-weight="600" letter-spacing=".5">'+lbl.toUpperCase()+'</text>'
         +'</svg>'
         +'</div>'
@@ -526,6 +525,7 @@ function showPresEvalCard(){
         h+='</div>';
     }
 
+    h+=renderWordDiffHTML(S.lines[S.currentLine].text,S.userResponses[S.currentLine]);
     h+='<div class="flex gap-2">'
         +'<button onclick="retryPresLine()" class="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/8 text-sf-100 font-display font-semibold text-sm transition-all"><i class="fas fa-rotate-right mr-1.5"></i>Retry</button>'
         +'<button onclick="advanceLine()" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 font-display font-semibold text-sm hover:from-amber-400 hover:to-yellow-400 transition-all">'+(isLast?'Finish':'Continue')+' <i class="fas fa-arrow-right ml-1.5"></i></button>'
@@ -589,7 +589,7 @@ function showPracticeEval(ev){
     var isLast=S.currentLine>=S.lines.length-1;
 
     var h='<div class="eval-in"><div class="flex items-start gap-4 sm:gap-5">'
-        +'<div class="flex-shrink-0"><svg viewBox="0 0 120 120" width="88" height="88"><circle cx="60" cy="60" r="52" fill="none" class="score-ring-bg" stroke-width="8"/><circle id="ev-ring" cx="60" cy="60" r="52" fill="none" stroke="'+col+'" stroke-width="8" stroke-dasharray="'+C+'" stroke-dashoffset="'+C+'" stroke-linecap="round" transform="rotate(-90 60 60)" class="score-ring-fill"/><text x="60" y="52" text-anchor="middle" fill="#E8E6E1" font-size="26" font-weight="700" font-family="Space Grotesk">'+sc+'</text><text x="60" y="70" text-anchor="middle" fill="'+col+'" font-size="8" font-weight="600" letter-spacing=".5">'+lbl.toUpperCase()+'</text></svg></div>'
+        +'<div class="flex-shrink-0"><svg viewBox="0 0 120 120" width="88" height="88"><circle cx="60" cy="60" r="52" fill="none" class="score-ring-bg" stroke-width="8"/><circle id="ev-ring" cx="60" cy="60" r="52" fill="none" stroke="'+col+'" stroke-width="8" stroke-dasharray="'+C+'" stroke-dashoffset="'+C+'" stroke-linecap="round" transform="rotate(-90 60 60)" class="score-ring-fill"/><text x="60" y="52" text-anchor="middle" fill="var(--sf-fg)" font-size="26" font-weight="700" font-family="Space Grotesk">'+sc+'</text><text x="60" y="70" text-anchor="middle" fill="'+col+'" font-size="8" font-weight="600" letter-spacing=".5">'+lbl.toUpperCase()+'</text></svg></div>'
         +'<div class="flex-1 min-w-0 space-y-2">'
         +'<div class="egrid grid gap-2" style="grid-template-columns:repeat(3,1fr)">'
         +'<div class="bg-white/3 rounded-lg px-3 py-2"><div class="text-[10px] text-sf-300 font-semibold uppercase">Accuracy</div><div class="text-xs text-sf-100 mt-0.5 leading-snug">'+esc(ev.accuracy)+'</div></div>'
@@ -601,6 +601,7 @@ function showPracticeEval(ev){
     if(ev.corrections&&ev.corrections.length){h+='<div><div class="text-[10px] text-coral-400 font-semibold uppercase mb-1">Corrections</div>';ev.corrections.forEach(function(c){h+='<li class="text-xs text-sf-200 list-none"><i class="fas fa-xmark text-coral-400 mr-1.5" style="font-size:10px"></i>'+esc(c)+'</li>'});h+='</div>'}
     if(ev.suggestions&&ev.suggestions.length){h+='<div><div class="text-[10px] text-copper-400 font-semibold uppercase mb-1">Tips</div>';ev.suggestions.forEach(function(sg){h+='<li class="text-xs text-sf-200 list-none"><i class="fas fa-lightbulb text-copper-400 mr-1.5" style="font-size:10px"></i>'+esc(sg)+'</li>'});h+='</div>'}
     if(ev.deliveryNotes&&ev.deliveryNotes.length){h+='<div><div class="text-[10px] text-sage-400 font-semibold uppercase mb-1">Delivery</div>';ev.deliveryNotes.forEach(function(n){h+='<li class="text-xs text-sf-200 list-none"><i class="fas fa-wave-square text-sage-400 mr-1.5" style="font-size:10px"></i>'+esc(n)+'</li>'});h+='</div>'}
+    h+=renderWordDiffHTML(S.lines[S.currentLine].text,S.userResponses[S.currentLine]);
     h+='<button onclick="advanceLine()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 font-display font-semibold text-sm hover:from-amber-400 hover:to-yellow-400 transition-all mt-1">'+(isLast?'Finish Session':'Next Line')+' <i class="fas fa-arrow-right ml-2"></i></button>'
         +'</div></div></div>';
 

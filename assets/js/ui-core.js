@@ -117,9 +117,54 @@ function refreshAdvancedState(){
     if(modeLbl)modeLbl.textContent=hasKey?t('assistantAdvanced'):t('assistantBasic');
 }
 
-function readStoreJSON(key,fallback){
+var ACCOUNT_SCOPED_STORAGE_KEYS=(function(){
+    var scoped={};
+    [
+        STORAGE_KEYS.sessions,
+        STORAGE_KEYS.scripts,
+        STORAGE_KEYS.bookmarks,
+        STORAGE_KEYS.assignments,
+        STORAGE_KEYS.assignmentsMap,
+        STORAGE_KEYS.assignmentRecent,
+        STORAGE_KEYS.leaderboard,
+        STORAGE_KEYS.uiTheme,
+        STORAGE_KEYS.onboardingDone
+    ].forEach(function(k){scoped[k]=true});
+    return scoped;
+})();
+
+function getStorageScopeId(){
+    if(S&&S.authUser&&S.authUser.uid)return String(S.authUser.uid);
+    return 'guest';
+}
+
+function isAccountScopedStorageKey(key){
+    return !!ACCOUNT_SCOPED_STORAGE_KEYS[key];
+}
+
+function getScopedStorageKey(key,scopeId){
+    return key+'__'+(scopeId||getStorageScopeId());
+}
+
+function migrateLegacyStorageIfNeeded(key,scopeId){
+    if(!isAccountScopedStorageKey(key))return;
+    var targetKey=getScopedStorageKey(key,scopeId);
     try{
-        var raw=localStorage.getItem(key);
+        if(localStorage.getItem(targetKey)!==null)return;
+        var legacy=localStorage.getItem(key);
+        if(legacy!==null)localStorage.setItem(targetKey,legacy);
+    }catch(e){}
+}
+
+function readStoreJSON(key,fallback){
+    var readKey=key;
+    if(isAccountScopedStorageKey(key)){
+        var scopeId=getStorageScopeId();
+        migrateLegacyStorageIfNeeded(key,scopeId);
+        readKey=getScopedStorageKey(key,scopeId);
+    }
+    try{
+        var raw=localStorage.getItem(readKey);
         if(!raw)return fallback;
         var parsed=JSON.parse(raw);
         return parsed==null?fallback:parsed;
@@ -129,7 +174,8 @@ function readStoreJSON(key,fallback){
 }
 
 function writeStoreJSON(key,val){
-    try{localStorage.setItem(key,JSON.stringify(val))}catch(e){}
+    var writeKey=isAccountScopedStorageKey(key)?getScopedStorageKey(key):key;
+    try{localStorage.setItem(writeKey,JSON.stringify(val))}catch(e){}
 }
 
 function getSavedSessions(){

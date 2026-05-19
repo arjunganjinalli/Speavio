@@ -29,6 +29,19 @@
                 <h1 class="text-3xl sm:text-4xl font-bold gradient-text tracking-tight">SpeakFlow</h1>
             </div>
             <p class="text-sf-200 text-sm sm:text-base mb-5">Sign in to continue your dialogue coaching sessions.</p>
+            <div class="space-y-3 text-left mb-4">
+                <input id="email-auth-input" type="text" placeholder="Username or email" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all" aria-label="Username or email" autocomplete="username">
+                <input id="password-auth-input" type="password" placeholder="Password" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all" aria-label="Password" autocomplete="current-password">
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="email-signin-btn" class="px-3 py-2.5 rounded-xl bg-copper-500/15 border border-copper-500/25 text-copper-300 text-sm font-semibold hover:bg-copper-500/25 transition-all">Sign In</button>
+                    <button id="email-create-btn" class="px-3 py-2.5 rounded-xl bg-sage-500/15 border border-sage-500/25 text-sage-300 text-sm font-semibold hover:bg-sage-500/25 transition-all">Create Account</button>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 mb-4" aria-hidden="true">
+                <div class="h-px bg-white/10 flex-1"></div>
+                <span class="text-[11px] text-sf-300 uppercase tracking-wide">or continue with Google</span>
+                <div class="h-px bg-white/10 flex-1"></div>
+            </div>
             <button id="google-signin-btn" class="google-btn w-full px-4 py-3 rounded-xl border border-white/12 bg-white/6 hover:bg-white/10 text-sf-50 font-semibold transition-all inline-flex items-center justify-center gap-2">
                 <i class="fa-brands fa-google"></i>
                 <span>Continue with Google</span>
@@ -353,12 +366,12 @@
                         <circle cx="60" cy="60" r="52" fill="none" class="score-ring-bg" stroke-width="8"/>
                         <circle id="final-ring" cx="60" cy="60" r="52" fill="none" stroke="url(#sg)" stroke-width="8" stroke-dasharray="326.73" stroke-dashoffset="326.73" stroke-linecap="round" transform="rotate(-90 60 60)" class="score-ring-fill"/>
                         <defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#C8956C"/><stop offset="100%" stop-color="#5BB882"/></linearGradient></defs>
-                        <text id="final-score" x="60" y="55" text-anchor="middle" fill="#E8E6E1" font-size="30" font-weight="700" font-family="Space Grotesk">0</text>
+                        <text id="final-score" x="60" y="55" text-anchor="middle" fill="var(--sf-fg)" font-size="30" font-weight="700" font-family="Space Grotesk">0</text>
                         <text x="60" y="74" text-anchor="middle" fill="#6E6D69" font-size="11" font-weight="600" letter-spacing="1">AVERAGE</text>
                     </svg>
                 </div>
                 <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 flex-1 w-full hdr-stats">
-                    <div class="bg-white/3 rounded-xl p-3 text-center"><div id="st-lines" class="text-xl font-display font-bold text-sf-50">0</div><div class="text-[10px] text-sf-300 mt-0.5">Lines</div></div>
+                    <div class="bg-white/3 rounded-xl p-3 text-center"><div id="st-lines" class="text-xl font-display font-bold text-sf-50">0</div><div class="text-[10px] text-sf-300 mt-0.5">Your Lines</div></div>
                     <div class="bg-white/3 rounded-xl p-3 text-center"><div id="st-eval" class="text-xl font-display font-bold text-sage-400">0</div><div class="text-[10px] text-sf-300 mt-0.5">Evaluated</div></div>
                     <div class="bg-white/3 rounded-xl p-3 text-center"><div id="st-correct" class="text-xl font-display font-bold text-sage-400">0</div><div class="text-[10px] text-sf-300 mt-0.5">Correct</div></div>
                     <div class="bg-white/3 rounded-xl p-3 text-center"><div id="st-best" class="text-xl font-display font-bold text-copper-400">0</div><div class="text-[10px] text-sf-300 mt-0.5">Best</div></div>

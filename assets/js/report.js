@@ -247,7 +247,7 @@ function renderReportUI(){
     var linesSkipped=totalUserLines-linesEvaluated;
     var correctPct=linesEvaluated?Math.round(linesCorrect/linesEvaluated*100):0;
 
-    $('st-lines').textContent=totalLines;
+    $('st-lines').textContent=totalUserLines;
     $('st-eval').textContent=linesEvaluated;
     $('st-correct').textContent=linesCorrect;
     $('st-best').textContent=best;

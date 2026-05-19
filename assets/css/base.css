@@ -11,7 +11,7 @@
         .dot-grid{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:radial-gradient(var(--sf-dot) 1px,transparent 1px);background-size:32px 32px}
         .screen{display:none;opacity:0;transition:opacity .4s ease;position:relative;z-index:1}
         .screen.active{display:flex;opacity:1}
-        .glass{background:rgba(var(--sf-glass),.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(var(--sf-glass-border),.1)}
+        .glass{background:rgba(var(--sf-glass),.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(var(--sf-glass-border),.18)}
         .gradient-text{background:linear-gradient(135deg,#E8B88A 0%,#C8956C 40%,#5BB882 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
         .mode-card{cursor:pointer;transition:all .3s ease;position:relative;overflow:hidden}
         .mode-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s ease;background:linear-gradient(135deg,rgba(200,149,108,.08),rgba(91,184,130,.05))}
@@ -26,8 +26,8 @@
         .hint-pill:hover{border-color:rgba(200,149,108,.3);color:#C8C6C1}
         .hint-pill.active{background:rgba(200,149,108,.15);border-color:#C8956C;color:#E8B88A}
         .bubble{max-width:80%;padding:12px 16px;border-radius:16px;position:relative;transition:all .3s ease}
-        .bubble-other{background:rgba(30,30,34,.7);border:1px solid rgba(91,184,130,.12);border-left:3px solid #5BB882;align-self:flex-start;border-bottom-left-radius:4px}
-        .bubble-user{background:rgba(200,149,108,.08);border:1px solid rgba(200,149,108,.15);border-right:3px solid #C8956C;align-self:flex-end;border-bottom-right-radius:4px}
+        .bubble-other{background:rgba(91,184,130,.1);border:1px solid rgba(91,184,130,.25);border-left:3px solid #5BB882;align-self:flex-start;border-bottom-left-radius:4px}
+        .bubble-user{background:rgba(200,149,108,.15);border:1px solid rgba(200,149,108,.28);border-right:3px solid #C8956C;align-self:flex-end;border-bottom-right-radius:4px}
         .bubble-current{box-shadow:0 0 24px rgba(200,149,108,.1);transform:scale(1.02)}
         .bubble-past{opacity:.5}
         .bubble-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
@@ -42,11 +42,11 @@
         .mic-btn-lg{width:80px;height:80px;font-size:28px;border-width:3px}
         .mic-btn-lg.recording::after{inset:-10px}
         @keyframes mp{0%{transform:scale(1);opacity:1}100%{transform:scale(1.6);opacity:0}}
-        .progress-track{height:3px;background:rgba(255,255,255,.06);overflow:hidden}
+        .progress-track{height:3px;background:rgba(255,255,255,.13);overflow:hidden}
         .progress-fill{height:100%;background:linear-gradient(90deg,#C8956C,#5BB882);transition:width .5s cubic-bezier(.4,0,.2,1)}
         .eval-in{animation:ei .5s cubic-bezier(.4,0,.2,1) forwards}
         @keyframes ei{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
-        .score-ring-bg{stroke:rgba(255,255,255,.06)}
+        .score-ring-bg{stroke:rgba(255,255,255,.13)}
         .score-ring-fill{transition:stroke-dashoffset 1s cubic-bezier(.4,0,.2,1)}
         .toast{padding:12px 20px;border-radius:12px;font-size:14px;font-weight:500;display:flex;align-items:center;gap:10px;max-width:420px;animation:ti .4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 8px 32px rgba(0,0,0,.5)}
         .toast-success{background:rgba(91,184,130,.15);border:1px solid rgba(91,184,130,.3);color:#A8E0C0}
@@ -55,7 +55,7 @@
         @keyframes ti{from{transform:translateX(100px);opacity:0}to{transform:translateX(0);opacity:1}}
         @keyframes to2{from{transform:translateX(0);opacity:1}to{transform:translateX(100px);opacity:0}}
         ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(200,149,108,.2);border-radius:3px}
-        .line-dot{width:8px;height:8px;border-radius:50%;transition:all .3s ease;background:rgba(255,255,255,.1)}
+        .line-dot{width:8px;height:8px;border-radius:50%;transition:all .3s ease;background:rgba(255,255,255,.2)}
         .line-dot.done{background:#5BB882}.line-dot.current{background:#C8956C;transform:scale(1.4);box-shadow:0 0 8px rgba(200,149,108,.5)}
         .line-dot.low{background:#D4736E}
         .typing-dot{width:6px;height:6px;border-radius:50%;background:#C8956C;animation:tb 1.4s ease-in-out infinite}
@@ -97,7 +97,7 @@
             transition:filter .4s ease, opacity .4s ease;
         }
 
-        .vol-bar-track{width:100%;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+        .vol-bar-track{width:100%;height:6px;background:rgba(255,255,255,.13);border-radius:3px;overflow:hidden}
         .vol-bar-fill{height:100%;border-radius:3px;transition:width 60ms linear;background:linear-gradient(90deg,#C8956C,#D4736E)}
         .silence-countdown{font-variant-numeric:tabular-nums;font-weight:700}
 
@@ -131,19 +131,19 @@
         /* Word diff in report */
         .wd-ok{color:#7EC9A0}
         .wd-miss{color:#E89590;text-decoration:underline wavy #D4736E;text-underline-offset:3px}
-        .wd-section{background:rgba(255,255,255,.02);border-radius:8px;padding:8px 12px;border:1px solid rgba(255,255,255,.04)}
+        .wd-section{background:rgba(255,255,255,.07);border-radius:8px;padding:8px 12px;border:1px solid rgba(255,255,255,.12)}
         .wd-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#8A8885;margin-bottom:4px}
         .wd-words{font-size:13px;line-height:1.8;word-wrap:break-word}
         .wd-pct{font-size:11px;font-weight:700;margin-left:6px}
 
         /* Setup tabs */
-        .setup-nav{display:flex;gap:8px;padding:6px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
-        .setup-tab-btn{flex:1;padding:10px 12px;border-radius:10px;border:1px solid transparent;background:transparent;color:#A8A6A2;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s ease;font-family:'Space Grotesk',sans-serif}
-        .setup-tab-btn:hover{color:#E8E6E1;background:rgba(255,255,255,.03)}
+        .setup-nav{display:flex;gap:8px;padding:6px;border-radius:14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)}
+        .setup-tab-btn{flex:1;padding:10px 12px;border-radius:10px;border:1px solid transparent;background:transparent;color:#C0BDB8;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s ease;font-family:'Space Grotesk',sans-serif}
+        .setup-tab-btn:hover{color:#E8E6E1;background:rgba(255,255,255,.08)}
         .setup-tab-btn.active{color:#E8B88A;background:rgba(200,149,108,.15);border-color:rgba(200,149,108,.35)}
         .setup-panel{display:none}
         .setup-panel.active{display:block}
-        .mini-card{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:14px}
+        .mini-card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px}
         .mode-layout{display:grid;grid-template-columns:1.05fr 1.4fr;gap:18px;align-items:start}
         @media(max-width:900px){.mode-layout{grid-template-columns:1fr}}
 
@@ -156,9 +156,9 @@
         .assist-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
         .assist-bubble{max-width:86%;padding:10px 12px;border-radius:12px;font-size:13px;line-height:1.45}
         .assist-user{align-self:flex-end;background:rgba(200,149,108,.2);border:1px solid rgba(200,149,108,.28);color:#F0CFA8}
-        .assist-bot{align-self:flex-start;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);color:#D5D3CF}
+        .assist-bot{align-self:flex-start;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#D5D3CF}
         .assist-meta{padding:10px 14px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:8px;background:rgba(0,0,0,.2)}
-        .assist-input{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:10px 12px;color:#E8E6E1;font-size:13px;outline:none}
+        .assist-input{flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:10px 12px;color:#E8E6E1;font-size:13px;outline:none}
         .assist-send{width:42px;height:42px;border-radius:10px;border:1px solid rgba(200,149,108,.25);background:rgba(200,149,108,.14);color:#E8B88A;cursor:pointer}
 
         .auth-card{border:1px solid rgba(200,149,108,.16)}
@@ -181,15 +181,102 @@
         .onboarding-dot{width:8px;height:8px;border-radius:999px;background:rgba(255,255,255,.18);transition:all .25s ease}
         .onboarding-dot.active{width:20px;background:rgba(200,149,108,.9)}
 
-        .lb-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+        .lb-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)}
         .lb-rank{font-size:11px;font-weight:700;color:#E8B88A;min-width:28px}
         .lb-name{font-size:12px;color:#E8E6E1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .lb-meta{font-size:10px;color:#8A8885}
         .lb-score{font-size:12px;font-weight:700;color:#7EC9A0}
 
+        /* ── DARK MODE: boost faint Tailwind utility surfaces & borders ── */
+        .bg-white\/2,.bg-white\/3{background:rgba(255,255,255,.07)!important}
+        .bg-white\/5{background:rgba(255,255,255,.09)!important}
+        .border-white\/5{border-color:rgba(255,255,255,.1)!important}
+        .border-white\/6{border-color:rgba(255,255,255,.11)!important}
+        .border-white\/8{border-color:rgba(255,255,255,.15)!important}
+        .border-white\/10{border-color:rgba(255,255,255,.17)!important}
+        .border-white\/12{border-color:rgba(255,255,255,.19)!important}
+
+        /* ── LIGHT MODE ── */
         html[data-theme='light'] body{color:#1C1B1A}
-        html[data-theme='light'] .glass{background:rgba(255,255,255,.84);border-color:rgba(185,143,109,.24)}
-        html[data-theme='light'] .mini-card{background:rgba(255,255,255,.72);border-color:rgba(0,0,0,.08)}
+        html[data-theme='light'] .glass{background:rgba(255,255,255,.88);border-color:rgba(0,0,0,.1)}
+        html[data-theme='light'] .mini-card{background:rgba(255,255,255,.78);border-color:rgba(0,0,0,.1)}
+
+        /* sf color scale is fixed in Tailwind config; invert for light mode */
+        html[data-theme='light'] .text-sf-50{color:#1C1B1A!important}
+        html[data-theme='light'] .text-sf-100{color:#2E2C2A!important}
+        html[data-theme='light'] .text-sf-200{color:#4A4845!important}
+
+        /* Tailwind surface/border utility overrides for light mode */
+        html[data-theme='light'] .bg-white\/2,html[data-theme='light'] .bg-white\/3{background:rgba(0,0,0,.04)!important}
+        html[data-theme='light'] .bg-white\/5{background:rgba(0,0,0,.05)!important}
+        html[data-theme='light'] .border-white\/5,html[data-theme='light'] .border-white\/6{border-color:rgba(0,0,0,.1)!important}
+        html[data-theme='light'] .border-white\/8{border-color:rgba(0,0,0,.13)!important}
+        html[data-theme='light'] .border-white\/10{border-color:rgba(0,0,0,.14)!important}
+        html[data-theme='light'] .border-white\/12{border-color:rgba(0,0,0,.15)!important}
+
+        /* Inputs */
+        html[data-theme='light'] .input-glow{background:#fff;border-color:rgba(0,0,0,.18)!important;color:#1C1B1A}
+        html[data-theme='light'] .input-glow::placeholder{color:#9A9895}
+        html[data-theme='light'] .input-glow:focus{border-color:rgba(200,149,108,.55)!important;box-shadow:0 0 0 2px rgba(200,149,108,.2)}
+        html[data-theme='light'] select option{background:#fff;color:#1C1B1A}
+
+        /* Start / action buttons (amber gradient) */
+        html[data-theme='light'] .from-amber-500{border:1.5px solid rgba(170,110,50,.4)!important;box-shadow:0 2px 10px rgba(200,149,108,.3)}
+        html[data-theme='light'] #start-btn:disabled{opacity:.45!important}
+
+        /* Setup navigation */
+        html[data-theme='light'] .setup-nav{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.1)}
         html[data-theme='light'] .setup-tab-btn{color:#4D4A45}
-        html[data-theme='light'] .setup-tab-btn.active{color:#7C4F31;background:rgba(200,149,108,.18)}
+        html[data-theme='light'] .setup-tab-btn:hover{background:rgba(0,0,0,.05);color:#1C1B1A}
+        html[data-theme='light'] .setup-tab-btn.active{color:#7C4F31;background:rgba(200,149,108,.18);border-color:rgba(200,149,108,.35)}
+
+        /* Role & hint pills */
+        html[data-theme='light'] .role-pill{background:rgba(255,255,255,.9);border-color:rgba(0,0,0,.14);color:#3D3C3A}
+        html[data-theme='light'] .role-pill:hover{border-color:rgba(200,149,108,.5);color:#1C1B1A}
+        html[data-theme='light'] .role-pill.selected{background:rgba(200,149,108,.15);border-color:#C8956C;color:#7C4F31}
+        html[data-theme='light'] .hint-pill{background:rgba(255,255,255,.9);border-color:rgba(0,0,0,.14);color:#5A5855}
+        html[data-theme='light'] .hint-pill:hover{border-color:rgba(200,149,108,.45);color:#1C1B1A}
+        html[data-theme='light'] .hint-pill.active{background:rgba(200,149,108,.18);border-color:#C8956C;color:#7C4F31}
+        html[data-theme='light'] .hint-reveal-btn{background:rgba(200,149,108,.15);border-color:rgba(200,149,108,.45);color:#7C4F31}
+        html[data-theme='light'] .hint-reveal-btn:hover{background:rgba(200,149,108,.25);border-color:#C8956C}
+
+        /* Dialogue bubbles */
+        html[data-theme='light'] .bubble-other{background:rgba(225,243,233,.9);border-color:rgba(91,184,130,.22);border-left-color:#5BB882}
+        html[data-theme='light'] .bubble-user{background:rgba(255,245,232,.9);border-color:rgba(200,149,108,.28);border-right-color:#C8956C}
+        html[data-theme='light'] .bubble-other .bubble-label{color:#449966}
+        html[data-theme='light'] .bubble-user .bubble-label{color:#A87A55}
+
+        /* Progress tracks & indicators */
+        html[data-theme='light'] .progress-track{background:rgba(0,0,0,.12)}
+        html[data-theme='light'] .line-dot{background:rgba(0,0,0,.2)}
+        html[data-theme='light'] .score-ring-bg{stroke:rgba(0,0,0,.12)}
+        html[data-theme='light'] .vol-bar-track{background:rgba(0,0,0,.12)}
+
+        /* Word diff boxes */
+        html[data-theme='light'] .wd-section{background:rgba(0,0,0,.03);border-color:rgba(0,0,0,.08)}
+
+        /* Leaderboard rows */
+        html[data-theme='light'] .lb-row{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.09)}
+
+        /* Report cards */
+        html[data-theme='light'] .report-card{border-color:rgba(0,0,0,.1)}
+        html[data-theme='light'] .report-card:hover{border-color:rgba(200,149,108,.35)}
+
+        /* Mode cards */
+        html[data-theme='light'] .mode-card{background:rgba(255,255,255,.65)}
+
+        /* Help & onboarding modals */
+        html[data-theme='light'] .help-modal{background:#fff;border-color:rgba(0,0,0,.1)}
+        html[data-theme='light'] .help-modal h2{color:#1C1B1A}
+        html[data-theme='light'] .help-modal h3{color:#7C4F31}
+        html[data-theme='light'] .help-modal p,html[data-theme='light'] .help-modal li{color:#4A4845}
+        html[data-theme='light'] .help-modal .close-help{background:rgba(0,0,0,.05);color:#6A6865}
+        html[data-theme='light'] .help-modal .close-help:hover{background:rgba(0,0,0,.1);color:#1C1B1A}
+        html[data-theme='light'] .onboarding-modal{background:rgba(255,255,255,.98);border-color:rgba(200,149,108,.25)}
+
+        /* Assistant widget */
         html[data-theme='light'] .assist-panel{background:rgba(255,255,255,.98);border-color:rgba(185,143,109,.25)}
+        html[data-theme='light'] .assist-bot{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.09);color:#3D3C3A}
+        html[data-theme='light'] .assist-user{background:rgba(200,149,108,.12);border-color:rgba(200,149,108,.25)}
+        html[data-theme='light'] .assist-input{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.14);color:#1C1B1A}
+        html[data-theme='light'] .assist-input::placeholder{color:#9A9895}

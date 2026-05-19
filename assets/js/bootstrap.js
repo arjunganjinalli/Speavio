@@ -300,8 +300,63 @@ document.addEventListener('DOMContentLoaded',function(){
         return;
     }
 
+    function setAuthButtonsDisabled(disabled){
+        ['google-signin-btn','email-signin-btn','email-create-btn'].forEach(function(id){
+            var btn=$(id);
+            if(btn)btn.disabled=!!disabled;
+        });
+    }
+
+    function readEmailAuthFields(){
+        var emailInput=$('email-auth-input');
+        var passwordInput=$('password-auth-input');
+        return {
+            email:emailInput?String(emailInput.value||'').trim():'',
+            password:passwordInput?String(passwordInput.value||''):''
+        };
+    }
+
+    function mapEmailAuthError(err,isCreate){
+        var code=err&&err.code?String(err.code):'';
+        if(code==='auth/invalid-email')return 'Enter a valid email in the username/email field.';
+        if(code==='auth/user-not-found'||code==='auth/wrong-password'||code==='auth/invalid-credential')return 'Invalid email or password.';
+        if(code==='auth/weak-password')return 'Password should be at least 6 characters.';
+        if(code==='auth/email-already-in-use')return 'That email is already registered. Try Sign In.';
+        if(code==='auth/too-many-requests')return 'Too many attempts. Please wait a bit and try again.';
+        if(code==='auth/operation-not-allowed')return isCreate?'Email/password sign-up is disabled in Firebase Auth settings.':'Email/password sign-in is disabled in Firebase Auth settings.';
+        return (err&&err.message)||'Authentication failed.';
+    }
+
+    function beginEmailPasswordAuth(isCreate){
+        var fields=readEmailAuthFields();
+        if(!fields.email||!fields.password){
+            setAuthStatus('Enter username/email and password first.',true);
+            return;
+        }
+        if(fields.email.indexOf('@')===-1){
+            setAuthStatus('Use a valid email address in the username/email field.',true);
+            return;
+        }
+
+        setAuthButtonsDisabled(true);
+        setAuthStatus(isCreate?'Creating account...':'Signing in...');
+        setAuthDebug((isCreate?'Create account':'Email sign-in')+' requested for '+fields.email);
+
+        var auth=firebase.auth();
+        var promise=isCreate
+            ?auth.createUserWithEmailAndPassword(fields.email,fields.password)
+            :auth.signInWithEmailAndPassword(fields.email,fields.password);
+
+        return promise.catch(function(err){
+            setAuthStatus(mapEmailAuthError(err,isCreate),true);
+            setAuthDebug('Email/password auth failed: '+((err&&err.code)||'unknown'),true);
+            setAuthButtonsDisabled(false);
+        });
+    }
+
     function beginGoogleSignIn(){
         var provider=new firebase.auth.GoogleAuthProvider();
+        setAuthButtonsDisabled(true);
         setAuthStatus('Opening Google Sign-In...');
         setAuthDebug('Popup sign-in requested');
         clearAuthPendingTimer();
@@ -312,6 +367,7 @@ document.addEventListener('DOMContentLoaded',function(){
             }
         },12000);
         return firebase.auth().signInWithPopup(provider).catch(function(err){
+            setAuthButtonsDisabled(false);
             if(err&&err.code==='auth/popup-closed-by-user'){
                 setAuthStatus('Sign-in canceled.',true);
                 setAuthDebug('Popup canceled by user',true);
@@ -340,6 +396,12 @@ document.addEventListener('DOMContentLoaded',function(){
     if($('google-signin-btn'))$('google-signin-btn').onclick=function(){
         beginGoogleSignIn();
     };
+    if($('email-signin-btn'))$('email-signin-btn').onclick=function(){
+        beginEmailPasswordAuth(false);
+    };
+    if($('email-create-btn'))$('email-create-btn').onclick=function(){
+        beginEmailPasswordAuth(true);
+    };
 
     firebase.auth().getRedirectResult().then(function(res){
         clearAuthPendingTimer();
@@ -348,15 +410,17 @@ document.addEventListener('DOMContentLoaded',function(){
             setAuthDebug('Redirect sign-in success');
             return;
         }
+        setAuthButtonsDisabled(false);
         setAuthDebug('Redirect sign-in: no pending result');
     }).catch(function(err){
         clearAuthPendingTimer();
+        setAuthButtonsDisabled(false);
         setAuthStatus((err&&err.message)||'Redirect sign-in failed.',true);
         setAuthDebug('Redirect sign-in failed: '+((err&&err.code)||'unknown'),true);
     });
 
     firebase.auth().onAuthStateChanged(function(user){
-        if($('google-signin-btn'))$('google-signin-btn').disabled=false;
+        setAuthButtonsDisabled(false);
         if(user){
             handleAuthenticatedUser(user);
             return;
