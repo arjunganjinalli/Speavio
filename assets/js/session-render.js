@@ -73,7 +73,7 @@ function startSession(){
 
     $('mode-badge').textContent=S.mode==='presentation'
         ?t('modePresentationBadge')
-        :(S.mode==='assignment'?t('modeAssignmentBadge'):t('modePracticeBadge'));
+        :t('modePracticeBadge');
     $('lang-badge').textContent=LANG[S.language].badge;
     $('hint-ctrl').classList.toggle('hidden',S.mode!=='presentation');
     renderAllHintPills();

@@ -77,7 +77,6 @@
                 <div class="setup-nav" role="tablist" aria-label="Main navigation">
                     <button id="tab-home" class="setup-tab-btn active" data-tab="home" role="tab" aria-selected="true"><i class="fa-solid fa-house mr-1.5"></i><span data-i18n="navHome">Home</span></button>
                     <button id="tab-practice" class="setup-tab-btn" data-tab="practice" role="tab" aria-selected="false"><i class="fa-solid fa-microphone-lines mr-1.5"></i><span data-i18n="navPractice">Practice</span></button>
-                    <button id="tab-assignment" class="setup-tab-btn" data-tab="assignment" role="tab" aria-selected="false"><i class="fa-solid fa-clipboard-check mr-1.5"></i><span data-i18n="navAssignment">Assignment</span></button>
                     <button id="tab-presentation" class="setup-tab-btn" data-tab="presentation" role="tab" aria-selected="false"><i class="fa-solid fa-masks-theater mr-1.5"></i><span data-i18n="navPresentation">Presentation</span></button>
                     <button id="tab-settings" class="setup-tab-btn" data-tab="settings" role="tab" aria-selected="false"><i class="fa-solid fa-gear mr-1.5"></i><span data-i18n="navSettings">Settings</span></button>
                 </div>
@@ -89,7 +88,6 @@
                             <p class="text-sm text-sf-300" data-i18n="homeQuickBody">Use the header tabs like GitHub navigation. Start in Practice or Presentation, then tune AI keys in Settings.</p>
                             <div class="mt-3 flex flex-wrap gap-2">
                                 <button onclick="showSetupTab('practice')" class="px-3 py-2 rounded-lg bg-copper-500/15 border border-copper-500/25 text-copper-400 text-xs font-semibold" data-i18n="homeGoPractice">Go to Practice</button>
-                                <button onclick="showSetupTab('assignment')" class="px-3 py-2 rounded-lg bg-copper-500/10 border border-copper-500/20 text-copper-300 text-xs font-semibold" data-i18n="homeGoAssignment">Go to Assignment</button>
                                 <button onclick="showSetupTab('presentation')" class="px-3 py-2 rounded-lg bg-sage-500/10 border border-sage-500/25 text-sage-400 text-xs font-semibold" data-i18n="homeGoPresentation">Go to Presentation</button>
                                 <button onclick="showSetupTab('settings')" class="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sf-200 text-xs font-semibold" data-i18n="homeOpenSettings">Open Settings</button>
                             </div>
@@ -199,11 +197,7 @@
                                     <button id="load-script-btn" class="action-btn action-btn--copper"><i class="fas fa-upload"></i>Load Script</button>
                                     <button id="delete-script-btn" class="action-btn action-btn--coral"><i class="fas fa-trash"></i>Delete</button>
                                 </div>
-                                <div class="flex flex-col sm:flex-row gap-2">
-                                    <button id="create-assignment-link-btn" class="action-btn action-btn--sage sm:flex-shrink-0"><i class="fas fa-link"></i>Create Assignment Link</button>
-                                    <input id="assignment-link-output" type="text" readonly placeholder="Assignment link will appear here" class="input-glow flex-1 bg-sf-800/60 border border-white/8 rounded-lg px-3 py-2.5 text-xs text-sf-100 outline-none transition-all" aria-label="Assignment link output">
-                                    <button id="copy-assignment-link-btn" class="action-btn sm:flex-shrink-0"><i class="fas fa-copy"></i>Copy Assignment Link</button>
-                                </div>
+
                             </div>
                         </div>
                     </div>

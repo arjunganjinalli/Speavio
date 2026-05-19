@@ -74,7 +74,7 @@ function getHintText(text){
 }
 
 function isPracticeLikeMode(){
-    return S.mode==='practice'||S.mode==='assignment';
+    return S.mode==='practice';
 }
 
 function showSetupTab(tab){
@@ -85,24 +85,23 @@ function showSetupTab(tab){
         btn.setAttribute('aria-selected',active?'true':'false');
     });
     $('panel-home').classList.toggle('active',tab==='home');
-    $('panel-mode').classList.toggle('active',tab==='practice'||tab==='assignment'||tab==='presentation');
+    $('panel-mode').classList.toggle('active',tab==='practice'||tab==='presentation');
     $('panel-settings').classList.toggle('active',tab==='settings');
 
-    if(tab==='practice'||tab==='assignment'||tab==='presentation'){
+    if(tab==='practice'||tab==='presentation'){
         S.mode=tab;
         var isPres=tab==='presentation';
-        var isAssign=tab==='assignment';
-        $('mode-title').textContent=isPres?t('modePresentationTitle'):(isAssign?t('modeAssignmentTitle'):t('modePracticeTitle'));
-        $('mode-desc').textContent=isPres?t('modePresentationDesc'):(isAssign?t('modeAssignmentDesc'):t('modePracticeDesc'));
-        $('mode-mini-badge').textContent=isPres?t('modePresentationBadge'):(isAssign?t('modeAssignmentBadge'):t('modePracticeBadge'));
+        $('mode-title').textContent=isPres?t('modePresentationTitle'):t('modePracticeTitle');
+        $('mode-desc').textContent=isPres?t('modePresentationDesc'):t('modePracticeDesc');
+        $('mode-mini-badge').textContent=isPres?t('modePresentationBadge'):t('modePracticeBadge');
         $('mode-mini-badge').className='px-2.5 py-1 rounded-md text-xs font-semibold '+(isPres?'bg-sage-500/15 text-sage-400':'bg-copper-500/15 text-copper-400');
         $('hint-settings').classList.toggle('hidden',!isPres);
         $('practice-script-language-wrap').classList.toggle('hidden',isPres);
         $('presentation-script-language-wrap').classList.toggle('hidden',!isPres);
-        $('start-btn').textContent=isPres?t('startPresentation'):(isAssign?t('startAssignment'):t('startPractice'));
+        $('start-btn').textContent=isPres?t('startPresentation'):t('startPractice');
     }
     if(tab==='home')refreshHomeProgressSnapshot();
-    if(tab==='practice'||tab==='assignment'||tab==='presentation')renderScriptLibraryOptions();
+    if(tab==='practice'||tab==='presentation')renderScriptLibraryOptions();
 }
 
 function refreshAdvancedState(){
@@ -123,9 +122,6 @@ var ACCOUNT_SCOPED_STORAGE_KEYS=(function(){
         STORAGE_KEYS.sessions,
         STORAGE_KEYS.scripts,
         STORAGE_KEYS.bookmarks,
-        STORAGE_KEYS.assignments,
-        STORAGE_KEYS.assignmentsMap,
-        STORAGE_KEYS.assignmentRecent,
         STORAGE_KEYS.leaderboard,
         STORAGE_KEYS.uiTheme,
         STORAGE_KEYS.onboardingDone
@@ -388,93 +384,6 @@ function deleteSelectedScriptFromLibrary(){
     writeStoreJSON(STORAGE_KEYS.scripts,list);
     renderScriptLibraryOptions();
     toast('Saved script removed.','success');
-}
-
-function encodeAssignmentPayload(payload){
-    return btoa(unescape(encodeURIComponent(JSON.stringify(payload)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-}
-
-function decodeAssignmentPayload(encoded){
-    var b64=String(encoded||'').replace(/-/g,'+').replace(/_/g,'/');
-    var pad=b64.length%4;
-    if(pad)b64+=new Array(5-pad).join('=');
-    return JSON.parse(decodeURIComponent(escape(atob(b64))));
-}
-
-function createAssignmentLink(){
-    var scriptText=($('script-input').value||'').trim();
-    if(!scriptText){toast('Paste a script first.','info');return ''}
-    var payload={
-        v:1,
-        mode:'assignment',
-        language:S.language,
-        scriptKey:getScriptKeyFromRawText(scriptText,S.language),
-        script:scriptText,
-        createdAt:new Date().toISOString()
-    };
-    var token=encodeAssignmentPayload(payload);
-    var url=window.location.origin+window.location.pathname+'?assignment='+encodeURIComponent(token);
-    if(url.length>1900){
-        var localToken='asg_'+Date.now().toString(36);
-        var localAssignments=readStoreJSON(STORAGE_KEYS.assignmentsMap,{});
-        localAssignments[localToken]=payload;
-        writeStoreJSON(STORAGE_KEYS.assignmentsMap,localAssignments);
-        url=window.location.origin+window.location.pathname+'?assignmentLocal='+encodeURIComponent(localToken);
-    }
-    var output=$('assignment-link-output');
-    if(output)output.value=url;
-
-    var recent=readStoreJSON(STORAGE_KEYS.assignmentRecent,[]);
-    recent.push({id:String(Date.now()),url:url,createdAt:payload.createdAt,language:S.language,length:scriptText.length});
-    while(recent.length>50)recent.shift();
-    writeStoreJSON(STORAGE_KEYS.assignmentRecent,recent);
-    return url;
-}
-
-function copyAssignmentLink(){
-    var output=$('assignment-link-output');
-    var val=((output&&output.value)||'').trim();
-    if(!val)val=createAssignmentLink();
-    if(!val)return;
-    if(navigator.clipboard&&navigator.clipboard.writeText){
-        navigator.clipboard.writeText(val).then(function(){toast('Assignment link copied.','success')}).catch(function(){toast('Copy failed.','error')});
-        return;
-    }
-    var ta=document.createElement('textarea');
-    ta.value=val;
-    document.body.appendChild(ta);
-    ta.select();
-    try{document.execCommand('copy');toast('Assignment link copied.','success')}catch(e){toast('Copy failed.','error')}
-    document.body.removeChild(ta);
-}
-
-function hydrateAssignmentFromURL(){
-    try{
-        var params=new URLSearchParams(window.location.search||'');
-        var payload=null;
-        var localToken=params.get('assignmentLocal');
-        if(localToken){
-            var saved=readStoreJSON(STORAGE_KEYS.assignmentsMap,{});
-            payload=saved[localToken]||null;
-        }else{
-            var token=params.get('assignment');
-            if(token)payload=decodeAssignmentPayload(token);
-        }
-        if(!payload||!payload.script)return false;
-        $('script-input').value=payload.script;
-        S.scriptSource='assignment';
-        S.scriptLabel='Assignment Script';
-        S.scriptRef=payload.scriptKey||'';
-        if(payload.language&&LANG[payload.language])S.language=payload.language;
-        syncScriptLanguageSelects();
-        updateParse();
-        showSetupTab('assignment');
-        toast('Loaded shared assignment script.','success');
-        return true;
-    }catch(e){
-        toast('Invalid assignment link.','error');
-        return false;
-    }
 }
 
 function updateLeaderboardFromSession(avgScore,totalUserLines,linesEvaluated){

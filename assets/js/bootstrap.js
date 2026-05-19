@@ -7,9 +7,9 @@ document.addEventListener('DOMContentLoaded',function(){
     var authPendingTimer=null;
     var authDebugEnabled=/^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname);
     var onboardingSteps=[
-        {title:'Welcome to SpeakFlow',body:'Use the top tabs to switch between Practice, Assignment, Presentation, and Settings.'},
-        {title:'Start Fast',body:'Paste a script, pick your role, and start. Use Assignment mode to generate a shareable script link.'},
-        {title:'Practice Controls',body:'In session, press Space to start/stop recording and Enter to submit your line in practice-like modes.'},
+        {title:'Welcome to SpeakFlow',body:'Use the top tabs to switch between Practice, Presentation, and Settings.'},
+        {title:'Start Fast',body:'Paste a script, pick your role, and start. Choose Practice for guided coaching or Presentation for full delivery mode.'},
+        {title:'Practice Controls',body:'In session, press Space to start/stop recording and Enter to submit your line.'},
         {title:'Reports and Progress',body:'After each session, review line scores, bookmark hard lines, share scorecards, and export PDF/JSON.'}
     ];
     var onboardingIndex=0;
@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded',function(){
         }
         refreshAdvancedState();
         refreshHomeProgressSnapshot();
-        if(!hydrateAssignmentFromURL())showSetupTab('home');
+        showSetupTab('home');
         renderScriptLibraryOptions();
         renderAllHintPills();
         renderSetupDifficultyBadge();
@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded',function(){
             appInitialized=true;
         }else{
             switchScreen('setup');
-            if(!hydrateAssignmentFromURL())showSetupTab('home');
+            showSetupTab('home');
         }
     }
 
@@ -254,11 +254,6 @@ document.addEventListener('DOMContentLoaded',function(){
     if($('save-script-btn'))$('save-script-btn').onclick=saveCurrentScriptToLibrary;
     if($('load-script-btn'))$('load-script-btn').onclick=loadSelectedScriptFromLibrary;
     if($('delete-script-btn'))$('delete-script-btn').onclick=deleteSelectedScriptFromLibrary;
-    if($('create-assignment-link-btn'))$('create-assignment-link-btn').onclick=function(){
-        var link=createAssignmentLink();
-        if(link)toast('Assignment link created.','success');
-    };
-    if($('copy-assignment-link-btn'))$('copy-assignment-link-btn').onclick=copyAssignmentLink;
     if($('theme-toggle-btn'))$('theme-toggle-btn').onclick=cycleTheme;
     if($('theme-quick-btn'))$('theme-quick-btn').onclick=cycleTheme;
     if($('replay-onboarding-btn'))$('replay-onboarding-btn').onclick=function(){openOnboarding(true)};
