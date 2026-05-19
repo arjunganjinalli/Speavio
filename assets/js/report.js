@@ -28,9 +28,9 @@ function buildScoreTrendSVG(scores){
     }).join(' ');
     var last=scores[scores.length-1]||0;
     return '<svg viewBox="0 0 '+w+' '+h+'" class="w-full h-[90px]">'
-        +'<polyline points="'+pts+'" fill="none" stroke="#C8956C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>'
-        +'<line x1="'+pad+'" y1="'+(h-pad)+'" x2="'+(w-pad)+'" y2="'+(h-pad)+'" stroke="rgba(255,255,255,.14)" stroke-width="1"/>'
-        +'<text x="'+(w-pad)+'" y="16" fill="#7EC9A0" font-size="11" text-anchor="end">Latest: '+last+'</text>'
+        +'<polyline points="'+pts+'" fill="none" stroke="var(--sf-chart-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>'
+        +'<line x1="'+pad+'" y1="'+(h-pad)+'" x2="'+(w-pad)+'" y2="'+(h-pad)+'" stroke="var(--sf-chart-axis)" stroke-width="1"/>'
+        +'<text x="'+(w-pad)+'" y="16" fill="var(--sf-chart-accent)" font-size="11" text-anchor="end">Latest: '+last+'</text>'
         +'</svg>';
 }
 
@@ -40,7 +40,14 @@ function launchPerfectScoreConfetti(){
     var layer=document.createElement('div');
     layer.id='sf-confetti-layer';
     layer.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:120;overflow:hidden;';
-    var colors=['#C8956C','#5BB882','#E8B88A','#E89590','#E8E6E1'];
+    var rs=getComputedStyle(document.documentElement);
+    var colors=[
+        rs.getPropertyValue('--sf-confetti-1').trim()||'#C8956C',
+        rs.getPropertyValue('--sf-confetti-2').trim()||'#5BB882',
+        rs.getPropertyValue('--sf-confetti-3').trim()||'#E8B88A',
+        rs.getPropertyValue('--sf-confetti-4').trim()||'#E89590',
+        rs.getPropertyValue('--sf-confetti-5').trim()||'#E8E6E1'
+    ];
     var count=100;
     var vh=Math.max(window.innerHeight||0,640);
 
@@ -200,7 +207,8 @@ function shareScorecardImage(){
     if(!target){toast('Scorecard not available yet.','error');return}
     if(typeof html2canvas==='undefined'){toast('Share tool is loading. Try again.','info');return}
 
-    html2canvas(target,{backgroundColor:'#0D0D0F',scale:2,useCORS:true})
+    var bg=getComputedStyle(document.documentElement).getPropertyValue('--sf-bg').trim()||'#0D0D0F';
+    html2canvas(target,{backgroundColor:bg,scale:2,useCORS:true})
         .then(function(canvas){
             return new Promise(function(resolve,reject){
                 canvas.toBlob(function(blob){if(blob)resolve(blob);else reject(new Error('No image blob produced'))},'image/png');
@@ -360,9 +368,12 @@ function exportPrint(){
     for(k in S.lineScores){if(S.lineScores[k]!=null)scores.push(S.lineScores[k])}
     var avg=scores.length?Math.round(scores.reduce(function(a,b){return a+b},0)/scores.length):0;
     var elapsed=Math.round((Date.now()-S.sessionStart)/1000);
-    var rows=S.lines.map(function(l,i){var sc=S.lineScores[i],resp=S.userResponses[i],det=S.lineDetails[i],isU=l.role===S.userRole;return '<tr style="border-bottom:1px solid #eee;'+(!isU?'opacity:.6':'')+'"><td style="padding:8px;font-size:13px">'+(i+1)+'</td><td style="padding:8px;font-size:13px;font-weight:600">'+esc(l.role)+'</td><td style="padding:8px;font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(l.text)+'</td><td style="padding:8px;font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(resp?esc(resp):'--')+'</td><td style="padding:8px;font-size:13px;text-align:center;'+(sc!=null&&sc<50?'color:#D4736E;font-weight:700':'')+'">'+(sc!=null?sc:'--')+'</td><td style="padding:8px;font-size:12px;color:#666;max-width:160px">'+(det&&det.encouragement?esc(det.encouragement):'--')+'</td></tr>'}).join('');
+    var rs=getComputedStyle(document.documentElement);
+    var chartPrimary=rs.getPropertyValue('--sf-chart-primary').trim()||'#C8956C';
+    var statusRecording=rs.getPropertyValue('--sf-status-recording').trim()||'#D4736E';
+    var rows=S.lines.map(function(l,i){var sc=S.lineScores[i],resp=S.userResponses[i],det=S.lineDetails[i],isU=l.role===S.userRole;return '<tr style="border-bottom:1px solid #ddd;'+(!isU?'opacity:.68':'')+'"><td style="padding:8px;font-size:13px">'+(i+1)+'</td><td style="padding:8px;font-size:13px;font-weight:600">'+esc(l.role)+'</td><td style="padding:8px;font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(l.text)+'</td><td style="padding:8px;font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(resp?esc(resp):'--')+'</td><td style="padding:8px;font-size:13px;text-align:center;'+(sc!=null&&sc<50?'color:'+statusRecording+';font-weight:700':'')+'">'+(sc!=null?sc:'--')+'</td><td style="padding:8px;font-size:12px;color:#555;max-width:160px">'+(det&&det.encouragement?esc(det.encouragement):'--')+'</td></tr>'}).join('');
     var modeLabel=S.mode==='presentation'?'Presentation':(S.mode==='assignment'?'Assignment':'Practice');
-    var html='<!DOCTYPE html><html><head><title>SpeakFlow Report</title><style>body{font-family:system-ui,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;color:#222}h1{font-size:28px;margin-bottom:4px}h2{font-size:16px;color:#666;font-weight:400;margin-bottom:20px}.stats{display:flex;gap:24px;margin-bottom:24px}.stat{text-align:center}.stat .val{font-size:32px;font-weight:700}.stat .lbl{font-size:12px;color:#888}table{width:100%;border-collapse:collapse}th{text-align:left;padding:8px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#888;border-bottom:2px solid #ddd}</style></head><body><h1>SpeakFlow Report</h1><h2>'+LANG[S.language].name+' &middot; '+modeLabel+' &middot; '+new Date().toLocaleDateString()+'</h2><div class="stats"><div class="stat"><div class="val">'+avg+'</div><div class="lbl">Average</div></div><div class="stat"><div class="val">'+(scores.length?Math.max.apply(null,scores):0)+'</div><div class="lbl">Best</div></div><div class="stat"><div class="val">'+S.lines.length+'</div><div class="lbl">Lines</div></div><div class="stat"><div class="val">'+(elapsed>=60?Math.floor(elapsed/60)+'m '+elapsed%60+'s':elapsed+'s')+'</div><div class="lbl">Time</div></div></div><table><thead><tr><th>#</th><th>Role</th><th>Expected</th><th>You Said</th><th>Score</th><th>Feedback</th></tr></thead><tbody>'+rows+'</tbody></table><script>window.onload=function(){window.print()}<\/script></body></html>';
+    var html='<!DOCTYPE html><html><head><title>SpeakFlow Report</title><style>body{font-family:system-ui,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;color:#222}h1{font-size:28px;margin-bottom:4px;color:'+chartPrimary+'}h2{font-size:16px;color:#666;font-weight:400;margin-bottom:20px}.stats{display:flex;gap:24px;margin-bottom:24px}.stat{text-align:center}.stat .val{font-size:32px;font-weight:700}.stat .lbl{font-size:12px;color:#888}table{width:100%;border-collapse:collapse}th{text-align:left;padding:8px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#888;border-bottom:2px solid #ddd}</style></head><body><h1>SpeakFlow Report</h1><h2>'+LANG[S.language].name+' &middot; '+modeLabel+' &middot; '+new Date().toLocaleDateString()+'</h2><div class="stats"><div class="stat"><div class="val">'+avg+'</div><div class="lbl">Average</div></div><div class="stat"><div class="val">'+(scores.length?Math.max.apply(null,scores):0)+'</div><div class="lbl">Best</div></div><div class="stat"><div class="val">'+S.lines.length+'</div><div class="lbl">Lines</div></div><div class="stat"><div class="val">'+(elapsed>=60?Math.floor(elapsed/60)+'m '+elapsed%60+'s':elapsed+'s')+'</div><div class="lbl">Time</div></div></div><table><thead><tr><th>#</th><th>Role</th><th>Expected</th><th>You Said</th><th>Score</th><th>Feedback</th></tr></thead><tbody>'+rows+'</tbody></table><script>window.onload=function(){window.print()}<\/script></body></html>';
     var w=window.open('','_blank');
     if(w){w.document.write(html);w.document.close()}else toast('Pop-up blocked.','error');
 }
@@ -372,11 +383,12 @@ function exportPDF(){
     if(!target){toast('Report is not ready yet.','error');return}
     if(typeof html2pdf==='undefined'){toast('PDF tool is loading. Try again.','info');return}
     var fileName='speakflow-report-'+Date.now()+'.pdf';
+    var bg=getComputedStyle(document.documentElement).getPropertyValue('--sf-bg').trim()||'#0D0D0F';
     var opt={
         margin:[10,10,10,10],
         filename:fileName,
         image:{type:'jpeg',quality:0.98},
-        html2canvas:{scale:2,useCORS:true,backgroundColor:'#0D0D0F'},
+        html2canvas:{scale:2,useCORS:true,backgroundColor:bg},
         jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
     };
     html2pdf().set(opt).from(target).save().then(function(){

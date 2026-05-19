@@ -270,7 +270,7 @@ function renderPracticeIA(area,line,isU){
         if(S.isRecording){
             /* ── RECORDING STATE: volume bar, live transcript, stop button ── */
             h+='<div class="flex items-center justify-center gap-2 mb-1">'
-              +'<span style="width:8px;height:8px;border-radius:50%;background:#D4736E;display:inline-block;animation:mp 1s ease-out infinite"></span>'
+                            +'<span style="width:8px;height:8px;border-radius:50%;background:var(--sf-status-recording);display:inline-block;animation:mp 1s ease-out infinite"></span>'
               +'<span class="text-xs text-coral-400 font-semibold tracking-wide">RECORDING</span>'
               +'</div>'
               +'<div class="vol-bar-track"><div id="vol-fill" class="vol-bar-fill" style="width:0%"></div></div>'
@@ -393,7 +393,7 @@ function renderPresentationIA(area,line,isU){
             area.innerHTML='<div class="flex flex-col items-center gap-4 py-2">'
                 +'<div class="text-center w-full max-w-lg">'
                 +'<div class="flex items-center justify-center gap-2 mb-2">'
-                +'<span style="width:8px;height:8px;border-radius:50%;background:#D4736E;display:inline-block;animation:mp 1s ease-out infinite"></span>'
+                +'<span style="width:8px;height:8px;border-radius:50%;background:var(--sf-status-recording);display:inline-block;animation:mp 1s ease-out infinite"></span>'
                 +'<span class="text-xs text-coral-400 font-semibold tracking-wide">RECORDING</span>'
                 +'</div>'
                 +'<div class="bg-white/3 rounded-xl px-5 py-3 border border-white/5 mb-3">'
