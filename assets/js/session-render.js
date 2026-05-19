@@ -60,11 +60,12 @@ function startSession(){
     if($('el-voice-select'))S.elevenlabsVoiceId=$('el-voice-select').value;
 
     S.currentLine=0;
+    S.practicePickerActive=false;
     S.showExpected=true;
     S.userInput='';
     S.isProcessing=false;
     S.sessionStart=Date.now();
-    S.lineScores={};S.lineDetails={};S.userResponses={};S.audioClips={};S.attemptCount={};S.hintShown={};
+    S.lineScores={};S.lineDetails={};S.userResponses={};S.audioClips={};S.attemptCount={};S.hintShown={};S.practiceScoreHistory={};
     if(!S.scriptLabel)S.scriptLabel='Manual Script';
     if(!S.scriptRef)S.scriptRef=getLeaderboardScriptKey();
     S.presState=PS.HIDDEN;
@@ -77,16 +78,22 @@ function startSession(){
     $('hint-ctrl').classList.toggle('hidden',S.mode!=='presentation');
     renderAllHintPills();
     switchScreen('session');
-    renderSession();
 
-    if(isPracticeLikeMode()){
-        var firstLine=S.lines[0];
-        if(firstLine&&firstLine.role!==S.userRole){
-            speak(firstLine.text,null,false);
-        }
+    if(S.mode==='practice'){
+        /* Practice mode: show line picker instead of starting at line 0 */
+        S.practicePickerActive=true;
+        renderPracticeLinePicker();
     }else{
-        /* Presentation mode — auto-flow starts after a brief pause */
-        setTimeout(presentationAutoFlow,600);
+        renderSession();
+        if(isPracticeLikeMode()){
+            var firstLine=S.lines[0];
+            if(firstLine&&firstLine.role!==S.userRole){
+                speak(firstLine.text,null,false);
+            }
+        }else{
+            /* Presentation mode — auto-flow starts after a brief pause */
+            setTimeout(presentationAutoFlow,600);
+        }
     }
 }
 
@@ -202,6 +209,8 @@ function batchEvaluatePresentation(){
 function renderSession(){renderProgress();renderContext();renderIA()}
 
 function renderProgress(){
+    /* Practice picker manages its own progress display */
+    if(S.mode==='practice'&&S.practicePickerActive){return}
     var t=S.lines.length,c=S.currentLine+1;
     $('progress-text').textContent=c+' / '+t;
     $('progress-fill').style.width=(c/t*100)+'%';
@@ -219,6 +228,16 @@ function renderProgress(){
 
 function renderContext(){
     var c=$('dialogue-context');
+    /* Practice mode: show only the single selected line, no conversation history */
+    if(S.mode==='practice'&&!S.practicePickerActive){
+        var line=S.lines[S.currentLine];
+        if(!line){c.innerHTML='';return}
+        var isU=line.role===S.userRole;
+        var bc=(isU?'bubble-user':'bubble-other')+' bubble-current';
+        c.innerHTML='<div class="bubble '+bc+'"><div class="bubble-label">'+esc(line.role)+'</div>'
+            +'<div class="text-sm leading-relaxed text-sf-50">'+esc(line.text)+'</div></div>';
+        return;
+    }
     var start=Math.max(0,S.currentLine-8),end=S.currentLine+1;
     c.innerHTML=S.lines.slice(start,end).map(function(line,vi){
         var ri=start+vi;
@@ -568,7 +587,16 @@ function handleSubmission(){
         input,
         false
     ).then(function(ev){
-        S.lineScores[S.currentLine]=ev.score;
+        if(S.mode==='practice'){
+            /* Average all attempts for this line */
+            if(!S.practiceScoreHistory[S.currentLine])S.practiceScoreHistory[S.currentLine]=[];
+            S.practiceScoreHistory[S.currentLine].push(ev.score);
+            var hist=S.practiceScoreHistory[S.currentLine];
+            S.lineScores[S.currentLine]=Math.round(hist.reduce(function(a,b){return a+b},0)/hist.length);
+            S.attemptCount[S.currentLine]=(S.attemptCount[S.currentLine]||0)+1;
+        }else{
+            S.lineScores[S.currentLine]=ev.score;
+        }
         S.lineDetails[S.currentLine]=ev;
         S.userResponses[S.currentLine]=input;
         showPracticeEval(ev);
@@ -602,8 +630,16 @@ function showPracticeEval(ev){
     if(ev.suggestions&&ev.suggestions.length){h+='<div><div class="text-[10px] text-copper-400 font-semibold uppercase mb-1">Tips</div>';ev.suggestions.forEach(function(sg){h+='<li class="text-xs text-sf-200 list-none"><i class="fas fa-lightbulb text-copper-400 mr-1.5" style="font-size:10px"></i>'+esc(sg)+'</li>'});h+='</div>'}
     if(ev.deliveryNotes&&ev.deliveryNotes.length){h+='<div><div class="text-[10px] text-sage-400 font-semibold uppercase mb-1">Delivery</div>';ev.deliveryNotes.forEach(function(n){h+='<li class="text-xs text-sf-200 list-none"><i class="fas fa-wave-square text-sage-400 mr-1.5" style="font-size:10px"></i>'+esc(n)+'</li>'});h+='</div>'}
     h+=renderWordDiffHTML(S.lines[S.currentLine].text,S.userResponses[S.currentLine]);
-    h+='<button onclick="advanceLine()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 font-display font-semibold text-sm hover:from-amber-400 hover:to-yellow-400 transition-all mt-1">'+(isLast?'Finish Session':'Next Line')+' <i class="fas fa-arrow-right ml-2"></i></button>'
-        +'</div></div></div>';
+    if(S.mode==='practice'){
+        /* Practice picker flow: Try Again stays on same line, Back to List returns to picker */
+        h+='<div class="flex gap-2 mt-1">'
+            +'<button onclick="retryCurrentPracticeLine()" class="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/8 text-sf-100 font-display font-semibold text-sm transition-all"><i class="fas fa-rotate-right mr-1.5"></i>Try Again</button>'
+            +'<button onclick="returnToPracticeLinePicker()" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 font-display font-semibold text-sm hover:from-amber-400 hover:to-yellow-400 transition-all"><i class="fas fa-list mr-1.5"></i>Back to List</button>'
+            +'</div>';
+    }else{
+        h+='<button onclick="advanceLine()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 font-display font-semibold text-sm hover:from-amber-400 hover:to-yellow-400 transition-all mt-1">'+(isLast?'Finish Session':'Next Line')+' <i class="fas fa-arrow-right ml-2"></i></button>';
+    }
+    h+='</div></div></div>';
 
     $('interaction-area').innerHTML=h;
     requestAnimationFrame(function(){requestAnimationFrame(function(){var r=$('ev-ring');if(r)r.style.strokeDashoffset=off})});
@@ -639,3 +675,101 @@ function advanceLine(){
 }
 
 function replayLine(i){var l=S.lines[i];if(l)speak(l.text,null,l.role===S.userRole)}
+
+/* ═══════════════════════════════════════════════════════════════
+   PRACTICE MODE — LINE PICKER FLOW
+   Replaces linear session for S.mode==='practice'.
+   Flow: renderPracticeLinePicker → selectLineForPractice → renderSession
+         → showPracticeEval → returnToPracticeLinePicker / retryCurrentPracticeLine
+         → endPractice → showReport
+═══════════════════════════════════════════════════════════════ */
+function renderPracticeLinePicker(){
+    /* Collect user lines with their absolute indices */
+    var userLines=[];
+    S.lines.forEach(function(l,i){if(l.role===S.userRole)userLines.push({idx:i,text:l.text})});
+
+    var practicedCount=Object.keys(S.lineScores).length;
+    var total=userLines.length;
+
+    /* Update header progress bar */
+    $('progress-text').textContent=practicedCount+' / '+total+' practiced';
+    $('progress-fill').style.width=(total>0?practicedCount/total*100:0)+'%';
+    $('line-dots').classList.add('hidden');
+
+    /* Build line list */
+    var listHtml='<div class="px-1 pb-2">'
+        +'<div class="flex items-center justify-between mb-3 px-1">'
+        +'<div class="text-xs text-copper-400 font-semibold uppercase tracking-wide"><i class="fas fa-user mr-1.5"></i>'+esc(S.userRole)+'\'s Lines</div>'
+        +'<div class="text-xs text-sf-300">tap a line to practice</div>'
+        +'</div>';
+
+    userLines.forEach(function(li,n){
+        var sc=S.lineScores[li.idx];
+        var att=S.attemptCount[li.idx]||0;
+        var hasPracticed=sc!=null;
+        var scoreCol=sc>=80?'#5BB882':sc>=50?'#E8B88A':'#D4736E';
+        var borderStyle=hasPracticed?'border-left:3px solid '+scoreCol+';padding-left:11px;':'';
+
+        listHtml+='<div class="practice-line-item" style="'+borderStyle+'" onclick="selectLineForPractice('+li.idx+')">'
+            +'<div class="pli-num">'+(n+1)+'</div>'
+            +'<div class="pli-text">'+esc(li.text)+'</div>';
+
+        if(hasPracticed){
+            listHtml+='<div class="flex flex-col items-end gap-1 flex-shrink-0">'
+                +'<div class="pli-score" style="background:'+scoreCol+'22;color:'+scoreCol+';border:1px solid '+scoreCol+'55">'+sc+'</div>'
+                +(att>1?'<div class="text-[10px] text-sf-300">×'+att+'</div>':'')
+                +'</div>';
+        }
+        listHtml+='</div>';
+    });
+    listHtml+='</div>';
+
+    $('dialogue-context').innerHTML=listHtml;
+    requestAnimationFrame(function(){$('dialogue-context').scrollTop=0});
+
+    /* End Practice button */
+    var allDone=practicedCount===total&&total>0;
+    var btnLabel=practicedCount>0
+        ?'End Practice  —  '+practicedCount+' of '+total+' lines done'
+        :'End Practice';
+    $('interaction-area').innerHTML='<div class="flex flex-col gap-3">'
+        +'<p class="text-xs text-sf-300 text-center">Tap any line to practice it. You can repeat lines as many times as you want.</p>'
+        +'<button onclick="endPractice()" class="w-full py-3 rounded-xl font-display font-semibold text-sm transition-all hover:opacity-90 active:scale-[.98]"'
+        +' style="background:linear-gradient(135deg,rgba(212,115,110,.85),rgba(180,60,55,.85));color:#fff;border:1px solid rgba(212,115,110,.4)">'
+        +'<i class="fas fa-flag-checkered mr-2"></i>'+btnLabel+'</button>'
+        +'</div>';
+}
+
+function selectLineForPractice(absIdx){
+    S.currentLine=absIdx;
+    S.practicePickerActive=false;
+    S.userInput='';
+    S.isProcessing=false;
+    S.presState=PS.HIDDEN;
+    renderSession();
+}
+
+function returnToPracticeLinePicker(){
+    stopSpeaking();
+    if(S.isRecording)stopAllRec();
+    S.practicePickerActive=true;
+    S.userInput='';
+    S.isProcessing=false;
+    renderPracticeLinePicker();
+}
+
+function retryCurrentPracticeLine(){
+    S.userInput='';
+    S.isProcessing=false;
+    renderIA();
+}
+
+function endPractice(){
+    if(Object.keys(S.lineScores).length===0){
+        toast('Practice at least one line before ending.','info');
+        return;
+    }
+    stopSpeaking();
+    if(S.isRecording)stopAllRec();
+    showReport();
+}

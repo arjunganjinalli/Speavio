@@ -180,6 +180,10 @@
         .onboarding-overlay{position:fixed;inset:0;z-index:130;background:rgba(3,3,5,.72);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;padding:16px}
         .onboarding-overlay.open{display:flex}
         .onboarding-modal{width:min(520px,100%);background:rgba(18,18,21,.98);border:1px solid rgba(200,149,108,.2);border-radius:16px;padding:22px;box-shadow:0 28px 60px rgba(0,0,0,.45)}
+        .onboarding-modal{pointer-events:auto}
+        .onboarding-modal button{pointer-events:auto;cursor:pointer}
+        #onboarding-prev-btn:disabled{opacity:.45;cursor:not-allowed}
+        #onboarding-prev-btn:disabled:hover{background:rgba(255,255,255,.05)}
         .onboarding-dots{display:flex;gap:6px;align-items:center;margin-top:12px}
         .onboarding-dot{width:8px;height:8px;border-radius:999px;background:rgba(255,255,255,.18);transition:all .25s ease}
         .onboarding-dot.active{width:20px;background:rgba(200,149,108,.9)}
@@ -260,6 +264,17 @@
         html[data-theme='light'] .wd-section{background:rgba(0,0,0,.03);border-color:rgba(0,0,0,.08)}
         html[data-theme='light'] .wd-ok{color:var(--sf-wd-ok)}
         html[data-theme='light'] .wd-miss{color:var(--sf-wd-miss);text-decoration-color:var(--sf-wd-miss-underline)}
+
+        /* Practice line picker */
+        .practice-line-item{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-radius:12px;border:1px solid var(--sf-border-soft);background:var(--sf-surface-1);cursor:pointer;transition:background .15s,border-color .15s;margin-bottom:7px}
+        .practice-line-item:hover{background:var(--sf-surface-2);border-color:var(--sf-border-strong)}
+        .pli-num{font-size:10px;font-weight:700;min-width:22px;text-align:center;background:var(--sf-surface-2);border-radius:6px;padding:2px 5px;color:#8A8885;flex-shrink:0;margin-top:2px}
+        .pli-text{font-size:14px;color:#E8E6E1;flex:1;line-height:1.5}
+        .pli-score{font-size:11px;font-weight:700;padding:2px 8px;border-radius:9999px;flex-shrink:0;margin-top:1px}
+        html[data-theme='light'] .practice-line-item{background:rgba(255,255,255,.78);border-color:rgba(0,0,0,.1)}
+        html[data-theme='light'] .practice-line-item:hover{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.18)}
+        html[data-theme='light'] .pli-num{background:rgba(0,0,0,.07);color:#666}
+        html[data-theme='light'] .pli-text{color:#1a1a1a}
 
         /* Leaderboard rows */
         html[data-theme='light'] .lb-row{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.09)}

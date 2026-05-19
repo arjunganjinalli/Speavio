@@ -20,8 +20,17 @@ document.addEventListener('DOMContentLoaded',function(){
         $('onboarding-title').textContent=s.title;
         $('onboarding-body').textContent=s.body;
         $('onboarding-step').textContent='Step '+(onboardingIndex+1)+' of '+onboardingSteps.length;
-        $('onboarding-prev-btn').disabled=onboardingIndex===0;
-        $('onboarding-next-btn').textContent=onboardingIndex===onboardingSteps.length-1?'Finish':'Next';
+        var prevBtn=$('onboarding-prev-btn');
+        var nextBtn=$('onboarding-next-btn');
+        if(prevBtn){
+            prevBtn.disabled=onboardingIndex===0;
+            prevBtn.setAttribute('aria-disabled',prevBtn.disabled?'true':'false');
+        }
+        if(nextBtn){
+            nextBtn.disabled=false;
+            nextBtn.setAttribute('aria-disabled','false');
+            nextBtn.textContent=onboardingIndex===onboardingSteps.length-1?'Finish':'Next';
+        }
         $('onboarding-dots').innerHTML=onboardingSteps.map(function(_,i){
             return '<span class="onboarding-dot '+(i===onboardingIndex?'active':'')+'"></span>';
         }).join('');
@@ -33,12 +42,40 @@ document.addEventListener('DOMContentLoaded',function(){
         renderOnboardingStep();
         $('onboarding-overlay').classList.add('open');
         $('onboarding-overlay').setAttribute('aria-hidden','false');
+        setTimeout(function(){
+            var nextBtn=$('onboarding-next-btn');
+            if(nextBtn)nextBtn.focus();
+        },80);
     }
 
     function closeOnboarding(markDone){
         $('onboarding-overlay').classList.remove('open');
         $('onboarding-overlay').setAttribute('aria-hidden','true');
         if(markDone)writeStoreJSON(STORAGE_KEYS.onboardingDone,true);
+    }
+
+    function goOnboardingPrev(e){
+        if(e){
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        if(onboardingIndex>0){
+            onboardingIndex--;
+            renderOnboardingStep();
+        }
+    }
+
+    function goOnboardingNext(e){
+        if(e){
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        if(onboardingIndex>=onboardingSteps.length-1){
+            closeOnboarding(true);
+            return;
+        }
+        onboardingIndex++;
+        renderOnboardingStep();
     }
 
     function setAuthStatus(msg,isError){
@@ -226,12 +263,8 @@ document.addEventListener('DOMContentLoaded',function(){
     if($('theme-quick-btn'))$('theme-quick-btn').onclick=cycleTheme;
     if($('replay-onboarding-btn'))$('replay-onboarding-btn').onclick=function(){openOnboarding(true)};
     if($('onboarding-close-btn'))$('onboarding-close-btn').onclick=function(){closeOnboarding(true)};
-    if($('onboarding-prev-btn'))$('onboarding-prev-btn').onclick=function(){if(onboardingIndex>0){onboardingIndex--;renderOnboardingStep()}};
-    if($('onboarding-next-btn'))$('onboarding-next-btn').onclick=function(){
-        if(onboardingIndex>=onboardingSteps.length-1){closeOnboarding(true);return}
-        onboardingIndex++;
-        renderOnboardingStep();
-    };
+    if($('onboarding-prev-btn'))$('onboarding-prev-btn').addEventListener('click',goOnboardingPrev);
+    if($('onboarding-next-btn'))$('onboarding-next-btn').addEventListener('click',goOnboardingNext);
     if($('onboarding-overlay'))$('onboarding-overlay').onclick=function(e){if(e.target===this)closeOnboarding(true)};
     if($('setup-signout-btn'))$('setup-signout-btn').onclick=signOutUser;
     if($('session-signout-btn'))$('session-signout-btn').onclick=signOutUser;

@@ -124,6 +124,7 @@ var S={
     language:'en',mode:'practice',
     lines:[],roles:[],userRole:'',
     currentLine:0,
+    practicePickerActive:false,
     isRecording:false,isProcessing:false,isSpeaking:false,
     showExpected:true,
     userInput:'',
@@ -131,7 +132,7 @@ var S={
     recognition:null,
     mediaRecorder:null,audioChunks:[],audioStream:null,
     ttsAudio:null,ttsProvider:'browser',elevenlabsKey:'',elevenlabsVoiceId:'21m00Tcm4TlvDq8ikWAM',clonedVoiceId:'',
-    lineScores:{},lineDetails:{},userResponses:{},audioClips:{},attemptCount:{},
+    lineScores:{},lineDetails:{},userResponses:{},audioClips:{},attemptCount:{},practiceScoreHistory:{},
     audioContext:null,analyser:null,silenceInterval:null,silenceFrames:0,recordStartTime:0,
     /* Silence detection: 2 seconds of RMS below threshold = auto-stop */
     SILENCE_THRESH:0.012,   /* RMS threshold — below this = silence */
