@@ -274,11 +274,27 @@ function applyAutoDetectedLines(lines,sourceLabel){
     Quick test: sends a tiny request to your configured app proxy to verify it works.
 ═══════════════════════════════════════════════════════════════ */
 
+var _autoDetectTipShown=false;
+function dismissAutoDetectTip(){
+    _autoDetectTipShown=true;
+    var tip=$('auto-detect-tip');
+    if(tip)tip.classList.add('hidden');
+    /* Re-enable button and run local detect now */
+    var text=$('script-input').value.trim();
+    if(text){
+        $('parse-status').innerHTML='<span class="text-copper-400"><i class="fas fa-spinner fa-spin mr-1"></i>Analyzing locally...</span>';
+        applyAutoDetectedLines(localAutoDetectLines(text),'Local detect');
+    }
+}
 function autoDetectScript(){
     var text=$('script-input').value.trim();
     if(!text){toast('Paste text first.','info');return}
     $('auto-detect-btn').disabled=true;
     if(!S.apiKey){
+        if(!_autoDetectTipShown){
+            var tip=$('auto-detect-tip');
+            if(tip){tip.classList.remove('hidden');$('auto-detect-btn').disabled=false;return;}
+        }
         $('parse-status').innerHTML='<span class="text-copper-400"><i class="fas fa-spinner fa-spin mr-1"></i>Analyzing locally...</span>';
         applyAutoDetectedLines(localAutoDetectLines(text),'Local detect');
         return;

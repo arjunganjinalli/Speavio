@@ -21,7 +21,7 @@ function updateParse(){
         var roles=[];
         lines.forEach(function(l){if(roles.indexOf(l.role)===-1)roles.push(l.role)});
         S.scriptDifficulty=estimateScriptDifficulty(lines);
-        el.innerHTML='<span class="text-sage-400"><i class="fas fa-circle-check mr-1"></i>'+lines.length+' lines &middot; '+roles.map(function(r){return '<span class="text-sf-50">'+esc(r)+'</span>'}).join(', ')+' &middot; Difficulty: <span class="text-copper-400">'+esc(S.scriptDifficulty.label)+' ('+S.scriptDifficulty.score+')</span></span>';
+        el.innerHTML='<span class="text-sage-400"><i class="fas fa-circle-check mr-1"></i>'+lines.length+' lines &middot; '+roles.map(function(r){return '<span class="text-sf-50">'+esc(r)+'</span>'}).join(', ')+'</span>';
         S.lines=lines;S.roles=roles;
         renderPills();
         $('role-section').classList.remove('hidden');
@@ -127,8 +127,9 @@ function presentationAutoFlow(){
             if(S.screen!=='session'||S.mode!=='presentation')return;
             if(S.currentLine>=S.lines.length-1){
                 finishPresentation();
+            }else{
+                advanceLine();
             }
-            /* else: stay on the NPC line — user clicks "Next Line" to advance */
         },false);
     }else{
         /* ── User line: show hint, then auto-start recording ── */
