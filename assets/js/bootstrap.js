@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded',function(){
 
         if(e.key==='Enter'){
             var line=S.lines[S.currentLine];
-            if(!line||line.role!==S.userRole||S.isRecording||S.isProcessing)return;
+            if(!line||S.userRoles.indexOf(line.role)===-1||S.isRecording||S.isProcessing)return;
             e.preventDefault();
             handleSubmission();
         }

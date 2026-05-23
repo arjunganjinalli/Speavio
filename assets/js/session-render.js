@@ -25,21 +25,29 @@ function updateParse(){
         S.lines=lines;S.roles=roles;
         renderPills();
         $('role-section').classList.remove('hidden');
-        if(!S.userRole||roles.indexOf(S.userRole)===-1)S.userRole='';
+        S.userRoles=S.userRoles.filter(function(r){return roles.indexOf(r)!==-1;});
     }
     renderSetupDifficultyBadge();
     updateStartBtn();
 }
+function isUserRole(r){return S.userRoles.indexOf(r)!==-1;}
 function renderPills(){
     $('role-pills').innerHTML=S.roles.map(function(r){
-        return '<button class="role-pill '+(S.userRole===r?'selected':'')+'" data-role="'+r+'">'+esc(r)+'</button>';
+        var sel=isUserRole(r);
+        return '<button class="role-pill '+(sel?'selected':'')+' " data-role="'+r+'">'+(sel?'<i class="fas fa-check mr-1.5 text-[10px]"></i>':'')+esc(r)+'</button>';
     }).join('');
     $('role-pills').querySelectorAll('.role-pill').forEach(function(p){
-        p.onclick=function(){S.userRole=p.dataset.role;renderPills();updateStartBtn()};
+        p.onclick=function(){
+            var r=p.dataset.role;
+            var idx=S.userRoles.indexOf(r);
+            if(idx===-1)S.userRoles.push(r);
+            else S.userRoles.splice(idx,1);
+            renderPills();updateStartBtn();
+        };
     });
 }
 function updateStartBtn(){
-    $('start-btn').disabled=!(S.lines.length&&S.userRole);
+    $('start-btn').disabled=!(S.lines.length&&S.userRoles.length>0);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -52,8 +60,8 @@ function startSession(){
         return;
     }
     var ok=false;
-    S.lines.forEach(function(l){if(l.role===S.userRole)ok=true});
-    if(!ok){toast('"'+S.userRole+'" has no lines!','error');return}
+    S.lines.forEach(function(l){if(isUserRole(l.role))ok=true});
+    if(!ok){toast('Selected role(s) have no lines!','error');return}
 
     var key=$('el-key')?$('el-key').value.trim():S.elevenlabsKey;
     S.elevenlabsKey=key;
@@ -87,7 +95,7 @@ function startSession(){
         renderSession();
         if(isPracticeLikeMode()){
             var firstLine=S.lines[0];
-            if(firstLine&&firstLine.role!==S.userRole){
+            if(firstLine&&!isUserRole(firstLine.role)){
                 speak(firstLine.text,null,false);
             }
         }else{
@@ -108,7 +116,7 @@ function presentationAutoFlow(){
     var line=S.lines[S.currentLine];
     if(!line){finishPresentation();return}
 
-    var isUser=line.role===S.userRole;
+    var isUser=isUserRole(line.role);
 
     if(!isUser){
         /* ── NPC line: auto-speak, then auto-advance ── */
@@ -158,7 +166,7 @@ function finishPresentation(){
 
     /* Switch to report screen and show loading */
     switchScreen('complete');
-    $('st-lines').textContent=S.lines.filter(function(l){return l.role===S.userRole}).length;
+    $('st-lines').textContent=S.lines.filter(function(l){return isUserRole(l.role)}).length;
     $('st-eval').innerHTML='<div class="spinner" style="width:16px;height:16px;display:inline-block;vertical-align:middle;border-width:2px"></div>';
     $('st-correct').textContent='...';
     $('st-best').textContent='...';
@@ -175,7 +183,7 @@ function batchEvaluatePresentation(){
     /* Collect all user lines that have responses */
     var userLines=[];
     S.lines.forEach(function(line,i){
-        if(line.role===S.userRole&&S.userResponses[i]){
+        if(isUserRole(line.role)&&S.userResponses[i]){
             userLines.push({index:i,line:line,response:S.userResponses[i]});
         }
     });
@@ -232,7 +240,7 @@ function renderContext(){
     if(S.mode==='practice'&&!S.practicePickerActive){
         var line=S.lines[S.currentLine];
         if(!line){c.innerHTML='';return}
-        var isU=line.role===S.userRole;
+        var isU=isUserRole(line.role);
         var bc=(isU?'bubble-user':'bubble-other')+' bubble-current';
         c.innerHTML='<div class="bubble '+bc+'"><div class="bubble-label">'+esc(line.role)+'</div>'
             +'<div class="text-sm leading-relaxed text-sf-50">'+esc(line.text)+'</div></div>';
@@ -241,7 +249,7 @@ function renderContext(){
     var start=Math.max(0,S.currentLine-8),end=S.currentLine+1;
     c.innerHTML=S.lines.slice(start,end).map(function(line,vi){
         var ri=start+vi;
-        var isU=line.role===S.userRole;
+        var isU=isUserRole(line.role);
         var isC=ri===S.currentLine;
         var isP=ri<S.currentLine;
         var bc=isU?'bubble-user':'bubble-other';
@@ -273,7 +281,7 @@ function renderIA(){
     var area=$('interaction-area');
     var line=S.lines[S.currentLine];
     if(!line){area.innerHTML='';return}
-    var isU=line.role===S.userRole;
+    var isU=isUserRole(line.role);
     if(isPracticeLikeMode()){
         renderPracticeIA(area,line,isU);
     }else{
@@ -663,7 +671,7 @@ function advanceLine(){
     /* Practice mode: auto-speak NPC lines */
     if(isPracticeLikeMode()){
         var nextLine=S.lines[S.currentLine];
-        if(nextLine&&nextLine.role!==S.userRole){
+        if(nextLine&&!isUserRole(nextLine.role)){
             speak(nextLine.text,null,false);
         }
     }
@@ -674,7 +682,7 @@ function advanceLine(){
     }
 }
 
-function replayLine(i){var l=S.lines[i];if(l)speak(l.text,null,l.role===S.userRole)}
+function replayLine(i){var l=S.lines[i];if(l)speak(l.text,null,isUserRole(l.role))}
 
 /* ═══════════════════════════════════════════════════════════════
    PRACTICE MODE — LINE PICKER FLOW
@@ -686,7 +694,7 @@ function replayLine(i){var l=S.lines[i];if(l)speak(l.text,null,l.role===S.userRo
 function renderPracticeLinePicker(){
     /* Collect user lines with their absolute indices */
     var userLines=[];
-    S.lines.forEach(function(l,i){if(l.role===S.userRole)userLines.push({idx:i,text:l.text})});
+    S.lines.forEach(function(l,i){if(isUserRole(l.role))userLines.push({idx:i,text:l.text,role:l.role})});
 
     var practicedCount=Object.keys(S.lineScores).length;
     var total=userLines.length;
@@ -699,7 +707,7 @@ function renderPracticeLinePicker(){
     /* Build line list */
     var listHtml='<div class="px-1 pb-2">'
         +'<div class="flex items-center justify-between mb-3 px-1">'
-        +'<div class="text-xs text-copper-400 font-semibold uppercase tracking-wide"><i class="fas fa-user mr-1.5"></i>'+esc(S.userRole)+'\'s Lines</div>'
+        +'<div class="text-xs text-copper-400 font-semibold uppercase tracking-wide"><i class="fas fa-user mr-1.5"></i>'+esc(S.userRoles.join(' & '))+'\'s Lines</div>'
         +'<div class="text-xs text-sf-300">tap a line to practice</div>'
         +'</div>';
 
@@ -712,6 +720,7 @@ function renderPracticeLinePicker(){
 
         listHtml+='<div class="practice-line-item" style="'+borderStyle+'" onclick="selectLineForPractice('+li.idx+')">'
             +'<div class="pli-num">'+(n+1)+'</div>'
+            +(S.userRoles.length>1?'<div class="text-[10px] text-sf-400 font-semibold mr-1.5 flex-shrink-0 self-start pt-[3px]">'+esc(li.role)+'</div>':'')
             +'<div class="pli-text">'+esc(li.text)+'</div>';
 
         if(hasPracticed){

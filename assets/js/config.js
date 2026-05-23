@@ -117,7 +117,7 @@ var S={
     apiKey:'',apiProxy:API_PROXY,apiEndpoint:'https://open.bigmodel.cn/api/paas/v4/chat/completions',apiModel:'',premiumPlaceholder:false,
     systemLanguage:'en',
     language:'en',mode:'practice',
-    lines:[],roles:[],userRole:'',
+    lines:[],roles:[],userRoles:[],
     currentLine:0,
     practicePickerActive:false,
     isRecording:false,isProcessing:false,isSpeaking:false,

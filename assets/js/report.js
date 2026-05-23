@@ -75,7 +75,7 @@ function launchPerfectScoreConfetti(){
 function getReportScriptKey(){
     if(typeof getCurrentScriptKey==='function')return getCurrentScriptKey();
     var scriptLines=(S.lines||[]).map(function(l){return (l.role||'')+':'+(l.text||'')}).join('\n');
-    var seed=[S.language||'',S.userRole||'',scriptLines].join('||');
+    var seed=[S.language||'',S.userRoles.slice().sort().join('+')||'',scriptLines].join('||');
     var h=2166136261;
     for(var i=0;i<seed.length;i++){
         h^=seed.charCodeAt(i);
@@ -196,7 +196,7 @@ function updateBookmarkButton(btn,isMarked){
 
 function toggleLineBookmark(i){
     var line=S.lines[i];
-    if(!line||line.role!==S.userRole)return;
+    if(!line||S.userRoles.indexOf(line.role)===-1)return;
     var marked=toggleReportLineBookmark(i,line.text,S.lineScores[i]);
     updateBookmarkButton(document.getElementById('bm-line-'+i),marked);
     toast(marked?'Bookmarked line '+(i+1)+'.':'Removed bookmark for line '+(i+1)+'.','info');
@@ -241,7 +241,7 @@ function renderReportUI(){
 
     /* ── Gather all stats ── */
     var scores=[],k;
-    var totalUserLines=S.lines.filter(function(l){return l.role===S.userRole}).length;
+    var totalUserLines=S.lines.filter(function(l){return S.userRoles.indexOf(l.role)!==-1}).length;
     var totalLines=S.lines.length;
 
     for(k in S.lineScores){if(S.lineScores[k]!=null)scores.push(S.lineScores[k])}
@@ -300,7 +300,7 @@ function renderReportUI(){
     var rc=$('report-lines');
     rc.innerHTML=statsHtml+gradeBar+legend+'<h3 class="font-display font-semibold text-lg text-sf-50 mb-4">Line-by-Line Breakdown</h3>'
         +S.lines.map(function(line,i){
-        var isU=line.role===S.userRole,sc=S.lineScores[i],det=S.lineDetails[i],resp=S.userResponses[i],clip=S.audioClips[i],isLow=sc!=null&&sc<50;
+        var isU=S.userRoles.indexOf(line.role)!==-1,sc=S.lineScores[i],det=S.lineDetails[i],resp=S.userResponses[i],clip=S.audioClips[i],isLow=sc!=null&&sc<50;
         var isMarked=isU&&isReportLineBookmarked(i,line.text);
         if(!isU)return '<div class="report-card bg-white/2 rounded-xl px-4 py-3 border border-white/5 flex items-start gap-3"><span class="text-xs text-sf-300 font-mono w-6 text-right flex-shrink-0 pt-0.5">'+(i+1)+'</span><div class="flex-1 min-w-0"><span class="text-xs text-sage-400 font-semibold">'+esc(line.role)+'</span><p class="text-sm text-sf-200 mt-0.5 truncate">'+esc(line.text)+'</p></div><span class="text-[10px] text-sf-300 flex-shrink-0 pt-1">NPC</span></div>';
         var sb=sc!=null?'<span class="px-2.5 py-1 rounded-lg text-sm font-bold '+(sc>=80?'bg-sage-500/15 text-sage-400':sc>=50?'bg-copper-500/15 text-copper-400':'bg-coral-500/15 text-coral-400')+'">'+sc+'%</span>':'<span class="px-2.5 py-1 rounded-lg text-sm text-sf-300 bg-white/3">Skipped</span>';
@@ -356,7 +356,7 @@ function showReport(){
 function exportJSON(){
     var scores=[],k;
     for(k in S.lineScores){if(S.lineScores[k]!=null)scores.push(S.lineScores[k])}
-    var data={session:{language:S.language,mode:S.mode,hintLevel:S.hintLevel,duration:Math.round((Date.now()-S.sessionStart)/1000),timestamp:new Date().toISOString(),model:_workingModel||MODEL},overall:{avgScore:scores.length?Math.round(scores.reduce(function(a,b){return a+b},0)/scores.length):0,bestScore:scores.length?Math.max.apply(null,scores):0,linesEvaluated:scores.length,totalLines:S.lines.length},lines:S.lines.map(function(l,i){return{index:i,role:l.role,isUser:l.role===S.userRole,expectedText:l.text,userResponse:S.userResponses[i]||null,score:S.lineScores[i]!=null?S.lineScores[i]:null,feedback:S.lineDetails[i]||null,attempts:S.attemptCount[i]||0,hasAudio:!!S.audioClips[i]}})};
+    var data={session:{language:S.language,mode:S.mode,hintLevel:S.hintLevel,duration:Math.round((Date.now()-S.sessionStart)/1000),timestamp:new Date().toISOString(),model:_workingModel||MODEL},overall:{avgScore:scores.length?Math.round(scores.reduce(function(a,b){return a+b},0)/scores.length):0,bestScore:scores.length?Math.max.apply(null,scores):0,linesEvaluated:scores.length,totalLines:S.lines.length},lines:S.lines.map(function(l,i){return{index:i,role:l.role,isUser:S.userRoles.indexOf(l.role)!==-1,expectedText:l.text,userResponse:S.userResponses[i]||null,score:S.lineScores[i]!=null?S.lineScores[i]:null,feedback:S.lineDetails[i]||null,attempts:S.attemptCount[i]||0,hasAudio:!!S.audioClips[i]}})};
     var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     var u=URL.createObjectURL(blob);
     var a=document.createElement('a');a.href=u;a.download='speakflow-report-'+Date.now()+'.json';a.click();URL.revokeObjectURL(u);
@@ -371,7 +371,7 @@ function exportPrint(){
     var rs=getComputedStyle(document.documentElement);
     var chartPrimary=rs.getPropertyValue('--sf-chart-primary').trim()||'#C8956C';
     var statusRecording=rs.getPropertyValue('--sf-status-recording').trim()||'#D4736E';
-    var rows=S.lines.map(function(l,i){var sc=S.lineScores[i],resp=S.userResponses[i],det=S.lineDetails[i],isU=l.role===S.userRole;return '<tr style="border-bottom:1px solid #ddd;'+(!isU?'opacity:.68':'')+'"><td style="padding:8px;font-size:13px">'+(i+1)+'</td><td style="padding:8px;font-size:13px;font-weight:600">'+esc(l.role)+'</td><td style="padding:8px;font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(l.text)+'</td><td style="padding:8px;font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(resp?esc(resp):'--')+'</td><td style="padding:8px;font-size:13px;text-align:center;'+(sc!=null&&sc<50?'color:'+statusRecording+';font-weight:700':'')+'">'+(sc!=null?sc:'--')+'</td><td style="padding:8px;font-size:12px;color:#555;max-width:160px">'+(det&&det.encouragement?esc(det.encouragement):'--')+'</td></tr>'}).join('');
+    var rows=S.lines.map(function(l,i){var sc=S.lineScores[i],resp=S.userResponses[i],det=S.lineDetails[i],isU=S.userRoles.indexOf(l.role)!==-1;return '<tr style="border-bottom:1px solid #ddd;'+(!isU?'opacity:.68':'')+'"><td style="padding:8px;font-size:13px">'+(i+1)+'</td><td style="padding:8px;font-size:13px;font-weight:600">'+esc(l.role)+'</td><td style="padding:8px;font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(l.text)+'</td><td style="padding:8px;font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(resp?esc(resp):'--')+'</td><td style="padding:8px;font-size:13px;text-align:center;'+(sc!=null&&sc<50?'color:'+statusRecording+';font-weight:700':'')+'">'+(sc!=null?sc:'--')+'</td><td style="padding:8px;font-size:12px;color:#555;max-width:160px">'+(det&&det.encouragement?esc(det.encouragement):'--')+'</td></tr>'}).join('');
     var modeLabel=S.mode==='presentation'?'Presentation':'Practice';
     var html='<!DOCTYPE html><html><head><title>SpeakFlow Report</title><style>body{font-family:system-ui,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;color:#222}h1{font-size:28px;margin-bottom:4px;color:'+chartPrimary+'}h2{font-size:16px;color:#666;font-weight:400;margin-bottom:20px}.stats{display:flex;gap:24px;margin-bottom:24px}.stat{text-align:center}.stat .val{font-size:32px;font-weight:700}.stat .lbl{font-size:12px;color:#888}table{width:100%;border-collapse:collapse}th{text-align:left;padding:8px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#888;border-bottom:2px solid #ddd}</style></head><body><h1>SpeakFlow Report</h1><h2>'+LANG[S.language].name+' &middot; '+modeLabel+' &middot; '+new Date().toLocaleDateString()+'</h2><div class="stats"><div class="stat"><div class="val">'+avg+'</div><div class="lbl">Average</div></div><div class="stat"><div class="val">'+(scores.length?Math.max.apply(null,scores):0)+'</div><div class="lbl">Best</div></div><div class="stat"><div class="val">'+S.lines.length+'</div><div class="lbl">Lines</div></div><div class="stat"><div class="val">'+(elapsed>=60?Math.floor(elapsed/60)+'m '+elapsed%60+'s':elapsed+'s')+'</div><div class="lbl">Time</div></div></div><table><thead><tr><th>#</th><th>Role</th><th>Expected</th><th>You Said</th><th>Score</th><th>Feedback</th></tr></thead><tbody>'+rows+'</tbody></table><script>window.onload=function(){window.print()}<\/script></body></html>';
     var w=window.open('','_blank');
@@ -408,7 +408,7 @@ function restartSession(){
     $('hint-ctrl').classList.toggle('hidden',S.mode!=='presentation');
     renderAllHintPills();
     renderSession();
-    if(isPracticeLikeMode()){var fl=S.lines[0];if(fl&&fl.role!==S.userRole)speak(fl.text,null,false)}
+    if(isPracticeLikeMode()){var fl=S.lines[0];if(fl&&S.userRoles.indexOf(fl.role)===-1)speak(fl.text,null,false)}
 }
 function newDialogue(){releaseMicStream();switchScreen('setup');showSetupTab('home')}
 

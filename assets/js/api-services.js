@@ -179,8 +179,8 @@ function evalResponse(ctx,expected,response,isPres){
         ?'You are an expert '+ln+' pronunciation and dialogue coach. Evaluate a student reading a line. Respond ONLY with valid JSON — no markdown, no explanation outside JSON.'+scoringRules
         :'You are an expert '+ln+' dialogue coach. Evaluate a student\'s response. Respond ONLY with valid JSON — no markdown, no explanation outside JSON.'+scoringRules;
     var userPrompt=isPres
-        ?'Context:\n'+cs+'\n\nExpected for "'+S.userRole+'": "'+expected+'"\nStudent said: "'+response+'"\n\nReturn JSON:\n{"score":<0-100>,"correct_words":"<yes or no>","pronunciation":"<1 sentence>","accuracy":"<1 sentence>","fluency":"<1 sentence>","corrections":["..."],"encouragement":"<positive>","suggestions":["..."],"delivery_notes":["..."]}'
-        :'Context:\n'+cs+'\n\nExpected for "'+S.userRole+'": "'+expected+'"\nStudent said: "'+response+'"\n\nReturn JSON:\n{"score":<0-100>,"correct_words":"<yes or no>","accuracy":"<1 sentence>","grammar":"<1 sentence>","fluency":"<1 sentence>","corrections":["..."],"encouragement":"<positive>","suggestions":["..."],"delivery_notes":["..."]}';
+        ?'Context:\n'+cs+'\n\nExpected for "'+S.userRoles.join(' / ')+'": "'+expected+'"\nStudent said: "'+response+'"\n\nReturn JSON:\n{"score":<0-100>,"correct_words":"<yes or no>","pronunciation":"<1 sentence>","accuracy":"<1 sentence>","fluency":"<1 sentence>","corrections":["..."],"encouragement":"<positive>","suggestions":["..."],"delivery_notes":["..."]}'
+        :'Context:\n'+cs+'\n\nExpected for "'+S.userRoles.join(' / ')+'": "'+expected+'"\nStudent said: "'+response+'"\n\nReturn JSON:\n{"score":<0-100>,"correct_words":"<yes or no>","accuracy":"<1 sentence>","grammar":"<1 sentence>","fluency":"<1 sentence>","corrections":["..."],"encouragement":"<positive>","suggestions":["..."],"delivery_notes":["..."]}';
 
     return callGLM([{role:'system',content:sysPrompt},{role:'user',content:userPrompt}]).then(function(raw){
         var p=extractJSON(raw);

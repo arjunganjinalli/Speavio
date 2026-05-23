@@ -212,7 +212,7 @@ function getLeaderboardScriptKey(){
 
 function getCurrentScriptKey(){
     var scriptLines=(S.lines||[]).map(function(l){return (l.role||'')+':'+(l.text||'')}).join('\n');
-    var seed=[S.language||'',S.userRole||'',scriptLines].join('||');
+    var seed=[S.language||'',S.userRoles.slice().sort().join('+')||'',scriptLines].join('||');
     var h=2166136261;
     for(var i=0;i<seed.length;i++){
         h^=seed.charCodeAt(i);

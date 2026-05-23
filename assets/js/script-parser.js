@@ -1,162 +1,186 @@
 /* ─────────────────────────────────────────────────────────────────
-   cleanScript — sanitise raw pasted text before dialogue parsing.
-   Strips HTML, normalises quotes/dashes, collapses excess blank
-   lines, and removes page numbers, scene headings, standalone
-   stage directions, and asterisked action lines.
+   cleanScript — normalise raw pasted text before line processing.
+   Strips HTML, normalises quote characters, collapses blank lines.
+   Em/en dashes are PRESERVED so Phase 3 patterns can match them
+   directly as dialogue separators.
 ───────────────────────────────────────────────────────────────── */
 function cleanScript(rawText){
     if(!rawText)return'';
-
-    /* 1 ── Strip HTML tags & decode common entities ─────────── */
+    /* Strip HTML tags & decode common entities */
     var text=rawText
         .replace(/<[^>]+>/g,' ')
         .replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<')
         .replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'");
-
-    /* 2 ── Normalise line endings (tabs preserved — used as separators) ─ */
+    /* Normalise line endings */
     text=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
-
-    /* 3 ── Normalise quote & dash characters ────────────────── */
+    /* Normalise smart/curly quotes — em/en dashes are kept intact */
     text=text
-        .replace(/[\u2018\u2019]/g,"'")                          /* smart single quotes → ' */
-        .replace(/[\u201C\u201D\u00AB\u00BB\u2039\u203A]/g,'"')  /* smart double / guillemets → " */
-        .replace(/\u2014|\u2013/g,'--');                         /* em/en dash → -- */
-
-    /* 4 ── Line-level removals ───────────────────────────────── */
-    var lines=text.split('\n');
-    var out=[];
-    var blankRun=0;
-
-    for(var i=0;i<lines.length;i++){
-        var trimmed=lines[i].trim();
-
-        /* Collapse 3+ consecutive blank lines into at most 2 */
-        if(!trimmed){
-            blankRun++;
-            if(blankRun<=2)out.push('');
-            continue;
-        }
-        blankRun=0;
-
-        /* Standalone page numbers — digits (and optional dot) only */
-        if(/^\d+\.?\s*$/.test(trimmed))continue;
-
-        /* Scene headings — INT. / EXT. sluglines */
-        if(/^(?:INT\.|EXT\.|INT\/EXT\.|EXT\/INT\.)\s/i.test(trimmed))continue;
-
-        /* Transition lines — FADE IN/OUT, CUT TO, DISSOLVE, etc. */
-        if(/^(?:FADE\s+(?:IN|OUT|TO)|CUT\s+TO|SMASH\s+CUT|MATCH\s+CUT|DISSOLVE\s+TO)\b[:.!]?\s*$/i.test(trimmed))continue;
-
-        /* ACT / SCENE headings (short — 4 words or fewer) */
-        if(/^(?:ACT|SCENE)\s+(?:[IVX]+|\d+)\b/i.test(trimmed)&&trimmed.split(/\s+/).length<=4)continue;
-
-        /* Stage directions that occupy their own line — (…) or […] */
-        if(/^\([^)]*\)$/.test(trimmed))continue;
-        if(/^\[[^\]]*\]$/.test(trimmed))continue;
-
-        /* Asterisked action lines:
-             *action text*   or   **action text**  (whole line wrapped)
-             * bullet action line  (leading asterisk + space) */
-        if(/^\*[^*].*\*$/.test(trimmed))continue;       /* *…*   whole-line wrap */
-        if(/^\*\*[^*].*\*\*$/.test(trimmed))continue;   /* **…** whole-line wrap */
-        if(/^\*\s/.test(trimmed))continue;               /* * bullet-style action */
-
-        /* Numbered list items: "1. Apple", "2. The bag", etc. */
-        if(/^\d+\.\s+\S/.test(trimmed))continue;
-
-        /* Lines starting with an emoji (Unicode supplementary plane via surrogate pair) */
-        if(trimmed.charCodeAt(0)>=0xD800&&trimmed.charCodeAt(0)<=0xDBFF)continue;
-
-        out.push(lines[i]);
-    }
-
-    return out.join('\n');
+        .replace(/[\u2018\u2019]/g,"'")
+        .replace(/[\u201C\u201D\u00AB\u00BB\u2039\u203A]/g,'"');
+    /* Collapse 3+ consecutive blank lines to 2 */
+    text=text.replace(/\n{3,}/g,'\n\n');
+    return text;
 }
 
 /* ─────────────────────────────────────────────────────────────────
-   _extractDialogueLines — comprehensive multi-format parser
-   Handles 13 role/line formats, HTML input, stage directions,
-   multi-line screenplay blocks, and all other messy input.
+   _extractDialogueLines — six-phase dialogue detection engine.
+
+   Phase 1 — find header end (first true dialogue line)
+   Phase 2 — discard stage directions & structural lines
+   Phase 3 — extract role + dialogue with 9 ordered patterns
+   Phase 4 — clean embedded stage directions from dialogue text
+   Phase 5 — merge aliased / duplicate role names
+
+   Pure regex + string matching. No API calls.
    Private — call via parseScript() or localAutoDetectLines().
 ───────────────────────────────────────────────────────────────── */
 function _extractDialogueLines(rawText){
     if(!rawText)return[];
 
-    /* 1 ── Pre-process (clean then split) ───────────────────────── */
     var text=cleanScript(rawText);
+    var allLines=text.split('\n');
 
-    var rawLines=text.split('\n');
+    /* ── Blacklist: words that cannot start a valid role name ── */
+    var ROLE_BLACKLIST=/^(?:characters?|props?|costumes?|notes?|starting|narrator|setting|director|page\b|scene\b|act\b|fade\b|cut\b|int\b|ext\b|new\b|end\b|pause\b|beat\b|note\b|silence\b|cast\b|crew\b|prologue\b|epilogue\b|chorus\b|title\b|subtitle\b|roles?\b|chapter\b|pg\b|music\b|sfx\b|camera\b|direction\b|the\s+end\b|fin\b)\b/i;
 
-    /* 2 ── Helpers ─────────────────────────────────────────────── */
-    /* Prefixes that mark script-structure labels, not character names */
-    var SKIP_ROLE=/^(scene\b|act\b|stage\s*dir|note\b|notes\b|setting\b|narrator\b|chapter\b|pg\b|page\b|director\b|int\b|ext\b|fade\b|cut\b|transition\b|music\b|sfx\b|camera\b|direction\b|prologue\b|epilogue\b|chorus\b|the\s+end\b|fin\b|end\b|all\b|characters\b|cast\b|title\b|subtitle\b|props\b|costumes\b|roles\b|starting\b|new\b|pause\b)/i;
-    var SCENE_HDG=/^(?:INT\.|EXT\.|INT\/EXT\.|EXT\/INT\.)[\s.]/i;
+    /* ── Keywords that mark non-dialogue lines ─────────────── */
+    var SKIP_START=/^(?:scene\b|act\b|setting\b|at\s+rise\b|lights?\s+(?:up|down|fade)\b|sound\b|music\b|sfx\b|blackout\b|curtain\b|exeunt\b|exit\s|enter\s|transition\b|cut\s+to\b|fade\s+(?:in|out|to)\b)/i;
 
+    /* ── Stage-direction action verbs ────────────────────── */
+    var ACTION_START=/^(?:walks?\s|runs?\s|enters?\s|exits?\s|sits?\s|stands?\s|turns?\s|looks?\s|picks?\s|puts?\s|grabs?\s|throws?\s|takes?\s|hands\s|moves?\s|crosses?\s|points?\s|nods?\s|shakes?\s|laughs?\s|cries?\s|pauses?\s|waits?\s|opens?\s|closes?\s|waves?\s|hugs?\s|pulls?\s|pushes?\s|holds?\s|drops?\s|reads?\s|writes?\s|shows?\s|gives?\s|receives?\s|signals?\s)/i;
+
+    function startsWithEmoji(s){
+        if(!s)return false;
+        var c=s.charCodeAt(0);
+        if(c>=0xD800&&c<=0xDBFF)return true;
+        if(c>=0x2600&&c<=0x27BF)return true;
+        if(c>=0x2300&&c<=0x23FF)return true;
+        return false;
+    }
+
+    /* ── cleanRole: strip markdown / screenplay annotations ── */
     function cleanRole(r){
+        if(!r)return'';
         r=r.replace(/\*\*([^*]+)\*\*/g,'$1').replace(/\*([^*]+)\*/g,'$1');
         r=r.replace(/__([^_]+)__/g,'$1').replace(/_([^_]+)_/g,'$1');
         r=r.replace(/\s*\((?:CONT'?D|O\.S\.|V\.O\.|O\.C\.|off-?stage|offstage)\s*\)\s*$/i,'');
         return r.replace(/\s+/g,' ').trim();
     }
-    function cleanDlg(t){
-        t=t.replace(/\[[^\]]*\]/g,'');
-        t=t.replace(/\*[^*]+\*/g,'');
-        t=t.replace(/^\s*\([^)]{1,80}\)\s+/,'');
-        t=t.replace(/^["'](.+)["']$/,'$1');
-        /* Strip trailing English translation in parens when main text is foreign.
-           "¡Hola! (Hello!)" → "¡Hola!"   Only strips pure-ASCII parentheticals. */
-        if(/[^\x00-\x7F]/.test(t)){
-            t=t.replace(/\s*\(([^)]{5,120})\)\s*$/,function(m,inner){
-                return/[^\x00-\x7F]/.test(inner)?m:'';
-            });
-        }
-        return t.replace(/\s+/g,' ').trim();
-    }
-    /* Common honorific/title prefixes that lead a name — count as one word each */
-    var TITLE_PFX=/^(?:Mr|Mrs|Ms|Miss|Dr|Prof|Sir|Rev|Cpl|Sgt|Lt|Capt|Col|Gen|Pvt|Det|Ofc)\.?\s/i;
+
+    /* ── isValidRole: 1-5 core words, not blacklisted ──────── */
     function isValidRole(r){
-        if(!r||r.length>65||r.length<2)return false;
+        if(!r||r.length<2||r.length>65)return false;
         if(/^\d+$/.test(r))return false;
-        if(SKIP_ROLE.test(r))return false;
-        if(SCENE_HDG.test(r))return false;
-        /* Accept letters from Latin, Greek, Cyrillic, Hebrew, Arabic, CJK, Hangul, Kana */
+        if(ROLE_BLACKLIST.test(r))return false;
         if(!/[A-Za-z\u00C0-\u024F\u0370-\u03FF\u0400-\u04FF\u0590-\u05FF\u0600-\u06FF\u3040-\u30FF\u4E00-\u9FFF\uAC00-\uD7AF]/.test(r))return false;
-        /* 1-4 words max; strip a leading title so it doesn't inflate the count */
-        var forCount=TITLE_PFX.test(r)?r.replace(TITLE_PFX,''):r;
-        if(forCount.split(/\s+/).filter(Boolean).length>4)return false;
-        return true;
+        var base=r.replace(/\s*\([^)]*\)\s*$/,'');
+        var wc=base.split(/\s+/).filter(Boolean).length;
+        return wc>=1&&wc<=5;
     }
-    function isSkipLine(l){
+
+    /* ── PHASE 2: decide whether a line should be discarded ── */
+    function shouldSkipLine(l){
         if(!l)return true;
-        if(/^\s*\d+\.?\s*$/.test(l))return true;
-        if(/^\d+\.\s+\S/.test(l))return true;                               /* "1. Something" list item */
-        if(l.charCodeAt(0)>=0xD800&&l.charCodeAt(0)<=0xDBFF)return true;    /* emoji-starting line */
-        if(/^(ACT|SCENE|CHAPTER)\s+[IVX\d]/i.test(l)&&l.split(' ').length<=4)return true;
-        if(SCENE_HDG.test(l))return true;
-        if(/^\s*\*[^*]+\*\s*$/.test(l))return true;
-        if(/^\s*_[^_]+_\s*$/.test(l))return true;
+        if(startsWithEmoji(l))return true;
+        if(/^\d+[.)]\s/.test(l))return true;
+        if(SKIP_START.test(l))return true;
+        if(/^(?:INT\.|EXT\.|INT\/EXT\.|EXT\/INT\.)\s/i.test(l))return true;
+        if(/^[A-Z][A-Z\s\d.'!?]{2,}$/.test(l)&&!/:\s*\S/.test(l)&&!/(?:—|--|–)\s+\S/.test(l)&&!/\s+-\s+\S/.test(l))return true;
+        var wc=l.split(/\s+/).filter(Boolean).length;
+        if(wc<4&&!/:\s*\S/.test(l)&&!/(?:—|--|–)\s+\S/.test(l)&&!/\s+-\s+\S/.test(l))return true;
+        if(ACTION_START.test(l)&&!/:\s*\S/.test(l)&&!/(?:—|--|–)\s+\S/.test(l)&&!/\s+-\s+\S/.test(l))return true;
         return false;
     }
 
-    /* Merge aliased/duplicate roles in parsed output.
-       Rule 1: short name "Ryu" found inside "Younger Brother 1 (Ryu)" → remap to longer form.
-       Rule 2: "S cientist" vs "Scientist" (extra-space typo) → keep single-space form.       */
-    function mergeRoles(lines){
-        if(!lines||lines.length<2)return lines;
-        var roleList=[],roleSeen={};
-        lines.forEach(function(l){var r=(l.role||'').trim();if(r&&!roleSeen[r]){roleSeen[r]=true;roleList.push(r);}});
+    /* ── PHASE 4: clean dialogue text ─────────────────────── */
+    function cleanDlg(t){
+        if(!t)return'';
+        t=t.replace(/\s*\((?:walks?(?:\s+\w+)?|runs?(?:\s+\w+)?|laughs?|cries?\b|sighs?|pauses?|softly|angrily|quietly|loudly|whispers?|shouts?|nervously|sadly|happily|slowly|quickly|gently|firmly|enters?|exits?|stands?\s+up|sits?\s+down)[^)]{0,60}\)/gi,'');
+        t=t.replace(/^\s*\([^)]{1,80}\)\s+/,'');
+        if(/[^\x00-\x7F]/.test(t)){
+            t=t.replace(/\s*\(([^)]{5,120})\)\s*$/,function(m,inner){
+                return /[^\x00-\x7F]/.test(inner)?m:'';
+            });
+        }
+        t=t.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g,'').replace(/[\u2600-\u27BF]/g,'');
+        t=t.replace(/\[[^\]]*\]/g,'');
+        return t.replace(/\s+/g,' ').trim();
+    }
+
+    /* ── PHASE 1: find where dialogue starts ──────────────── */
+    var HDR_PATS=[
+        /^\[([^\]]{1,60})\]:\s*\S/,
+        /^\(([^)]{1,50})\):\s*\S/,
+        /^([A-Za-z\u00C0-\u024F][^:\n]{0,60}?):\s*\S/,
+        /^([A-Za-z\u00C0-\u024F][^\n]{0,50}?)\s+(?:—|--)\s+\S/,
+        /^([A-Za-z\u00C0-\u024F][^\n]{0,50}?)\s+–\s+\S/,
+        /^([A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F0-9 .'()]{0,40}?)\s+-\s+\S/,
+    ];
+    var dialogueStart=0;
+    hdrLoop:for(var hi=0;hi<allLines.length;hi++){
+        var hl=(allLines[hi]||'').trim();
+        if(!hl)continue;
+        for(var hpi=0;hpi<HDR_PATS.length;hpi++){
+            var hm=hl.match(HDR_PATS[hpi]);
+            if(hm){
+                var hRole=cleanRole(hm[1]||'');
+                if(!hRole||isValidRole(hRole)){dialogueStart=hi;break hdrLoop;}
+            }
+        }
+    }
+    var lines=allLines.slice(dialogueStart);
+
+    /* ── PHASE 3: extraction patterns (spec order) ─────────── */
+    var EXTRACT=[
+        {rx:/^\[([^\]]{1,60})\]:\s*(.+)$/},
+        {rx:/^\(([^)]{1,50})\):\s*(.+)$/},
+        {rx:/^([A-Za-z\u00C0-\u024F][^:\n]{2,60}?(?:\s*\([^)\n]{1,40}\))?)\s*:\s*(\S.+)$/},
+        {rx:/^([^:\[\]()*\n]{1,55}):\s*(\S.+)$/},
+        {rx:/^([A-Za-z\u00C0-\u024F][^\n]{0,44}?)\s+(?:—|--)\s+(\S.+)$/, mw:5},
+        {rx:/^([A-Za-z\u00C0-\u024F][^\n]{0,44}?)\s+–\s+(\S.+)$/, mw:5},
+        {rx:/^([A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F0-9 .'()]{0,38}?)\s+-\s+(\S.+)$/, mw:5},
+        {rx:/^([^|\n]{1,48})\|\s*(\S.+)$/, mw:5},
+        {rx:/^([A-Za-z\u00C0-\u024F][^\u2192\n]{0,44})\s*(?:\u2192|->)\s*(\S.+)$/, mw:5},
+    ];
+
+    /* ── PHASE 2 + 3: iterate post-header lines ───────────── */
+    var result=[];
+    for(var i=0;i<lines.length;i++){
+        var raw=(lines[i]||'').trim();
+        if(!raw)continue;
+        if(shouldSkipLine(raw))continue;
+        var found=false;
+        for(var pi=0;pi<EXTRACT.length;pi++){
+            var m=raw.match(EXTRACT[pi].rx);
+            if(!m)continue;
+            var role=cleanRole(m[1]);
+            var dlg=cleanDlg(m[2]);
+            if(!role||!dlg)continue;
+            if(EXTRACT[pi].mw){
+                var base=role.replace(/\s*\([^)]*\)\s*$/,'');
+                if(base.split(/\s+/).filter(Boolean).length>EXTRACT[pi].mw)continue;
+            }
+            if(!isValidRole(role))continue;
+            result.push({role:role,text:dlg});
+            found=true;
+            break;
+        }
+    }
+
+    /* ── PHASE 5: merge aliased / duplicate role names ────── */
+    function mergeRoles(arr){
+        if(!arr||arr.length<2)return arr;
+        var roleList=[],seen={};
+        arr.forEach(function(l){var r=(l.role||'').trim();if(r&&!seen[r]){seen[r]=true;roleList.push(r);}});
         var map={};
-        /* Rule 1: short name embedded in "(Name)" suffix of a longer role */
         roleList.forEach(function(rLong){
             var inner=(rLong.match(/\(([^)]{1,40})\)\s*$/)||[])[1];
             if(!inner)return;
-            var innerKey=inner.trim().toLowerCase();
+            var ik=inner.trim().toLowerCase();
             roleList.forEach(function(rShort){
-                if(rShort!==rLong&&rShort.toLowerCase()===innerKey&&!map[rLong])
-                    map[rShort]=rLong;
+                if(rShort!==rLong&&rShort.toLowerCase()===ik&&!map[rShort])map[rShort]=rLong;
             });
         });
-        /* Rule 2: identical when whitespace is collapsed → keep tidy single-space form */
         var normMap={};
         roleList.forEach(function(r){
             var k=r.replace(/\s+/g,'').toLowerCase();
@@ -164,254 +188,15 @@ function _extractDialogueLines(rawText){
         });
         roleList.forEach(function(r){
             var k=r.replace(/\s+/g,'').toLowerCase();
-            var canonical=normMap[k];
-            if(canonical&&canonical!==r&&!map[r])map[r]=canonical;
+            var can=normMap[k];
+            if(can&&can!==r&&!map[r])map[r]=can;
         });
-        if(!Object.keys(map).length)return lines;
-        return lines.map(function(l){var r=(l.role||'').trim();return{role:map[r]||r,text:l.text};});
+        if(!Object.keys(map).length)return arr;
+        return arr.map(function(l){var r=(l.role||'').trim();return{role:map[r]||r,text:l.text};});
     }
 
-    /* 3 ── Section A: inline formats (role + dialogue on same line) ── */
-
-    /* All separator patterns ordered from most-specific to least-specific.
-       Properties:
-         rx  — regex with two capture groups: (role, dialogue)
-         mw  — optional max word count for role (guards ambiguous separators)
-         np  — if true, role must not end with sentence-ending punctuation      */
-    var SEP=[
-        /* Explicitly-delimited name containers — highest confidence */
-        {id:'bracket',    rx:/^\[([^\]]{1,60})\]:\s*(.+)$/},
-        {id:'paren',      rx:/^\(([^)]{1,50})\):\s*(.+)$/},
-        {id:'quotedname', rx:/^["']([^"'\n]{1,50})["']:\s*(.+)$/},
-        {id:'bold',       rx:/^\*{1,2}([^*]{1,50})\*{1,2}:\s*(.+)$/},
-        /* Unambiguous non-colon separators */
-        {id:'dcolon',     rx:/^([^:\t\n]{1,55})::\s*(.+)$/},
-        {id:'tab',        rx:/^([^\t\n]{1,55})\t(.+)$/},
-        {id:'arrow',      rx:/^([A-Za-z\u00C0-\u024F][^\u2192\n]{0,44})\s*(?:\u2192|->)\s*(.+)$/, mw:5},
-        {id:'pipe',       rx:/^([^|\n]{1,48})\|\s*(.+)$/},
-        {id:'tilde',      rx:/^([^~\n]{1,48})~\s*(.+)$/, mw:5},
-        {id:'equals',     rx:/^([^=\n]{1,48})\s+=\s+(.+)$/, mw:5},
-        {id:'gt',         rx:/^([^>\n]{1,48})>\s*(.+)$/, mw:4},
-        {id:'slash',      rx:/^([A-Za-z\u00C0-\u024F][^/\n]{0,42}[A-Za-z\u00C0-\u024F0-9)]?)\s+\/\s+(.+)$/, mw:5},
-        /* Dash variants (em/en dashes already normalised to -- by cleanScript) */
-        {id:'emdash',     rx:/^([A-Za-z\u00C0-\u024F][^\n]{0,44}?)\s+--\s+(.+)$/, mw:5, np:true},
-        {id:'dash',       rx:/^([A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F0-9 .'()]{0,38}[A-Za-z\u00C0-\u024F0-9)]?)\s+-\s+(.+)$/, mw:5, np:true},
-        /* Plain colon — least specific, catches all remaining Name: text */
-        {id:'colon',      rx:/^([^:\[\]|*\n]{1,55}):\s*(.+)$/}
-    ];
-
-    /* Header detection: slide rawLines forward to the first real dialogue line.
-       Header labels (Title:, Characters:, Props:, etc.) are in SKIP_ROLE so
-       isValidRole rejects them, letting us skip the entire header block.      */
-    for(var hi=0;hi<rawLines.length;hi++){
-        var hl=(rawLines[hi]||'').trim();
-        if(!hl||isSkipLine(hl))continue;
-        var hlFound=false;
-        for(var hpi=0;hpi<SEP.length;hpi++){
-            var hm=hl.match(SEP[hpi].rx);
-            if(hm){
-                var hr=cleanRole(hm[1]);
-                var hwOk=!SEP[hpi].mw||hr.split(/\s+/).length<=SEP[hpi].mw;
-                var hpOk=!SEP[hpi].np||!/[.!?]$/.test(hr);
-                if(isValidRole(hr)&&hwOk&&hpOk){if(hi>0)rawLines=rawLines.slice(hi);hlFound=true;break;}
-            }
-        }
-        if(hlFound)break;
-    }
-
-    /* Score: count lines where each pattern matches with a valid role.
-       Only the FIRST matching pattern per line is counted (no double-scoring). */
-    var sepScore={};
-    for(var pi=0;pi<SEP.length;pi++)sepScore[SEP[pi].id]=0;
-    for(var i=0;i<rawLines.length;i++){
-        var sl=(rawLines[i]||'').trim();
-        if(!sl||isSkipLine(sl))continue;
-        for(var pi=0;pi<SEP.length;pi++){
-            var sm=sl.match(SEP[pi].rx);
-            if(sm){
-                var sr=cleanRole(sm[1]);
-                var swOk=!SEP[pi].mw||sr.split(/\s+/).length<=SEP[pi].mw;
-                var spOk=!SEP[pi].np||!/[.!?]$/.test(sr);
-                if(isValidRole(sr)&&swOk&&spOk){sepScore[SEP[pi].id]++;break;}
-            }
-        }
-    }
-
-    /* Sort: dominant (highest score) first; ties preserve original specificity order */
-    var ranked=SEP.slice().sort(function(a,b){
-        var d=(sepScore[b.id]||0)-(sepScore[a.id]||0);
-        return d!==0?d:SEP.indexOf(a)-SEP.indexOf(b);
-    });
-
-    /* Parse every line — dominant separator first, all others as fallback */
-    var inlineOut=[];
-    for(var i=0;i<rawLines.length;i++){
-        var raw=(rawLines[i]||'').trim();
-        if(!raw||isSkipLine(raw))continue;
-        var role,txt,m,matched=false;
-
-        /* Try all separator patterns in dominant-first ranked order */
-        for(var pi=0;pi<ranked.length;pi++){
-            m=raw.match(ranked[pi].rx);
-            if(m){
-                role=cleanRole(m[1]);txt=cleanDlg(m[2]);
-                var wOk=!ranked[pi].mw||role.split(/\s+/).length<=ranked[pi].mw;
-                var pOk=!ranked[pi].np||!/[.!?]$/.test(role);
-                if(isValidRole(role)&&wOk&&pOk&&txt){
-                    /* Collect wrapped continuation lines (no separator on subsequent lines) */
-                    var j=i+1;
-                    while(j<rawLines.length){
-                        var cLine=(rawLines[j]||'').trim();
-                        if(!cLine||isSkipLine(cLine))break;
-                        var isNewEntry=false;
-                        for(var cpi=0;cpi<ranked.length;cpi++){
-                            var cm=cLine.match(ranked[cpi].rx);
-                            if(cm){var cr=cleanRole(cm[1]);var cwOk=!ranked[cpi].mw||cr.split(/\s+/).length<=ranked[cpi].mw;var cpOk=!ranked[cpi].np||!/[.!?]$/.test(cr);if(isValidRole(cr)&&cwOk&&cpOk){isNewEntry=true;break;}}
-                        }
-                        if(isNewEntry)break;
-                        txt+=' '+cLine;j++;
-                    }
-                    i=j-1;
-                    inlineOut.push({role:role,text:cleanDlg(txt)});matched=true;break;
-                }
-            }
-        }
-        if(matched)continue;
-
-        /* Attribution formats — no leading separator */
-
-        /* Name said/asked/replied/... text */
-        m=raw.match(/^([A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F0-9 .'(),\-]{0,42}?)\s+(?:said|says|asked|replied|answered|shouted|whispered|muttered|exclaimed|continued|added|insisted|pleaded|cried|called|announced|declared|responded)\s*[,:]?\s*["']?(.{2,})["']?$/i);
-        if(m){role=cleanRole(m[1]);txt=cleanDlg(m[2]).replace(/^["'](.+)["']$/,'$1').trim();if(isValidRole(role)&&txt){inlineOut.push({role:role,text:txt});continue;}}
-
-        /* "dialogue" -- Name  (end attribution with dash) */
-        m=raw.match(/^["\u201C](.*)["\u201D]\.?\s*(?:--|\u2014|\u2013)\s*([A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F0-9 .']{0,38})$/);
-        if(m){txt=cleanDlg(m[1]);role=cleanRole(m[2]);if(isValidRole(role)&&txt&&txt.length>2){inlineOut.push({role:role,text:txt});continue;}}
-
-        /* text (Name) — end attribution in parens */
-        m=raw.match(/^(.{5,})\s+\(([A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F0-9 .']{1,38})\)\s*$/);
-        if(m&&!/^\(/.test(raw)&&!/^(?:O\.S\.|V\.O\.|O\.C\.|CONT'?D|offstage|off-?stage)$/i.test(m[2].trim())){
-            txt=cleanDlg(m[1]);role=cleanRole(m[2]);if(isValidRole(role)&&txt){inlineOut.push({role:role,text:txt});continue;}
-        }
-    }
-    if(inlineOut.length>=2)return mergeRoles(inlineOut);
-
-    /* 4 ── Section B: block format (NAME alone on a line, dialogue below) ── */
-    /* Handles ALL CAPS (screenplay), title-case, or any-case names.
-       Pass 0: pre-count short standalone lines so mixed-case names
-       require ≥2 appearances before being accepted as characters —
-       this prevents false positives from regular short sentences.     */
-    var nameFreq={};
-    for(var ni=0;ni<rawLines.length;ni++){
-        var nRaw=(rawLines[ni]||'').trim();
-        if(!nRaw||isSkipLine(nRaw))continue;
-        if(nRaw.split(/\s+/).filter(Boolean).length<=3&&
-           !SCENE_HDG.test(nRaw)&&!SKIP_ROLE.test(nRaw)){
-            var nCleanKey=cleanRole(nRaw);
-            if(isValidRole(nCleanKey))
-                nameFreq[nCleanKey.toLowerCase()]=(nameFreq[nCleanKey.toLowerCase()]||0)+1;
-        }
-    }
-
-    var screenOut=[];
-    var si=0;
-    while(si<rawLines.length){
-        var sRaw=(rawLines[si]||'').trim();
-        if(!sRaw||isSkipLine(sRaw)){si++;continue;}
-
-        var sClean=cleanRole(sRaw);
-        /* ALL-CAPS name: structurally unambiguous — no repetition guard needed */
-        var sIsAllCaps=(
-            /^[A-Z\u00C0-\u00D6\u00D8-\u00DE][A-Z\u00C0-\u00D6\u00D8-\u00DE0-9 '.\-]{0,44}(?:\s*\([^)]{1,40}\))?$/.test(sRaw)&&
-            sRaw.replace(/\s*\([^)]*\)$/,'').split(/\s+/).length<=6
-        );
-        /* Mixed-case name: ≤3 words AND must appear ≥2 times as a standalone line */
-        var sIsMixed=(
-            !sIsAllCaps&&
-            sRaw.split(/\s+/).filter(Boolean).length<=3&&
-            (nameFreq[sClean.toLowerCase()]||0)>=2
-        );
-        var isCharLine=(
-            (sIsAllCaps||sIsMixed)&&
-            !SCENE_HDG.test(sRaw)&&
-            !SKIP_ROLE.test(sRaw)&&
-            !/^(?:ACT|SCENE|CHAPTER|INT|EXT|FADE|CUT|THE END)[\s.]/.test(sRaw)&&
-            isValidRole(sClean)
-        );
-
-        if(isCharLine){
-            var dlgParts=[];
-            var sk=si+1;
-            while(sk<rawLines.length){
-                var n=(rawLines[sk]||'').trim();
-                if(!n){if(dlgParts.length)break;sk++;continue;}
-                /* Stop at the next character name — ALL CAPS or a known mixed-case name */
-                var nC=cleanRole(n);
-                var nAllCaps=/^[A-Z\u00C0-\u00D6\u00D8-\u00DE][A-Z\u00C0-\u00D6\u00D8-\u00DE0-9 '.\-]{0,44}(?:\s*\([^)]{1,40}\))?$/.test(n);
-                var nMixed=!nAllCaps&&n.split(/\s+/).filter(Boolean).length<=3&&
-                            (nameFreq[nC.toLowerCase()]||0)>=2&&isValidRole(nC);
-                if((nAllCaps||nMixed)&&!SCENE_HDG.test(n)&&!SKIP_ROLE.test(n))break;
-                if(SCENE_HDG.test(n)||isSkipLine(n))break;
-                if(/^\([^)]{1,80}\)$/.test(n)||/^\[[^\]]+\]$/.test(n)){sk++;continue;}
-                /* Skip embedded stage-direction lines (emoji or action-verb starts) */
-                if(n.charCodeAt(0)>=0xD800&&n.charCodeAt(0)<=0xDBFF){sk++;continue;}
-                if(/^(?:walks?|runs?|puts?|takes?|grabs?|enters?|exits?|stands?|sits?|turns?|looks?|moves?|comes?|goes?|arrives?|leaves?|picks?|pulls?|pushes?|reaches?|points?|nods?|shakes?|brings?|starts?|opens?|closes?|drops?|throws?|gets?)\s/i.test(n)){sk++;continue;}
-                dlgParts.push(n);
-                sk++;
-            }
-            if(dlgParts.length){
-                var stxt=cleanDlg(dlgParts.join(' '));
-                if(stxt)screenOut.push({role:sClean,text:stxt});
-                si=sk;continue;
-            }
-        }
-        si++;
-    }
-    if(screenOut.length>=2)return mergeRoles(screenOut);
-
-    /* 5 ── Section C: quoted speech fallback ───────────────── */
-    /* Last resort: extract "quoted text" and attribute to nearby speaker names.
-       Unattributed quotes alternate between Speaker 1 and Speaker 2.            */
-    if(inlineOut.length<2&&screenOut.length<2){
-        var qOut=[];
-        var anonIdx=0;
-        var ANON=['Speaker 1','Speaker 2'];
-        var qLines=rawLines; /* rawLines is already header-stripped and cleaned */
-        for(var qi=0;qi<qLines.length;qi++){
-            var qLine=(qLines[qi]||'').trim();
-            if(!qLine||isSkipLine(qLine))continue;
-            var qRx=/"([^"]{2,300})"/g;
-            var qm;
-            while((qm=qRx.exec(qLine))!==null){
-                var qTxt=cleanDlg(qm[1]);
-                if(!qTxt||qTxt.split(/\s+/).length<2)continue;
-                var qRole=null;
-                /* Before attribution: Name: "..." or Name "..." */
-                var qBefore=qLine.slice(0,qm.index).replace(/[\s:,.\-]+$/,'').trim();
-                if(qBefore){var qrb=cleanRole(qBefore);if(isValidRole(qrb))qRole=qrb;}
-                /* After attribution: "..." -- Name */
-                if(!qRole){
-                    var qAfter=qLine.slice(qm.index+qm[0].length).replace(/^[\s,.\-]+/,'').trim();
-                    var qam=qAfter.match(/^([A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F0-9 .'\-]{0,35})[\s.,]*$/);
-                    if(qam){var qra=cleanRole(qam[1]);if(isValidRole(qra))qRole=qra;}
-                }
-                /* After attribution: "...", said Name */
-                if(!qRole){
-                    var qAfter2=qLine.slice(qm.index+qm[0].length);
-                    var qam2=qAfter2.match(/,?\s*(?:said|asked|replied|whispered|shouted|muttered|exclaimed)\s+([A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F0-9 .'\-]{1,35})/i);
-                    if(qam2){var qra2=cleanRole(qam2[1]);if(isValidRole(qra2))qRole=qra2;}
-                }
-                if(!qRole){qRole=ANON[anonIdx%2];anonIdx++;}
-                qOut.push({role:qRole,text:qTxt});
-            }
-        }
-        if(qOut.length>=2)return mergeRoles(qOut);
-    }
-
-    /* 6 ── Return whichever gave more results ───────────────── */
-    return mergeRoles(inlineOut.length>=screenOut.length?inlineOut:screenOut);
+    return mergeRoles(result);
 }
-
 function parseScript(text){
     if(!text)return[];
     /* Fast path: primary [Name]: text format */
