@@ -14,7 +14,7 @@ function updateParse(){
     if(!text){el.textContent='';$('role-section').classList.add('hidden');S.lines=[];S.scriptDifficulty={score:0,label:'Easy',metrics:null};renderSetupDifficultyBadge();updateStartBtn();return}
     var lines=parseScript(text);
     if(!lines.length){
-        el.innerHTML='<span class="text-coral-400"><i class="fas fa-triangle-exclamation mr-1"></i>No valid lines. Use [Role]: text or click Auto-Detect.</span>';
+        el.innerHTML='<span class="text-coral-400"><i class="fas fa-triangle-exclamation mr-1"></i>No valid lines detected. Try Auto-Detect, or use [Role]: text format.</span>';
         $('role-section').classList.add('hidden');S.lines=[];
         S.scriptDifficulty={score:0,label:'Easy',metrics:null};
     }else{
