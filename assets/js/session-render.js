@@ -13,6 +13,16 @@ function updateParse(){
     var text=$('script-input').value.trim(),el=$('parse-status');
     if(!text){el.textContent='';$('role-section').classList.add('hidden');S.lines=[];S.scriptDifficulty={score:0,label:'Easy',metrics:null};renderSetupDifficultyBadge();updateStartBtn();return}
     var lines=parseScript(text);
+    /* Auto-detect script language (skipped if user manually chose a language) */
+    if(!S._langManualOverride){
+        var detected=detectScriptLanguage(text);
+        if(detected&&detected!==S.language){
+            S.language=detected;
+            syncScriptLanguageSelects();
+            toast('Detected language: '+LANG[detected].name,'info');
+            checkAndWarnVoice(LANG[detected].tts,LANG[detected].name);
+        }
+    }
     if(!lines.length){
         el.innerHTML='<span class="text-coral-400"><i class="fas fa-triangle-exclamation mr-1"></i>No valid lines detected. Try Auto-Detect, or use [Role]: text format.</span>';
         $('role-section').classList.add('hidden');S.lines=[];

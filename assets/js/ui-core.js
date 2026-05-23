@@ -16,11 +16,61 @@ function syncScriptLanguageSelects(){
     if(ls)ls.value=S.language;
 }
 
+/* ─────────────────────────────────────────────────────────────────
+   detectScriptLanguage — character-frequency language detection.
+   Checks for script-unique Unicode ranges and diacritics.
+   Returns a LANG key ('en','es','fr', etc.) or null if text is too short.
+───────────────────────────────────────────────────────────────── */
+function detectScriptLanguage(text){
+    if(!text||text.length<20)return null;
+    /* Non-Latin scripts — unique ranges, check first */
+    if(/[\u3040-\u309F\u30A0-\u30FF]/.test(text))return'ja';     /* Hiragana / Katakana */
+    if(/[\uAC00-\uD7AF\u1100-\u11FF]/.test(text))return'ko';     /* Hangul */
+    if(/[\u4E00-\u9FFF\u3400-\u4DBF]/.test(text))return'zh';     /* CJK (checked after JP) */
+    if(/[\u0600-\u06FF\u0750-\u077F]/.test(text))return'ar';     /* Arabic */
+    if(/[\u0400-\u04FF]/.test(text))return'ru';                   /* Cyrillic */
+    /* Latin-based — score by language-unique diacritics */
+    var es=((text.match(/[\u00F1\u00D1\u00A1\u00BF]/g)||[]).length*4
+           +(text.match(/[\u00E1\u00E9\u00ED\u00F3\u00FA\u00C1\u00C9\u00CD\u00D3\u00DA]/g)||[]).length);
+    var fr=((text.match(/[\u00E0\u00E8\u00EA\u00E7\u0153\u00C0\u00C8\u00CA\u00C7\u0152]/g)||[]).length*4
+           +(text.match(/[\u00EE\u00F4\u00FB\u00F9\u00E9\u00CE\u00D4\u00DB\u00D9\u00C9]/g)||[]).length);
+    var de=((text.match(/[\u00DF]/g)||[]).length*6
+           +(text.match(/[\u00FC\u00F6\u00E4\u00DC\u00D6\u00C4]/g)||[]).length*3);
+    var pt=((text.match(/[\u00E3\u00F5\u00C3\u00D5]/g)||[]).length*5
+           +(text.match(/[\u00E2\u00CA\u00F4\u00E0\u00E1\u00E9\u00ED\u00F3\u00FA\u00E7]/g)||[]).length);
+    var best=null,bestScore=3; /* need at least 3 matching chars to trigger */
+    var scores={es:es,fr:fr,de:de,pt:pt};
+    Object.keys(scores).forEach(function(k){if(scores[k]>bestScore){best=k;bestScore=scores[k];}});
+    return best||'en';
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   checkAndWarnVoice — shows a toast if no native TTS voice is
+   installed on this device for the given BCP-47 code.
+───────────────────────────────────────────────────────────────── */
+function checkAndWarnVoice(ttsCode,langName){
+    if(typeof speechSynthesis==='undefined')return;
+    function _check(){
+        var voices=speechSynthesis.getVoices();
+        if(!voices.length)return;
+        var prefix=ttsCode.split('-')[0];
+        var found=voices.some(function(v){return v.lang===ttsCode||v.lang.startsWith(prefix);});
+        if(!found){
+            toast('No '+langName+' voice found on this device. '
+                 +'Go to System Settings and install a '+langName+' voice for correct pronunciation.',
+                 'info',8000);
+        }
+    }
+    if(speechSynthesis.getVoices().length>0){_check();}
+    else{setTimeout(_check,900);}
+}
+
 /* ═══════════════════════════════════════════════════════════════
    TOAST
 ═══════════════════════════════════════════════════════════════ */
-function toast(msg,type){
+function toast(msg,type,duration){
     type=type||'info';
+    duration=duration||4000;
     var ic={success:'fa-circle-check',error:'fa-circle-exclamation',info:'fa-circle-info'};
     var t=document.createElement('div');
     t.className='toast toast-'+type;
@@ -29,7 +79,7 @@ function toast(msg,type){
     setTimeout(function(){
         t.style.animation='to2 .3s ease forwards';
         setTimeout(function(){t.remove()},300);
-    },4000);
+    },duration);
 }
 
 /* ═══════════════════════════════════════════════════════════════

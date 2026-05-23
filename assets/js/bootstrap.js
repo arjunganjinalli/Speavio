@@ -198,8 +198,18 @@ document.addEventListener('DOMContentLoaded',function(){
     $('api-endpoint').oninput=function(e){S.apiEndpoint=e.target.value.trim();_workingModel=null};
     $('premium-toggle').onchange=function(e){S.premiumPlaceholder=!!e.target.checked};
     $('system-language-select').onchange=function(e){S.systemLanguage=e.target.value;applySystemLanguage()};
-    $('language-select-practice').onchange=function(e){S.language=e.target.value;syncScriptLanguageSelects()};
-    $('language-select-presentation').onchange=function(e){S.language=e.target.value;syncScriptLanguageSelects()};
+    $('language-select-practice').onchange=function(e){
+        S.language=e.target.value;
+        S._langManualOverride=true;
+        syncScriptLanguageSelects();
+        checkAndWarnVoice(LANG[S.language].tts,LANG[S.language].name);
+    };
+    $('language-select-presentation').onchange=function(e){
+        S.language=e.target.value;
+        S._langManualOverride=true;
+        syncScriptLanguageSelects();
+        checkAndWarnVoice(LANG[S.language].tts,LANG[S.language].name);
+    };
     if($('el-key'))$('el-key').oninput=function(){S.elevenlabsKey=$('el-key').value.trim()};
     if($('el-voice-select'))$('el-voice-select').onchange=function(){S.elevenlabsVoiceId=$('el-voice-select').value};
     if($('npc-slow-replay'))$('npc-slow-replay').onchange=function(e){S.npcSlowReplay=!!e.target.checked};
@@ -221,6 +231,7 @@ document.addEventListener('DOMContentLoaded',function(){
         S.scriptSource='manual';
         S.scriptLabel='Manual Script';
         S.scriptRef='';
+        S._langManualOverride=false; /* new text → re-enable auto-detection */
         clearTimeout(pt);
         pt=setTimeout(updateParse,350);
     };

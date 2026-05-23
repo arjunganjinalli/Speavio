@@ -142,6 +142,7 @@ var S={
     scriptSource:'manual',
     scriptLabel:'Manual Script',
     scriptRef:'',
+    _langManualOverride:false,
     authReady:false,
     isAuthenticated:false,
     authUser:null
