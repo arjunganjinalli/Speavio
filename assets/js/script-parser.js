@@ -61,6 +61,12 @@ function cleanScript(rawText){
         if(/^\*\*[^*].*\*\*$/.test(trimmed))continue;   /* **…** whole-line wrap */
         if(/^\*\s/.test(trimmed))continue;               /* * bullet-style action */
 
+        /* Numbered list items: "1. Apple", "2. The bag", etc. */
+        if(/^\d+\.\s+\S/.test(trimmed))continue;
+
+        /* Lines starting with an emoji (Unicode supplementary plane via surrogate pair) */
+        if(trimmed.charCodeAt(0)>=0xD800&&trimmed.charCodeAt(0)<=0xDBFF)continue;
+
         out.push(lines[i]);
     }
 
@@ -83,7 +89,7 @@ function _extractDialogueLines(rawText){
 
     /* 2 ── Helpers ─────────────────────────────────────────────── */
     /* Prefixes that mark script-structure labels, not character names */
-    var SKIP_ROLE=/^(scene\b|act\b|stage\s*dir|note\b|setting\b|narrator\b|chapter\b|pg\b|page\b|director\b|int\b|ext\b|fade\b|cut\b|transition\b|music\b|sfx\b|camera\b|direction\b|prologue\b|epilogue\b|chorus\b|the\s+end\b|fin\b|end\b)/i;
+    var SKIP_ROLE=/^(scene\b|act\b|stage\s*dir|note\b|notes\b|setting\b|narrator\b|chapter\b|pg\b|page\b|director\b|int\b|ext\b|fade\b|cut\b|transition\b|music\b|sfx\b|camera\b|direction\b|prologue\b|epilogue\b|chorus\b|the\s+end\b|fin\b|end\b|all\b|characters\b|cast\b|title\b|subtitle\b|props\b|costumes\b|roles\b|starting\b|new\b|pause\b)/i;
     var SCENE_HDG=/^(?:INT\.|EXT\.|INT\/EXT\.|EXT\/INT\.)[\s.]/i;
 
     function cleanRole(r){
@@ -97,6 +103,13 @@ function _extractDialogueLines(rawText){
         t=t.replace(/\*[^*]+\*/g,'');
         t=t.replace(/^\s*\([^)]{1,80}\)\s+/,'');
         t=t.replace(/^["'](.+)["']$/,'$1');
+        /* Strip trailing English translation in parens when main text is foreign.
+           "¡Hola! (Hello!)" → "¡Hola!"   Only strips pure-ASCII parentheticals. */
+        if(/[^\x00-\x7F]/.test(t)){
+            t=t.replace(/\s*\(([^)]{5,120})\)\s*$/,function(m,inner){
+                return/[^\x00-\x7F]/.test(inner)?m:'';
+            });
+        }
         return t.replace(/\s+/g,' ').trim();
     }
     /* Common honorific/title prefixes that lead a name — count as one word each */
@@ -116,11 +129,46 @@ function _extractDialogueLines(rawText){
     function isSkipLine(l){
         if(!l)return true;
         if(/^\s*\d+\.?\s*$/.test(l))return true;
+        if(/^\d+\.\s+\S/.test(l))return true;                               /* "1. Something" list item */
+        if(l.charCodeAt(0)>=0xD800&&l.charCodeAt(0)<=0xDBFF)return true;    /* emoji-starting line */
         if(/^(ACT|SCENE|CHAPTER)\s+[IVX\d]/i.test(l)&&l.split(' ').length<=4)return true;
         if(SCENE_HDG.test(l))return true;
         if(/^\s*\*[^*]+\*\s*$/.test(l))return true;
         if(/^\s*_[^_]+_\s*$/.test(l))return true;
         return false;
+    }
+
+    /* Merge aliased/duplicate roles in parsed output.
+       Rule 1: short name "Ryu" found inside "Younger Brother 1 (Ryu)" → remap to longer form.
+       Rule 2: "S cientist" vs "Scientist" (extra-space typo) → keep single-space form.       */
+    function mergeRoles(lines){
+        if(!lines||lines.length<2)return lines;
+        var roleList=[],roleSeen={};
+        lines.forEach(function(l){var r=(l.role||'').trim();if(r&&!roleSeen[r]){roleSeen[r]=true;roleList.push(r);}});
+        var map={};
+        /* Rule 1: short name embedded in "(Name)" suffix of a longer role */
+        roleList.forEach(function(rLong){
+            var inner=(rLong.match(/\(([^)]{1,40})\)\s*$/)||[])[1];
+            if(!inner)return;
+            var innerKey=inner.trim().toLowerCase();
+            roleList.forEach(function(rShort){
+                if(rShort!==rLong&&rShort.toLowerCase()===innerKey&&!map[rLong])
+                    map[rShort]=rLong;
+            });
+        });
+        /* Rule 2: identical when whitespace is collapsed → keep tidy single-space form */
+        var normMap={};
+        roleList.forEach(function(r){
+            var k=r.replace(/\s+/g,'').toLowerCase();
+            if(!normMap[k])normMap[k]=r.replace(/\s+/g,' ').trim();
+        });
+        roleList.forEach(function(r){
+            var k=r.replace(/\s+/g,'').toLowerCase();
+            var canonical=normMap[k];
+            if(canonical&&canonical!==r&&!map[r])map[r]=canonical;
+        });
+        if(!Object.keys(map).length)return lines;
+        return lines.map(function(l){var r=(l.role||'').trim();return{role:map[r]||r,text:l.text};});
     }
 
     /* 3 ── Section A: inline formats (role + dialogue on same line) ── */
@@ -151,6 +199,25 @@ function _extractDialogueLines(rawText){
         /* Plain colon — least specific, catches all remaining Name: text */
         {id:'colon',      rx:/^([^:\[\]|*\n]{1,55}):\s*(.+)$/}
     ];
+
+    /* Header detection: slide rawLines forward to the first real dialogue line.
+       Header labels (Title:, Characters:, Props:, etc.) are in SKIP_ROLE so
+       isValidRole rejects them, letting us skip the entire header block.      */
+    for(var hi=0;hi<rawLines.length;hi++){
+        var hl=(rawLines[hi]||'').trim();
+        if(!hl||isSkipLine(hl))continue;
+        var hlFound=false;
+        for(var hpi=0;hpi<SEP.length;hpi++){
+            var hm=hl.match(SEP[hpi].rx);
+            if(hm){
+                var hr=cleanRole(hm[1]);
+                var hwOk=!SEP[hpi].mw||hr.split(/\s+/).length<=SEP[hpi].mw;
+                var hpOk=!SEP[hpi].np||!/[.!?]$/.test(hr);
+                if(isValidRole(hr)&&hwOk&&hpOk){if(hi>0)rawLines=rawLines.slice(hi);hlFound=true;break;}
+            }
+        }
+        if(hlFound)break;
+    }
 
     /* Score: count lines where each pattern matches with a valid role.
        Only the FIRST matching pattern per line is counted (no double-scoring). */
@@ -227,7 +294,7 @@ function _extractDialogueLines(rawText){
             txt=cleanDlg(m[1]);role=cleanRole(m[2]);if(isValidRole(role)&&txt){inlineOut.push({role:role,text:txt});continue;}
         }
     }
-    if(inlineOut.length>=2)return inlineOut;
+    if(inlineOut.length>=2)return mergeRoles(inlineOut);
 
     /* 4 ── Section B: block format (NAME alone on a line, dialogue below) ── */
     /* Handles ALL CAPS (screenplay), title-case, or any-case names.
@@ -286,6 +353,9 @@ function _extractDialogueLines(rawText){
                 if((nAllCaps||nMixed)&&!SCENE_HDG.test(n)&&!SKIP_ROLE.test(n))break;
                 if(SCENE_HDG.test(n)||isSkipLine(n))break;
                 if(/^\([^)]{1,80}\)$/.test(n)||/^\[[^\]]+\]$/.test(n)){sk++;continue;}
+                /* Skip embedded stage-direction lines (emoji or action-verb starts) */
+                if(n.charCodeAt(0)>=0xD800&&n.charCodeAt(0)<=0xDBFF){sk++;continue;}
+                if(/^(?:walks?|runs?|puts?|takes?|grabs?|enters?|exits?|stands?|sits?|turns?|looks?|moves?|comes?|goes?|arrives?|leaves?|picks?|pulls?|pushes?|reaches?|points?|nods?|shakes?|brings?|starts?|opens?|closes?|drops?|throws?|gets?)\s/i.test(n)){sk++;continue;}
                 dlgParts.push(n);
                 sk++;
             }
@@ -297,7 +367,7 @@ function _extractDialogueLines(rawText){
         }
         si++;
     }
-    if(screenOut.length>=2)return screenOut;
+    if(screenOut.length>=2)return mergeRoles(screenOut);
 
     /* 5 ── Section C: quoted speech fallback ───────────────── */
     /* Last resort: extract "quoted text" and attribute to nearby speaker names.
@@ -306,7 +376,7 @@ function _extractDialogueLines(rawText){
         var qOut=[];
         var anonIdx=0;
         var ANON=['Speaker 1','Speaker 2'];
-        var qLines=text.split('\n');
+        var qLines=rawLines; /* rawLines is already header-stripped and cleaned */
         for(var qi=0;qi<qLines.length;qi++){
             var qLine=(qLines[qi]||'').trim();
             if(!qLine||isSkipLine(qLine))continue;
@@ -335,11 +405,11 @@ function _extractDialogueLines(rawText){
                 qOut.push({role:qRole,text:qTxt});
             }
         }
-        if(qOut.length>=2)return qOut;
+        if(qOut.length>=2)return mergeRoles(qOut);
     }
 
     /* 6 ── Return whichever gave more results ───────────────── */
-    return inlineOut.length>=screenOut.length?inlineOut:screenOut;
+    return mergeRoles(inlineOut.length>=screenOut.length?inlineOut:screenOut);
 }
 
 function parseScript(text){
