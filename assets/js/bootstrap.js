@@ -236,11 +236,11 @@ document.addEventListener('DOMContentLoaded',function(){
         pt=setTimeout(updateParse,350);
     };
     $('load-example').onclick=function(){
-        $('script-input').value=EXAMPLE;
-        S.language='en';
-        syncScriptLanguageSelects();
+        var lang=S.language||'en';
+        $('script-input').value=EXAMPLE[lang]||EXAMPLE.en;
+        S._langManualOverride=true; /* don't re-detect language from the example */
         updateParse();
-        toast('Example dialogue loaded.','success');
+        toast('Example dialogue loaded ('+(LANG[lang]?LANG[lang].name:'English')+').','success');
     };
     if($('copy-script-btn'))$('copy-script-btn').onclick=function(){
         var text=($('script-input').value||'').trim();
