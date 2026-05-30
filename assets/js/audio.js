@@ -6,7 +6,16 @@ function getVoice(lc){
     var v=speechSynthesis.getVoices();
     if(!v.length)return null;
     var p=lc.split('-')[0];
-    return v.find(function(x){return x.lang===lc})||v.find(function(x){return x.lang.startsWith(p)})||v[0];
+    var candidates=v.filter(function(x){return x.lang===lc||x.lang.startsWith(p+'-')||x.lang===p});
+    if(!candidates.length)return null;
+    function score(name){
+        if(/Enhanced|Premium/i.test(name))return 4;
+        if(/Siri/i.test(name))return 3;
+        if(/Natural/i.test(name))return 2;
+        if(/Google/i.test(name))return 1;
+        return 0;
+    }
+    return candidates.slice().sort(function(a,b){return score(b.name)-score(a.name)})[0];
 }
 function speak(text,onEnd,isUserLine){
     stopSpeaking();
@@ -22,18 +31,29 @@ function speakBrowser(text,onEnd,isUserLine){
     speechSynthesis.cancel();
     /* Chrome bug workaround: small delay after cancel() before speak() */
     var lc=LANG[S.language];
-    setTimeout(function(){
-        var u=new SpeechSynthesisUtterance(text);
+    var parts=text.split(/([.!?]+)/);
+    var sentences=[];
+    for(var i=0;i<parts.length;i+=2){
+        var s=(parts[i]+(parts[i+1]||'')).trim();
+        if(s)sentences.push(s);
+    }
+    if(!sentences.length)sentences=[text];
+    var idx=0;
+    var slowNpc=S.npcSlowReplay&&!isUserLine;
+    function speakNext(){
+        if(idx>=sentences.length){S.isSpeaking=false;if(onEnd)onEnd();return}
+        var u=new SpeechSynthesisUtterance(sentences[idx]);
         u.lang=lc.tts;
-        var v=getVoice(lc.tts);
-        if(v)u.voice=v;
-        var slowNpc=S.npcSlowReplay&&!isUserLine;
-        u.rate=slowNpc?0.5:0.9;
+        var voice=getVoice(lc.tts);
+        if(voice)u.voice=voice;
+        u.rate=slowNpc?0.5:0.88;
+        u.pitch=1.0;
         S.isSpeaking=true;
-        u.onend=function(){S.isSpeaking=false;if(onEnd)onEnd()};
+        u.onend=function(){idx++;if(idx<sentences.length){setTimeout(speakNext,120);}else{S.isSpeaking=false;if(onEnd)onEnd();}};
         u.onerror=function(){S.isSpeaking=false;if(onEnd)onEnd()};
         speechSynthesis.speak(u);
-    },100);
+    }
+    setTimeout(speakNext,100);
     return;
 }
 
