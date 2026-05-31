@@ -135,6 +135,7 @@ function presentationAutoFlow(){
 
         speak(line.text,function(){
             if(S.screen!=='session'||S.mode!=='presentation')return;
+            if(S.lines[S.currentLine]!==line)return; /* line already changed, skip */
             if(S.currentLine>=S.lines.length-1){
                 finishPresentation();
             }else{
