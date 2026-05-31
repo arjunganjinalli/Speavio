@@ -175,8 +175,14 @@ function startSilenceDetection(stream){
             S.currentRMS=rms;
 
             /* Require 8 consecutive frames (400ms) above 0.04 to confirm real speech */
-            if(rms>=0.04){S._speechFrames++;if(S._speechFrames>=8)S._speechDetected=true;}
-            else{S._speechFrames=0;}
+            if(rms>=0.04){
+                S._speechFrames++;
+                if(S._speechFrames>=8&&!S._speechDetected){
+                    S._speechDetected=true;
+                    S.speechDetected=true;
+                    if(typeof renderIA==='function')renderIA();
+                }
+            }else{S._speechFrames=0;}
 
             /* Update vol bar */
             var vb=document.getElementById('vol-fill');
@@ -249,6 +255,7 @@ function startRec(){
     S.recognition.continuous=true;
     S.recognition.interimResults=true;
     S.recognition.maxAlternatives=1;
+    S.speechDetected=false;
     S.isRecording=true;
     S.userInput='';
     S.presState=PS.REC;

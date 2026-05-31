@@ -289,31 +289,21 @@ function renderContext(){
    INTERACTION AREA
 ═══════════════════════════════════════════════════════════════ */
 
-/* ── Animate Listening→Recording indicator while mic is open ── */
+/* ── Animate Listening indicator while waiting for valid speech ── */
 function _startListenAnim(){
     if(S._listenAnim){clearInterval(S._listenAnim);S._listenAnim=null;}
     var ticks=0;
     var countdown=7;
     S._listenAnim=setInterval(function(){
         var ls=document.getElementById('listen-status');
-        var ld=document.getElementById('listen-dot');
         var lc=document.getElementById('listen-countdown');
-        if(!ls||!S.isRecording){clearInterval(S._listenAnim);S._listenAnim=null;return;}
-        if(S._speechDetected){
-            ls.textContent='Recording...';
-            ls.className='text-xs text-coral-400 font-semibold tracking-wide';
-            if(ld)ld.style.background='var(--sf-status-recording)';
-            if(lc)lc.style.display='none';
-        }else{
-            ticks++;
-            var dotCount=(ticks%3)+1;
-            ls.textContent='Listening'+'.'.repeat(dotCount);
-            ls.className='text-xs text-copper-400 font-semibold tracking-wide';
-            if(ld)ld.style.background='#b45309';
-            if(ticks%2===0&&countdown>0)countdown--;
-            if(lc)lc.textContent=countdown+'s';
-            if(countdown===0){clearInterval(S._listenAnim);S._listenAnim=null;stopAllRec();}
-        }
+        if(!ls||!S.isRecording||S.speechDetected){clearInterval(S._listenAnim);S._listenAnim=null;return;}
+        ticks++;
+        var dotCount=(ticks%3)+1;
+        ls.textContent='Listening'+'.'.repeat(dotCount);
+        if(ticks%2===0&&countdown>0)countdown--;
+        if(lc)lc.textContent=countdown+'s';
+        if(countdown===0){clearInterval(S._listenAnim);S._listenAnim=null;stopAllRec();}
     },500);
 }
 
@@ -335,22 +325,34 @@ function renderPracticeIA(area,line,isU){
         var h='<div class="flex flex-col gap-3">';
 
         if(S.isRecording){
-            /* ── RECORDING STATE: volume bar, live transcript, stop button ── */
-            h+='<div class="flex items-center justify-center gap-2 mb-1">'
-                            +'<span id="listen-dot" style="width:8px;height:8px;border-radius:50%;background:#b45309;display:inline-block;animation:mp 1s ease-out infinite"></span>'
-              +'<span id="listen-status" class="text-xs text-copper-400 font-semibold tracking-wide">Listening.</span>'
-              +'<span id="listen-countdown" class="text-[10px] text-sf-300 ml-1">7s</span>'
-              +'</div>'
-              +'<div class="vol-bar-track"><div id="vol-fill" class="vol-bar-fill" style="width:0%"></div></div>'
-              +'<div class="flex justify-between text-[10px] text-sf-300">'
-              +'<span>Voice level</span>'
-              +'<span>Auto-stop in <span id="sil-count" class="silence-countdown text-coral-400">2s</span> of silence</span>'
-              +'</div>'
-              +(S.userInput?'<div class="bg-sf-800/60 rounded-lg px-4 py-2 border border-white/5 text-left mt-1"><p id="live-text" class="text-sm text-sf-200 italic leading-snug">'+esc(S.userInput)+'</p></div>':'')
-              +'<div class="flex flex-col items-center gap-2 mt-1">'
-              +'<button class="mic-btn mic-btn-lg recording" onclick="stopAllRec()" title="Stop recording"><i class="fas fa-stop"></i></button>'
-              +'<p class="text-xs text-coral-400 font-medium">Tap to stop early</p>'
-              +'</div>';
+            if(!S.speechDetected){
+                /* ── LISTENING STATE: waiting for valid speech ── */
+                h+='<div class="flex items-center justify-center gap-2 mb-1">'
+                  +'<span id="listen-dot" style="width:8px;height:8px;border-radius:50%;background:#b45309;display:inline-block;animation:mp 1s ease-out infinite"></span>'
+                  +'<span id="listen-status" class="text-xs text-copper-400 font-semibold tracking-wide">Listening.</span>'
+                  +'<span id="listen-countdown" class="text-[10px] text-sf-300 ml-1">7s</span>'
+                  +'</div>'
+                  +'<div class="flex flex-col items-center gap-2 mt-3">'
+                  +'<button class="mic-btn mic-btn-lg recording" onclick="stopAllRec()" title="Cancel"><i class="fas fa-stop"></i></button>'
+                  +'<p class="text-xs text-sf-300 font-medium">Tap to cancel</p>'
+                  +'</div>';
+            }else{
+                /* ── RECORDING STATE: speech confirmed, show vol bar and transcript ── */
+                h+='<div class="flex items-center justify-center gap-2 mb-1">'
+                  +'<span style="width:8px;height:8px;border-radius:50%;background:var(--sf-status-recording);display:inline-block;animation:mp 1s ease-out infinite"></span>'
+                  +'<span class="text-xs text-coral-400 font-semibold tracking-wide">RECORDING</span>'
+                  +'</div>'
+                  +'<div class="vol-bar-track"><div id="vol-fill" class="vol-bar-fill" style="width:0%"></div></div>'
+                  +'<div class="flex justify-between text-[10px] text-sf-300">'
+                  +'<span>Voice level</span>'
+                  +'<span>Auto-stop in <span id="sil-count" class="silence-countdown text-coral-400">2s</span> of silence</span>'
+                  +'</div>'
+                  +(S.userInput?'<div class="bg-sf-800/60 rounded-lg px-4 py-2 border border-white/5 text-left mt-1"><p id="live-text" class="text-sm text-sf-200 italic leading-snug">'+esc(S.userInput)+'</p></div>':'')
+                  +'<div class="flex flex-col items-center gap-2 mt-1">'
+                  +'<button class="mic-btn mic-btn-lg recording" onclick="stopAllRec()" title="Stop recording"><i class="fas fa-stop"></i></button>'
+                  +'<p class="text-xs text-coral-400 font-medium">Tap to stop early</p>'
+                  +'</div>';
+            }
         }else if(S.isProcessing){
             h+='<div class="flex items-center justify-center gap-2.5 py-3"><div class="spinner"></div><span class="text-sm text-sf-300">Evaluating...</span></div>';
         }else{
@@ -367,7 +369,7 @@ function renderPracticeIA(area,line,isU){
         }
         h+='</div>';
         area.innerHTML=h;
-        if(S.isRecording)_startListenAnim();
+        if(S.isRecording&&!S.speechDetected)_startListenAnim();
         var inp=$('txt-in');
         if(inp&&!S.isRecording){
             inp.oninput=function(e){S.userInput=e.target.value};
@@ -459,31 +461,51 @@ function renderPresentationIA(area,line,isU){
         ────────────────────────────────────────────────────────── */
         case PS.REC:
             var dispText=getHintText(line.text)||line.text;
-            area.innerHTML='<div class="flex flex-col items-center gap-4 py-2">'
-                +'<div class="text-center w-full max-w-lg">'
-                +'<div class="flex items-center justify-center gap-2 mb-2">'
-                +'<span id="listen-dot" style="width:8px;height:8px;border-radius:50%;background:#b45309;display:inline-block;animation:mp 1s ease-out infinite"></span>'
-                +'<span id="listen-status" class="text-xs text-copper-400 font-semibold tracking-wide">Listening.</span>'
-                +'<span id="listen-countdown" class="text-[10px] text-sf-300 ml-1">7s</span>'
-                +'</div>'
-                +'<div class="bg-white/3 rounded-xl px-5 py-3 border border-white/5 mb-3">'
-                +'<p class="text-base text-sf-100 font-medium leading-relaxed">'+esc(dispText)+'</p>'
-                +'</div>'
-                +'<div class="space-y-1.5 mb-1">'
-                +'<div class="vol-bar-track"><div id="vol-fill" class="vol-bar-fill" style="width:0%"></div></div>'
-                +'<div class="flex justify-between text-[10px] text-sf-300">'
-                +'<span>Voice level</span>'
-                +'<span>Auto-stop in <span id="sil-count" class="silence-countdown text-coral-400">2s</span> of silence</span>'
-                +'</div>'
-                +'</div>'
-                +(S.userInput?'<div class="bg-sf-800/60 rounded-lg px-4 py-2 border border-white/5 text-left"><p id="live-text" class="text-sm text-sf-200 italic leading-snug">'+esc(S.userInput)+'</p></div>':'')
-                +'</div>'
-                +'<div class="flex flex-col items-center gap-2">'
-                +'<button class="mic-btn mic-btn-lg recording" onclick="stopAllRec()" title="Stop recording"><i class="fas fa-stop"></i></button>'
-                +'<p class="text-xs text-coral-400 font-medium">Tap to stop early</p>'
-                +'</div>'
-                +'</div>';
-            _startListenAnim();
+            if(!S.speechDetected){
+                /* ── LISTENING STATE ── */
+                area.innerHTML='<div class="flex flex-col items-center gap-4 py-2">'
+                    +'<div class="text-center w-full max-w-lg">'
+                    +'<div class="flex items-center justify-center gap-2 mb-2">'
+                    +'<span id="listen-dot" style="width:8px;height:8px;border-radius:50%;background:#b45309;display:inline-block;animation:mp 1s ease-out infinite"></span>'
+                    +'<span id="listen-status" class="text-xs text-copper-400 font-semibold tracking-wide">Listening.</span>'
+                    +'<span id="listen-countdown" class="text-[10px] text-sf-300 ml-1">7s</span>'
+                    +'</div>'
+                    +'<div class="bg-white/3 rounded-xl px-5 py-3 border border-white/5 mb-3">'
+                    +'<p class="text-base text-sf-100 font-medium leading-relaxed">'+esc(dispText)+'</p>'
+                    +'</div>'
+                    +'</div>'
+                    +'<div class="flex flex-col items-center gap-2">'
+                    +'<button class="mic-btn mic-btn-lg recording" onclick="stopAllRec()" title="Cancel"><i class="fas fa-stop"></i></button>'
+                    +'<p class="text-xs text-sf-300 font-medium">Tap to cancel</p>'
+                    +'</div>'
+                    +'</div>';
+                _startListenAnim();
+            }else{
+                /* ── RECORDING STATE ── */
+                area.innerHTML='<div class="flex flex-col items-center gap-4 py-2">'
+                    +'<div class="text-center w-full max-w-lg">'
+                    +'<div class="flex items-center justify-center gap-2 mb-2">'
+                    +'<span style="width:8px;height:8px;border-radius:50%;background:var(--sf-status-recording);display:inline-block;animation:mp 1s ease-out infinite"></span>'
+                    +'<span class="text-xs text-coral-400 font-semibold tracking-wide">RECORDING</span>'
+                    +'</div>'
+                    +'<div class="bg-white/3 rounded-xl px-5 py-3 border border-white/5 mb-3">'
+                    +'<p class="text-base text-sf-100 font-medium leading-relaxed">'+esc(dispText)+'</p>'
+                    +'</div>'
+                    +'<div class="space-y-1.5 mb-1">'
+                    +'<div class="vol-bar-track"><div id="vol-fill" class="vol-bar-fill" style="width:0%"></div></div>'
+                    +'<div class="flex justify-between text-[10px] text-sf-300">'
+                    +'<span>Voice level</span>'
+                    +'<span>Auto-stop in <span id="sil-count" class="silence-countdown text-coral-400">2s</span> of silence</span>'
+                    +'</div>'
+                    +'</div>'
+                    +(S.userInput?'<div class="bg-sf-800/60 rounded-lg px-4 py-2 border border-white/5 text-left"><p id="live-text" class="text-sm text-sf-200 italic leading-snug">'+esc(S.userInput)+'</p></div>':'')
+                    +'</div>'
+                    +'<div class="flex flex-col items-center gap-2">'
+                    +'<button class="mic-btn mic-btn-lg recording" onclick="stopAllRec()" title="Stop recording"><i class="fas fa-stop"></i></button>'
+                    +'<p class="text-xs text-coral-400 font-medium">Tap to stop early</p>'
+                    +'</div>'
+                    +'</div>';
+            }
             break;
 
         /* ── STATE: EVAL ──────────────────────────────────────────
@@ -620,8 +642,20 @@ function retryPresLine(){
 }
 
 function skipLine(){
-    S.userResponses[S.currentLine]=null;
-    advanceLine();
+    var idx = S.currentLine;
+    S.userResponses[idx] = null;
+    S.lineScores[idx] = null;
+    if(idx >= S.lines.length - 1){
+        if(S.mode === 'presentation') finishPresentation();
+        else showReport();
+        return;
+    }
+    S.currentLine = idx + 1;
+    S.userInput = '';
+    S.isProcessing = false;
+    S.presState = PS.HIDDEN;
+    renderSession();
+    if(S.mode === 'presentation') setTimeout(presentationAutoFlow, 400);
 }
 
 /* ═══════════════════════════════════════════════════════════════
