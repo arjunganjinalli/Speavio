@@ -655,7 +655,6 @@ function skipLine(){
     S.isProcessing = false;
     S.presState = PS.HIDDEN;
     renderSession();
-    if(S.mode === 'presentation') setTimeout(presentationAutoFlow, 400);
 }
 
 /* ═══════════════════════════════════════════════════════════════
