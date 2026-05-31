@@ -215,10 +215,10 @@ function shareScorecardImage(){
             });
         })
         .then(function(blob){
-            var filename='speakflow-scorecard-'+Date.now()+'.png';
+            var filename='voqua-scorecard-'+Date.now()+'.png';
             var file=new File([blob],filename,{type:'image/png'});
             if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
-                return navigator.share({title:'My SpeakFlow Scorecard',text:'My latest SpeakFlow report',files:[file]})
+                return navigator.share({title:'My Voqua Scorecard',text:'My latest Voqua report',files:[file]})
                     .then(function(){toast('Scorecard shared.','success')})
                     .catch(function(err){if(err&&err.name!=='AbortError')throw err});
             }
@@ -359,7 +359,7 @@ function exportJSON(){
     var data={session:{language:S.language,mode:S.mode,hintLevel:S.hintLevel,duration:Math.round((Date.now()-S.sessionStart)/1000),timestamp:new Date().toISOString(),model:_workingModel||MODEL},overall:{avgScore:scores.length?Math.round(scores.reduce(function(a,b){return a+b},0)/scores.length):0,bestScore:scores.length?Math.max.apply(null,scores):0,linesEvaluated:scores.length,totalLines:S.lines.length},lines:S.lines.map(function(l,i){return{index:i,role:l.role,isUser:S.userRoles.indexOf(l.role)!==-1,expectedText:l.text,userResponse:S.userResponses[i]||null,score:S.lineScores[i]!=null?S.lineScores[i]:null,feedback:S.lineDetails[i]||null,attempts:S.attemptCount[i]||0,hasAudio:!!S.audioClips[i]}})};
     var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     var u=URL.createObjectURL(blob);
-    var a=document.createElement('a');a.href=u;a.download='speakflow-report-'+Date.now()+'.json';a.click();URL.revokeObjectURL(u);
+    var a=document.createElement('a');a.href=u;a.download='voqua-report-'+Date.now()+'.json';a.click();URL.revokeObjectURL(u);
     toast('Report exported.','success');
 }
 
@@ -373,7 +373,7 @@ function exportPrint(){
     var statusRecording=rs.getPropertyValue('--sf-status-recording').trim()||'#D4736E';
     var rows=S.lines.map(function(l,i){var sc=S.lineScores[i],resp=S.userResponses[i],det=S.lineDetails[i],isU=S.userRoles.indexOf(l.role)!==-1;return '<tr style="border-bottom:1px solid #ddd;'+(!isU?'opacity:.68':'')+'"><td style="padding:8px;font-size:13px">'+(i+1)+'</td><td style="padding:8px;font-size:13px;font-weight:600">'+esc(l.role)+'</td><td style="padding:8px;font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(l.text)+'</td><td style="padding:8px;font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(resp?esc(resp):'--')+'</td><td style="padding:8px;font-size:13px;text-align:center;'+(sc!=null&&sc<50?'color:'+statusRecording+';font-weight:700':'')+'">'+(sc!=null?sc:'--')+'</td><td style="padding:8px;font-size:12px;color:#555;max-width:160px">'+(det&&det.encouragement?esc(det.encouragement):'--')+'</td></tr>'}).join('');
     var modeLabel=S.mode==='presentation'?'Presentation':'Practice';
-    var html='<!DOCTYPE html><html><head><title>SpeakFlow Report</title><style>body{font-family:system-ui,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;color:#222}h1{font-size:28px;margin-bottom:4px;color:'+chartPrimary+'}h2{font-size:16px;color:#666;font-weight:400;margin-bottom:20px}.stats{display:flex;gap:24px;margin-bottom:24px}.stat{text-align:center}.stat .val{font-size:32px;font-weight:700}.stat .lbl{font-size:12px;color:#888}table{width:100%;border-collapse:collapse}th{text-align:left;padding:8px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#888;border-bottom:2px solid #ddd}</style></head><body><h1>SpeakFlow Report</h1><h2>'+LANG[S.language].name+' &middot; '+modeLabel+' &middot; '+new Date().toLocaleDateString()+'</h2><div class="stats"><div class="stat"><div class="val">'+avg+'</div><div class="lbl">Average</div></div><div class="stat"><div class="val">'+(scores.length?Math.max.apply(null,scores):0)+'</div><div class="lbl">Best</div></div><div class="stat"><div class="val">'+S.lines.length+'</div><div class="lbl">Lines</div></div><div class="stat"><div class="val">'+(elapsed>=60?Math.floor(elapsed/60)+'m '+elapsed%60+'s':elapsed+'s')+'</div><div class="lbl">Time</div></div></div><table><thead><tr><th>#</th><th>Role</th><th>Expected</th><th>You Said</th><th>Score</th><th>Feedback</th></tr></thead><tbody>'+rows+'</tbody></table><script>window.onload=function(){window.print()}<\/script></body></html>';
+    var html='<!DOCTYPE html><html><head><title>Voqua Report</title><style>body{font-family:system-ui,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;color:#222}h1{font-size:28px;margin-bottom:4px;color:'+chartPrimary+'}h2{font-size:16px;color:#666;font-weight:400;margin-bottom:20px}.stats{display:flex;gap:24px;margin-bottom:24px}.stat{text-align:center}.stat .val{font-size:32px;font-weight:700}.stat .lbl{font-size:12px;color:#888}table{width:100%;border-collapse:collapse}th{text-align:left;padding:8px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#888;border-bottom:2px solid #ddd}</style></head><body><h1>Voqua Report</h1><h2>'+LANG[S.language].name+' &middot; '+modeLabel+' &middot; '+new Date().toLocaleDateString()+'</h2><div class="stats"><div class="stat"><div class="val">'+avg+'</div><div class="lbl">Average</div></div><div class="stat"><div class="val">'+(scores.length?Math.max.apply(null,scores):0)+'</div><div class="lbl">Best</div></div><div class="stat"><div class="val">'+S.lines.length+'</div><div class="lbl">Lines</div></div><div class="stat"><div class="val">'+(elapsed>=60?Math.floor(elapsed/60)+'m '+elapsed%60+'s':elapsed+'s')+'</div><div class="lbl">Time</div></div></div><table><thead><tr><th>#</th><th>Role</th><th>Expected</th><th>You Said</th><th>Score</th><th>Feedback</th></tr></thead><tbody>'+rows+'</tbody></table><script>window.onload=function(){window.print()}<\/script></body></html>';
     var w=window.open('','_blank');
     if(w){w.document.write(html);w.document.close()}else toast('Pop-up blocked.','error');
 }
@@ -382,7 +382,7 @@ function exportPDF(){
     var target=document.querySelector('#complete-screen .max-w-4xl');
     if(!target){toast('Report is not ready yet.','error');return}
     if(typeof html2pdf==='undefined'){toast('PDF tool is loading. Try again.','info');return}
-    var fileName='speakflow-report-'+Date.now()+'.pdf';
+    var fileName='voqua-report-'+Date.now()+'.pdf';
     var bg=getComputedStyle(document.documentElement).getPropertyValue('--sf-bg').trim()||'#0D0D0F';
     var opt={
         margin:[10,10,10,10],

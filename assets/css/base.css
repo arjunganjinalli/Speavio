@@ -329,3 +329,5 @@
         .action-btn--copper:hover{background:color-mix(in srgb,var(--sf-accent-copper) 26%,transparent)}
         .action-btn--coral{background:color-mix(in srgb,var(--sf-accent-coral) 18%,transparent);border-color:color-mix(in srgb,var(--sf-accent-coral) 40%,transparent);color:var(--sf-accent-coral)}
         .action-btn--coral:hover{background:color-mix(in srgb,var(--sf-accent-coral) 26%,transparent)}
+        html:not([data-theme='light']) #onboarding-next-btn{background:rgba(255,255,255,0.1)!important;border:1px solid rgba(255,255,255,0.2)!important;color:#E8B88A!important;}
+        html:not([data-theme='light']) #onboarding-prev-btn{background:rgba(255,255,255,0.07)!important;border:1px solid rgba(255,255,255,0.15)!important;color:#C8C6C1!important;}

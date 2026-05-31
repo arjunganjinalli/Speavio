@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded',function(){
     var authPendingTimer=null;
     var authDebugEnabled=/^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname);
     var onboardingSteps=[
-        {title:'Welcome to SpeakFlow',body:'Use the top tabs to switch between Practice, Presentation, and Settings.'},
+        {title:'Welcome to Voqua',body:'Use the top tabs to switch between Practice, Presentation, and Settings.'},
         {title:'Start Fast',body:'Paste a script, pick your role, and start. Choose Practice for guided coaching or Presentation for full delivery mode.'},
         {title:'Practice Controls',body:'In session, press Space to start/stop recording and Enter to submit your line.'},
         {title:'Reports and Progress',body:'After each session, review line scores, bookmark hard lines, share scorecards, and export PDF/JSON.'}

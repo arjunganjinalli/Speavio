@@ -34,12 +34,12 @@ var _workingModel = null; /* cached once a working model is found */
 var API_PROXY = '/api/chat';
 
 var STORAGE_KEYS={
-    sessions:'speakflow_sessions',
-    scripts:'speakflow_scripts',
-    bookmarks:'speakflow_bookmarks',
-    leaderboard:'speakflow_leaderboard',
-    uiTheme:'speakflow_ui_theme',
-    onboardingDone:'speakflow_onboarding_done'
+    sessions:'voqua_sessions',
+    scripts:'voqua_scripts',
+    bookmarks:'voqua_bookmarks',
+    leaderboard:'voqua_leaderboard',
+    uiTheme:'voqua_ui_theme',
+    onboardingDone:'voqua_onboarding_done'
 };
 
 var UI_TEXT={
