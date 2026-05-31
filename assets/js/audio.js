@@ -158,6 +158,7 @@ function startSilenceDetection(stream){
         S.silenceFrames=0;
         S.recordStartTime=Date.now();
         S.currentRMS=0;
+        S._speechDetected=false;
         var timeBuf=new Uint8Array(S.analyser.fftSize);
 
         S.silenceInterval=setInterval(function(){
@@ -172,12 +173,18 @@ function startSilenceDetection(stream){
             var rms=Math.sqrt(sumSq/timeBuf.length);
             S.currentRMS=rms;
 
+            /* Mark that real speech (not just ambient noise) has occurred */
+            if(rms>=0.04)S._speechDetected=true;
+
             /* Update vol bar */
             var vb=document.getElementById('vol-fill');
             if(vb){var pct=Math.min(100,rms*600);vb.style.width=pct+'%'}
 
             /* Don't check silence in first MIN_REC_MS */
             if(Date.now()-S.recordStartTime<S.MIN_REC_MS){S.silenceFrames=0;return}
+
+            /* Only count silence frames after actual speech has been detected */
+            if(!S._speechDetected){S.silenceFrames=0;return}
 
             if(rms<S.SILENCE_THRESH){S.silenceFrames++}else{S.silenceFrames=0}
 
@@ -297,17 +304,23 @@ function finishRecording(){
     playRecCue('stop');
     S.userResponses[S.currentLine]=S.userInput.trim()||null;
 
+    var _wordCount=S.userInput.trim().split(/\s+/).filter(Boolean).length;
     if(S.mode==='presentation'){
-        /* Auto-flow: save response, advance to next line */
-        S.attemptCount[S.currentLine]=(S.attemptCount[S.currentLine]||0)+1;
-        if(S.currentLine>=S.lines.length-1){
-            finishPresentation();
+        if(_wordCount>=2){
+            /* Auto-flow: save response, advance to next line */
+            S.attemptCount[S.currentLine]=(S.attemptCount[S.currentLine]||0)+1;
+            if(S.currentLine>=S.lines.length-1){
+                finishPresentation();
+            }else{
+                advanceLine();
+            }
         }else{
-            advanceLine();
+            S.presState=PS.HINT;
+            renderIA();
         }
     }else{
         /* Practice mode */
-        if(S.userInput.trim()){
+        if(_wordCount>=2){
             handleSubmission();
         }else{
             S.presState=PS.HINT;
@@ -325,17 +338,23 @@ function stopAllRec(){
     playRecCue('stop');
     S.userResponses[S.currentLine]=S.userInput.trim()||null;
 
+    var _wordCount=S.userInput.trim().split(/\s+/).filter(Boolean).length;
     if(S.mode==='presentation'){
-        /* Auto-flow: save response, advance to next line */
-        S.attemptCount[S.currentLine]=(S.attemptCount[S.currentLine]||0)+1;
-        if(S.currentLine>=S.lines.length-1){
-            finishPresentation();
+        if(_wordCount>=2){
+            /* Auto-flow: save response, advance to next line */
+            S.attemptCount[S.currentLine]=(S.attemptCount[S.currentLine]||0)+1;
+            if(S.currentLine>=S.lines.length-1){
+                finishPresentation();
+            }else{
+                advanceLine();
+            }
         }else{
-            advanceLine();
+            S.presState=PS.HINT;
+            renderIA();
         }
     }else{
-        if(S.userInput.trim()){handleSubmission()}
-        else renderIA();
+        if(_wordCount>=2){handleSubmission()}
+        else{S.presState=PS.HINT;renderIA();}
     }
 }
 
