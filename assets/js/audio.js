@@ -367,6 +367,20 @@ function stopAllRec(){
     }
 }
 
+/* ── Called by the 7-second no-speech UI timer ── */
+function handleNoSpeechTimeout(){
+    if(!S.isRecording)return;
+    S.isRecording=false;
+    stopSilenceDetection();
+    try{if(S.recognition)S.recognition.stop()}catch(e){}
+    stopMR();
+    playRecCue('stop');
+    S.speechDetected=false;
+    S._speechDetected=false;
+    S._speechFrames=0;
+    if(typeof skipLine==='function')skipLine();
+}
+
 /* ═══════════════════════════════════════════════════════════════
    JSON EXTRACTOR — Sanitizes AI responses before parsing
    Handles: markdown code blocks, leading text, nested JSON, etc.

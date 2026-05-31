@@ -303,7 +303,7 @@ function _startListenAnim(){
         ls.textContent='Listening'+'.'.repeat(dotCount);
         if(ticks%2===0&&countdown>0)countdown--;
         if(lc)lc.textContent=countdown+'s';
-        if(countdown===0){clearInterval(S._listenAnim);S._listenAnim=null;stopAllRec();}
+        if(countdown===0){clearInterval(S._listenAnim);S._listenAnim=null;handleNoSpeechTimeout();}
     },500);
 }
 
