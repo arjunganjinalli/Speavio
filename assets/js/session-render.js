@@ -288,6 +288,35 @@ function renderContext(){
 /* ═══════════════════════════════════════════════════════════════
    INTERACTION AREA
 ═══════════════════════════════════════════════════════════════ */
+
+/* ── Animate Listening→Recording indicator while mic is open ── */
+function _startListenAnim(){
+    if(S._listenAnim){clearInterval(S._listenAnim);S._listenAnim=null;}
+    var ticks=0;
+    var countdown=7;
+    S._listenAnim=setInterval(function(){
+        var ls=document.getElementById('listen-status');
+        var ld=document.getElementById('listen-dot');
+        var lc=document.getElementById('listen-countdown');
+        if(!ls||!S.isRecording){clearInterval(S._listenAnim);S._listenAnim=null;return;}
+        if(S._speechDetected){
+            ls.textContent='Recording...';
+            ls.className='text-xs text-coral-400 font-semibold tracking-wide';
+            if(ld)ld.style.background='var(--sf-status-recording)';
+            if(lc)lc.style.display='none';
+        }else{
+            ticks++;
+            var dotCount=(ticks%3)+1;
+            ls.textContent='Listening'+'.'.repeat(dotCount);
+            ls.className='text-xs text-copper-400 font-semibold tracking-wide';
+            if(ld)ld.style.background='#b45309';
+            if(ticks%2===0&&countdown>0)countdown--;
+            if(lc)lc.textContent=countdown+'s';
+            if(countdown===0){clearInterval(S._listenAnim);S._listenAnim=null;stopAllRec();}
+        }
+    },500);
+}
+
 function renderIA(){
     var area=$('interaction-area');
     var line=S.lines[S.currentLine];
@@ -308,8 +337,9 @@ function renderPracticeIA(area,line,isU){
         if(S.isRecording){
             /* ── RECORDING STATE: volume bar, live transcript, stop button ── */
             h+='<div class="flex items-center justify-center gap-2 mb-1">'
-                            +'<span style="width:8px;height:8px;border-radius:50%;background:var(--sf-status-recording);display:inline-block;animation:mp 1s ease-out infinite"></span>'
-              +'<span class="text-xs text-coral-400 font-semibold tracking-wide">RECORDING</span>'
+                            +'<span id="listen-dot" style="width:8px;height:8px;border-radius:50%;background:#b45309;display:inline-block;animation:mp 1s ease-out infinite"></span>'
+              +'<span id="listen-status" class="text-xs text-copper-400 font-semibold tracking-wide">Listening.</span>'
+              +'<span id="listen-countdown" class="text-[10px] text-sf-300 ml-1">7s</span>'
               +'</div>'
               +'<div class="vol-bar-track"><div id="vol-fill" class="vol-bar-fill" style="width:0%"></div></div>'
               +'<div class="flex justify-between text-[10px] text-sf-300">'
@@ -337,6 +367,7 @@ function renderPracticeIA(area,line,isU){
         }
         h+='</div>';
         area.innerHTML=h;
+        if(S.isRecording)_startListenAnim();
         var inp=$('txt-in');
         if(inp&&!S.isRecording){
             inp.oninput=function(e){S.userInput=e.target.value};
@@ -431,8 +462,9 @@ function renderPresentationIA(area,line,isU){
             area.innerHTML='<div class="flex flex-col items-center gap-4 py-2">'
                 +'<div class="text-center w-full max-w-lg">'
                 +'<div class="flex items-center justify-center gap-2 mb-2">'
-                +'<span style="width:8px;height:8px;border-radius:50%;background:var(--sf-status-recording);display:inline-block;animation:mp 1s ease-out infinite"></span>'
-                +'<span class="text-xs text-coral-400 font-semibold tracking-wide">RECORDING</span>'
+                +'<span id="listen-dot" style="width:8px;height:8px;border-radius:50%;background:#b45309;display:inline-block;animation:mp 1s ease-out infinite"></span>'
+                +'<span id="listen-status" class="text-xs text-copper-400 font-semibold tracking-wide">Listening.</span>'
+                +'<span id="listen-countdown" class="text-[10px] text-sf-300 ml-1">7s</span>'
                 +'</div>'
                 +'<div class="bg-white/3 rounded-xl px-5 py-3 border border-white/5 mb-3">'
                 +'<p class="text-base text-sf-100 font-medium leading-relaxed">'+esc(dispText)+'</p>'
@@ -451,6 +483,7 @@ function renderPresentationIA(area,line,isU){
                 +'<p class="text-xs text-coral-400 font-medium">Tap to stop early</p>'
                 +'</div>'
                 +'</div>';
+            _startListenAnim();
             break;
 
         /* ── STATE: EVAL ──────────────────────────────────────────
