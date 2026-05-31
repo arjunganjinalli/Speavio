@@ -159,6 +159,7 @@ function startSilenceDetection(stream){
         S.recordStartTime=Date.now();
         S.currentRMS=0;
         S._speechDetected=false;
+        S._speechFrames=0;
         var timeBuf=new Uint8Array(S.analyser.fftSize);
 
         S.silenceInterval=setInterval(function(){
@@ -173,8 +174,9 @@ function startSilenceDetection(stream){
             var rms=Math.sqrt(sumSq/timeBuf.length);
             S.currentRMS=rms;
 
-            /* Mark that real speech (not just ambient noise) has occurred */
-            if(rms>=0.04)S._speechDetected=true;
+            /* Require 8 consecutive frames (400ms) above 0.04 to confirm real speech */
+            if(rms>=0.04){S._speechFrames++;if(S._speechFrames>=8)S._speechDetected=true;}
+            else{S._speechFrames=0;}
 
             /* Update vol bar */
             var vb=document.getElementById('vol-fill');
@@ -306,7 +308,7 @@ function finishRecording(){
 
     var _wordCount=S.userInput.trim().split(/\s+/).filter(Boolean).length;
     if(S.mode==='presentation'){
-        if(_wordCount>=2){
+        if(S._speechDetected&&_wordCount>=2){
             /* Auto-flow: save response, advance to next line */
             S.attemptCount[S.currentLine]=(S.attemptCount[S.currentLine]||0)+1;
             if(S.currentLine>=S.lines.length-1){
@@ -320,7 +322,7 @@ function finishRecording(){
         }
     }else{
         /* Practice mode */
-        if(_wordCount>=2){
+        if(S._speechDetected&&_wordCount>=2){
             handleSubmission();
         }else{
             S.presState=PS.HINT;
@@ -340,7 +342,7 @@ function stopAllRec(){
 
     var _wordCount=S.userInput.trim().split(/\s+/).filter(Boolean).length;
     if(S.mode==='presentation'){
-        if(_wordCount>=2){
+        if(S._speechDetected&&_wordCount>=2){
             /* Auto-flow: save response, advance to next line */
             S.attemptCount[S.currentLine]=(S.attemptCount[S.currentLine]||0)+1;
             if(S.currentLine>=S.lines.length-1){
@@ -353,7 +355,7 @@ function stopAllRec(){
             renderIA();
         }
     }else{
-        if(_wordCount>=2){handleSubmission()}
+        if(S._speechDetected&&_wordCount>=2){handleSubmission()}
         else{S.presState=PS.HINT;renderIA();}
     }
 }
