@@ -18,19 +18,19 @@ function pushSessionHistory(avgScore,totalLines,totalUserLines,linesEvaluated){
 
 function buildScoreTrendSVG(scores){
     if(!scores.length)return '';
-    var w=320,h=90,pad=12;
+    var w=320,h=90,pad=20;
     var min=Math.min.apply(null,scores),max=Math.max.apply(null,scores);
     var span=Math.max(1,max-min);
     var pts=scores.map(function(s,i){
         var x=pad+(i*(w-2*pad))/Math.max(1,scores.length-1);
-        var y=h-pad-((s-min)/span)*(h-2*pad);
+        var y=pad+((max-s)/span)*(h-2*pad);
         return x.toFixed(1)+','+y.toFixed(1);
     }).join(' ');
     var last=scores[scores.length-1]||0;
     return '<svg viewBox="0 0 '+w+' '+h+'" class="w-full h-[90px]">'
         +'<polyline points="'+pts+'" fill="none" stroke="var(--sf-chart-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>'
         +'<line x1="'+pad+'" y1="'+(h-pad)+'" x2="'+(w-pad)+'" y2="'+(h-pad)+'" stroke="var(--sf-chart-axis)" stroke-width="1"/>'
-        +'<text x="'+(w-pad)+'" y="16" fill="var(--sf-chart-accent)" font-size="11" text-anchor="end">Latest: '+last+'</text>'
+        +'<text x="'+(w-pad)+'" y="14" fill="var(--sf-chart-accent)" font-size="11" text-anchor="end">Latest: '+last+'</text>'
         +'</svg>';
 }
 
@@ -320,7 +320,7 @@ function renderReportUI(){
         }
         /* Word-level diff: show green/red words */
         if(resp)dh+=renderWordDiffHTML(line.text,resp);
-        var ah='';if(clip){var clipUrl=URL.createObjectURL(clip);_reportBlobURLs.push(clipUrl);ah='<div class="mt-2"><audio controls src="'+clipUrl+'" class="w-full h-8"></audio></div>'}
+        var ah='';if(clip&&clip.size>10000){var clipUrl=URL.createObjectURL(clip);_reportBlobURLs.push(clipUrl);ah='<div class="mt-2"><audio controls src="'+clipUrl+'" class="w-full h-8"></audio></div>'}
         var gradeLabel=sc!=null?(sc>=80?'<span class="text-[10px] bg-sage-500/15 text-sage-400 px-2 py-0.5 rounded font-semibold">Excellent</span>':sc>=50?'<span class="text-[10px] bg-copper-500/15 text-copper-400 px-2 py-0.5 rounded font-semibold">Good</span>':'<span class="text-[10px] bg-coral-500/15 text-coral-400 px-2 py-0.5 rounded font-semibold">Needs Work</span>'):(resp?'<span class="text-[10px] bg-white/5 text-sf-300 px-2 py-0.5 rounded font-semibold">No eval</span>':'');
         return '<div class="report-card '+(isLow?'low':'')+' bg-white/2 rounded-xl px-4 py-3 border '+(isLow?'border-coral-500/25':'border-white/5')+'"><div class="flex items-start gap-3"><span class="text-xs '+(isLow?'text-coral-400':'text-sf-300')+' font-mono w-6 text-right flex-shrink-0 pt-0.5">'+(i+1)+'</span><div class="flex-1 min-w-0"><div class="flex items-center gap-2 flex-wrap"><span class="text-xs '+(isLow?'text-coral-400':'text-copper-400')+' font-semibold">'+esc(line.role)+'</span>'+sb+gradeLabel+bm+'</div>'+dh+ah+'</div></div></div>';
     }).join('');
@@ -336,9 +336,9 @@ function playClip(i){
 function playLatestRecording(){
     var idx=-1;
     for(var i=S.lines.length-1;i>=0;i--){
-        if(S.audioClips[i]){idx=i;break}
+        if(S.audioClips[i]&&S.audioClips[i].size>10000){idx=i;break}
     }
-    if(idx===-1){toast('No recording available yet.','info');return}
+    if(idx===-1){toast('No voice recording available.','info');return}
     playClip(idx);
     toast('Playing your latest recording.','success');
 }
@@ -379,21 +379,96 @@ function exportPrint(){
 }
 
 function exportPDF(){
-    var target=document.querySelector('#complete-screen .max-w-4xl');
-    if(!target){toast('Report is not ready yet.','error');return}
     if(typeof html2pdf==='undefined'){toast('PDF tool is loading. Try again.','info');return}
-    var fileName='voqua-report-'+Date.now()+'.pdf';
-    var bg=getComputedStyle(document.documentElement).getPropertyValue('--sf-bg').trim()||'#0D0D0F';
+    var scores=[],k;
+    for(k in S.lineScores){if(S.lineScores[k]!=null)scores.push(S.lineScores[k])}
+    var avg=scores.length?Math.round(scores.reduce(function(a,b){return a+b},0)/scores.length):0;
+    var best=scores.length?Math.max.apply(null,scores):0;
+    var evalCount=scores.length;
+    var userLineCount=S.lines.filter(function(l){return isUserRole(l.role)}).length;
+    var elapsed=Math.round((Date.now()-S.sessionStart)/1000);
+    var ts=elapsed>=60?Math.floor(elapsed/60)+'m '+Math.floor(elapsed%60)+'s':elapsed+'s';
+    var modeLabel=S.mode==='presentation'?'Presentation':'Practice';
+    var avgCol=avg>=80?'#166534':avg>=50?'#92400e':'#991b1b';
+    var rows=S.lines.map(function(l,i){
+        var sc=S.lineScores[i],resp=S.userResponses[i],det=S.lineDetails[i];
+        var isU=isUserRole(l.role);
+        var scCol=sc!=null?(sc>=80?'#166534':sc>=50?'#92400e':'#991b1b'):'#9ca3af';
+        var scTxt=sc!=null?sc+(isU?'%':''):(isU?'Skipped':'NPC');
+        var rowBg=isU?'#ffffff':'#f9fafb';
+        var roleCol=isU?'#92400e':'#6b7280';
+        var fb=[];
+        if(det){
+            if(det.accuracy)fb.push('<b>Accuracy:</b> '+esc(det.accuracy));
+            if(det.grammar)fb.push('<b>Pronunciation:</b> '+esc(det.grammar));
+            if(det.fluency)fb.push('<b>Fluency:</b> '+esc(det.fluency));
+            if(det.encouragement)fb.push('<i style="color:#166534">'+esc(det.encouragement)+'</i>');
+            if(det.corrections&&det.corrections.length)fb.push('<span style="color:#991b1b">\u2717 '+det.corrections.map(function(c){return esc(c)}).join(' \u00b7 ')+'</span>');
+            if(det.suggestions&&det.suggestions.length)fb.push('<span style="color:#92400e">\ud83d\udca1 '+det.suggestions.map(function(s){return esc(s)}).join(' \u00b7 ')+'</span>');
+        }
+        return '<tr style="background:'+rowBg+';border-bottom:1px solid #e5e7eb">'
+            +'<td style="padding:9px 6px;font-size:11px;color:#9ca3af;text-align:center;width:28px">'+(i+1)+'</td>'
+            +'<td style="padding:9px 8px;font-size:12px;font-weight:700;color:'+roleCol+';white-space:nowrap">'+esc(l.role)+'</td>'
+            +'<td style="padding:9px 8px;font-size:12px;color:#374151">'+esc(l.text)+'</td>'
+            +'<td style="padding:9px 8px;font-size:12px;color:'+(resp?'#111827':'#9ca3af')+'">'+(resp?esc(resp):'<i>\u2014</i>')+'</td>'
+            +'<td style="padding:9px 8px;font-size:13px;font-weight:800;text-align:center;color:'+scCol+'">'+scTxt+'</td>'
+            +'<td style="padding:9px 8px;font-size:11px;color:#4b5563;line-height:1.6">'+fb.join('<br>')+'</td>'
+            +'</tr>';
+    }).join('');
+    var statBlocks=[
+        ['Avg Score',avg+'%',avgCol],
+        ['Best Score',best+'%',best>=80?'#166534':best>=50?'#92400e':'#991b1b'],
+        ['Evaluated',evalCount+' / '+userLineCount,'#374151'],
+        ['Total Lines',S.lines.length,'#374151'],
+        ['Time',ts,'#374151']
+    ].map(function(s){
+        return '<div style="flex:1;background:#f3f4f6;border-radius:8px;padding:12px 8px;text-align:center;min-width:80px">'
+            +'<div style="font-size:22px;font-weight:800;color:'+s[2]+'">'+s[1]+'</div>'
+            +'<div style="font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#9ca3af;margin-top:2px">'+s[0]+'</div>'
+            +'</div>';
+    }).join('');
+    var html='<!DOCTYPE html><html><head><meta charset="utf-8"></head>'
+        +'<body style="font-family:Helvetica Neue,Arial,sans-serif;margin:0;padding:36px 40px;background:#fff;color:#111">'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #C8956C;padding-bottom:18px;margin-bottom:24px">'
+        +'<div>'
+        +'<div style="font-size:26px;font-weight:900;color:#C8956C;margin-bottom:4px">Voqua \u2014 Session Report</div>'
+        +'<div style="font-size:13px;color:#6b7280">'+esc(LANG[S.language].name)+' \u00b7 '+modeLabel+' Mode \u00b7 '+new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})+'</div>'
+        +(S.scriptLabel?'<div style="font-size:12px;color:#9ca3af;margin-top:2px">Script: '+esc(S.scriptLabel)+'</div>':'')
+        +'</div>'
+        +'<div style="text-align:right">'
+        +'<div style="font-size:52px;font-weight:900;line-height:1;color:'+avgCol+'">'+avg+'</div>'
+        +'<div style="font-size:11px;color:#9ca3af;letter-spacing:.5px;text-transform:uppercase">Avg Score</div>'
+        +'</div></div>'
+        +'<div style="display:flex;gap:12px;margin-bottom:28px;flex-wrap:wrap">'+statBlocks+'</div>'
+        +'<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#9ca3af;margin-bottom:10px">Line-by-Line Breakdown</div>'
+        +'<table style="width:100%;border-collapse:collapse">'
+        +'<thead><tr style="background:#f3f4f6;border-bottom:2px solid #d1d5db">'
+        +'<th style="padding:8px 6px;font-size:10px;text-transform:uppercase;color:#9ca3af;text-align:center">#</th>'
+        +'<th style="padding:8px;font-size:10px;text-transform:uppercase;color:#9ca3af;text-align:left">Role</th>'
+        +'<th style="padding:8px;font-size:10px;text-transform:uppercase;color:#9ca3af;text-align:left">Expected</th>'
+        +'<th style="padding:8px;font-size:10px;text-transform:uppercase;color:#9ca3af;text-align:left">You Said</th>'
+        +'<th style="padding:8px;font-size:10px;text-transform:uppercase;color:#9ca3af;text-align:center">Score</th>'
+        +'<th style="padding:8px;font-size:10px;text-transform:uppercase;color:#9ca3af;text-align:left">Feedback</th>'
+        +'</tr></thead>'
+        +'<tbody>'+rows+'</tbody></table>'
+        +'<div style="margin-top:36px;padding-top:14px;border-top:1px solid #e5e7eb;font-size:10px;color:#d1d5db;text-align:center">Generated by Voqua \u00b7 '+new Date().toISOString()+'</div>'
+        +'</body></html>';
+    var container=document.createElement('div');
+    container.style.cssText='position:fixed;left:-9999px;top:0;width:794px;background:#fff';
+    container.innerHTML=html;
+    document.body.appendChild(container);
     var opt={
-        margin:[10,10,10,10],
-        filename:fileName,
+        margin:[8,8,8,8],
+        filename:'voqua-report-'+Date.now()+'.pdf',
         image:{type:'jpeg',quality:0.98},
-        html2canvas:{scale:2,useCORS:true,backgroundColor:bg},
+        html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false},
         jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
     };
-    html2pdf().set(opt).from(target).save().then(function(){
+    html2pdf().set(opt).from(container).save().then(function(){
+        document.body.removeChild(container);
         toast('PDF exported.','success');
     }).catch(function(err){
+        document.body.removeChild(container);
         console.error(err);
         toast('Could not export PDF.','error');
     });
