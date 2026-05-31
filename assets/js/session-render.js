@@ -642,19 +642,22 @@ function retryPresLine(){
 }
 
 function skipLine(){
-    var idx = S.currentLine;
-    S.userResponses[idx] = null;
-    S.lineScores[idx] = null;
-    if(idx >= S.lines.length - 1){
-        if(S.mode === 'presentation') finishPresentation();
+    var idx=S.currentLine;
+    S.userResponses[idx]=null;
+    S.lineScores[idx]=null;
+    if(idx>=S.lines.length-1){
+        if(S.mode==='presentation')finishPresentation();
         else showReport();
         return;
     }
-    S.currentLine = idx + 1;
-    S.userInput = '';
-    S.isProcessing = false;
-    S.presState = PS.HIDDEN;
+    S.currentLine=idx+1;
+    S.userInput='';
+    S.isProcessing=false;
+    S.presState=PS.HIDDEN;
     renderSession();
+    if(S.mode==='presentation'){
+        setTimeout(presentationAutoFlow,400);
+    }
 }
 
 /* ═══════════════════════════════════════════════════════════════
