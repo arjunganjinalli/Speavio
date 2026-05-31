@@ -642,17 +642,24 @@ function retryPresLine(){
 }
 
 function skipLine(){
+    stopSpeaking();
     var idx=S.currentLine;
     S.userResponses[idx]=null;
     S.lineScores[idx]=null;
+    S.isRecording=false;
+    S.isProcessing=false;
+    S.userInput='';
+    stopSilenceDetection();
+    try{if(S.recognition)S.recognition.stop()}catch(e){}
+    stopMR();
+    clearTimeout(S._noSpeechTimer);
+    S._noSpeechTimer=null;
     if(idx>=S.lines.length-1){
         if(S.mode==='presentation')finishPresentation();
         else showReport();
         return;
     }
     S.currentLine=idx+1;
-    S.userInput='';
-    S.isProcessing=false;
     S.presState=PS.HIDDEN;
     renderSession();
     if(S.mode==='presentation'){
