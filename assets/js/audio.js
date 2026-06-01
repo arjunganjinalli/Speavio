@@ -127,12 +127,13 @@ function getMime(){
 function startMR(stream){
     S.audioStream=stream;
     var m=getMime();
+    var lineIdx=S.currentLine;
     S.mediaRecorder=new MediaRecorder(stream,m?{mimeType:m}:undefined);
     S.audioChunks=[];
     S.mediaRecorder.ondataavailable=function(e){if(e.data.size>0)S.audioChunks.push(e.data)};
     S.mediaRecorder.onstop=function(){
         if(S.audioChunks.length)
-            S.audioClips[S.currentLine]=new Blob(S.audioChunks,{type:S.mediaRecorder.mimeType||'audio/webm'});
+            S.audioClips[lineIdx]=new Blob(S.audioChunks,{type:S.mediaRecorder.mimeType||'audio/webm'});
     };
     S.mediaRecorder.start();
 }
