@@ -353,16 +353,6 @@ function showReport(){
     renderReportUI();
 }
 
-function exportJSON(){
-    var scores=[],k;
-    for(k in S.lineScores){if(S.lineScores[k]!=null)scores.push(S.lineScores[k])}
-    var data={session:{language:S.language,mode:S.mode,hintLevel:S.hintLevel,duration:Math.round((Date.now()-S.sessionStart)/1000),timestamp:new Date().toISOString(),model:_workingModel||MODEL},overall:{avgScore:scores.length?Math.round(scores.reduce(function(a,b){return a+b},0)/scores.length):0,bestScore:scores.length?Math.max.apply(null,scores):0,linesEvaluated:scores.length,totalLines:S.lines.length},lines:S.lines.map(function(l,i){return{index:i,role:l.role,isUser:S.userRoles.indexOf(l.role)!==-1,expectedText:l.text,userResponse:S.userResponses[i]||null,score:S.lineScores[i]!=null?S.lineScores[i]:null,feedback:S.lineDetails[i]||null,attempts:S.attemptCount[i]||0,hasAudio:!!S.audioClips[i]}})};
-    var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-    var u=URL.createObjectURL(blob);
-    var a=document.createElement('a');a.href=u;a.download='voqua-report-'+Date.now()+'.json';a.click();URL.revokeObjectURL(u);
-    toast('Report exported.','success');
-}
-
 function exportPrint(){
     var scores=[],k;
     for(k in S.lineScores){if(S.lineScores[k]!=null)scores.push(S.lineScores[k])}
