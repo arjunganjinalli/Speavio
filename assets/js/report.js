@@ -677,7 +677,7 @@ function exportPDF(){
         +'</body></html>';
 
     var container=document.createElement('div');
-    container.style.cssText='position:absolute;left:-9999px;top:0;width:794px;background:#fff';
+    container.style.cssText='position:fixed;left:-9999px;top:0;width:794px;background:#fff;z-index:-1';
     container.innerHTML=html;
     document.body.appendChild(container);
     var opt={
@@ -687,14 +687,16 @@ function exportPDF(){
         html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0,windowWidth:794},
         jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
     };
-    html2pdf().set(opt).from(container).save().then(function(){
-        document.body.removeChild(container);
-        toast('PDF exported.','success');
-    }).catch(function(err){
-        document.body.removeChild(container);
-        console.error(err);
-        toast('Could not export PDF.','error');
-    });
+    setTimeout(function(){
+        html2pdf().set(opt).from(container).save().then(function(){
+            document.body.removeChild(container);
+            toast('PDF exported.','success');
+        }).catch(function(err){
+            document.body.removeChild(container);
+            console.error(err);
+            toast('Could not export PDF.','error');
+        });
+    },300);
 }
 
 function restartSession(){
