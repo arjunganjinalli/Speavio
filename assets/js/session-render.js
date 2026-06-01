@@ -582,6 +582,7 @@ function showPresEvalCard(){
     var cw=ev.correct_words||'--';
     var isYes=cw.toLowerCase().indexOf('yes')!==-1;
     var isLast=S.currentLine>=S.lines.length-1;
+    var clip=S.audioClips[S.currentLine];
 
     var h='<div class="eval-in overflow-auto max-h-[calc(100vh-300px)]">'
         +'<div class="flex items-start gap-4">'
@@ -620,6 +621,7 @@ function showPresEvalCard(){
     }
 
     h+=renderWordDiffHTML(S.lines[S.currentLine].text,S.userResponses[S.currentLine]);
+    if(clip&&clip.size>10000){h+='<button onclick="playClip('+S.currentLine+')" class="w-full py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/8 text-sf-200 text-sm transition-all flex items-center justify-center gap-2"><i class="fas fa-play text-xs"></i>Play My Recording</button>';}
     h+='<div class="flex gap-2">'
         +'<button onclick="retryPresLine()" class="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/8 text-sf-100 font-display font-semibold text-sm transition-all"><i class="fas fa-rotate-right mr-1.5"></i>Retry</button>'
         +'<button onclick="advanceLine()" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 font-display font-semibold text-sm hover:from-amber-400 hover:to-yellow-400 transition-all">'+(isLast?'Finish':'Continue')+' <i class="fas fa-arrow-right ml-1.5"></i></button>'
@@ -711,6 +713,7 @@ function showPracticeEval(ev){
     var isYes=cw.toLowerCase().indexOf('yes')!==-1;
     var C=326.73,off=C*(1-sc/100);
     var isLast=S.currentLine>=S.lines.length-1;
+    var clip=S.audioClips[S.currentLine];
 
     var h='<div class="eval-in"><div class="flex items-start gap-4 sm:gap-5">'
         +'<div class="flex-shrink-0"><svg viewBox="0 0 120 120" width="88" height="88"><circle cx="60" cy="60" r="52" fill="none" class="score-ring-bg" stroke-width="8"/><circle id="ev-ring" cx="60" cy="60" r="52" fill="none" stroke="'+col+'" stroke-width="8" stroke-dasharray="'+C+'" stroke-dashoffset="'+C+'" stroke-linecap="round" transform="rotate(-90 60 60)" class="score-ring-fill"/><text x="60" y="52" text-anchor="middle" fill="var(--sf-fg)" font-size="26" font-weight="700" font-family="Space Grotesk">'+sc+'</text><text x="60" y="70" text-anchor="middle" fill="'+col+'" font-size="8" font-weight="600" letter-spacing=".5">'+lbl.toUpperCase()+'</text></svg></div>'
@@ -726,6 +729,7 @@ function showPracticeEval(ev){
     if(ev.suggestions&&ev.suggestions.length){h+='<div><div class="text-[10px] text-copper-400 font-semibold uppercase mb-1">Tips</div>';ev.suggestions.forEach(function(sg){h+='<li class="text-xs text-sf-200 list-none"><i class="fas fa-lightbulb text-copper-400 mr-1.5" style="font-size:10px"></i>'+esc(sg)+'</li>'});h+='</div>'}
     if(ev.deliveryNotes&&ev.deliveryNotes.length){h+='<div><div class="text-[10px] text-sage-400 font-semibold uppercase mb-1">Delivery</div>';ev.deliveryNotes.forEach(function(n){h+='<li class="text-xs text-sf-200 list-none"><i class="fas fa-wave-square text-sage-400 mr-1.5" style="font-size:10px"></i>'+esc(n)+'</li>'});h+='</div>'}
     h+=renderWordDiffHTML(S.lines[S.currentLine].text,S.userResponses[S.currentLine]);
+    if(clip&&clip.size>10000){h+='<button onclick="playClip('+S.currentLine+')" class="w-full py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/8 text-sf-200 text-sm transition-all flex items-center justify-center gap-2"><i class="fas fa-play text-xs"></i>Play My Recording</button>';}
     if(S.mode==='practice'){
         /* Practice picker flow: Try Again stays on same line, Back to List returns to picker */
         h+='<div class="flex gap-2 mt-1">'
