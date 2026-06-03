@@ -734,7 +734,7 @@ function showPracticeEval(ev){
         /* Practice picker flow: Try Again stays on same line, Back to List returns to picker */
         h+='<div class="flex gap-2 mt-1">'
             +'<button onclick="retryCurrentPracticeLine()" class="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/8 text-sf-100 font-display font-semibold text-sm transition-all"><i class="fas fa-rotate-right mr-1.5"></i>Try Again</button>'
-            +'<button onclick="returnToPracticeLinePicker()" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 font-display font-semibold text-sm hover:from-amber-400 hover:to-yellow-400 transition-all"><i class="fas fa-list mr-1.5"></i>Back to List</button>'
+            +'<button onclick="returnToPracticeLinePicker()" class="flex-1 py-2.5 rounded-xl bg-white/8 hover:bg-white/12 border border-white/10 text-sf-300 font-display font-semibold text-sm transition-all"><i class="fas fa-list mr-1.5"></i>Back to List</button>'
             +'</div>';
     }else{
         h+='<button onclick="advanceLine()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 font-display font-semibold text-sm hover:from-amber-400 hover:to-yellow-400 transition-all mt-1">'+(isLast?'Finish Session':'Next Line')+' <i class="fas fa-arrow-right ml-2"></i></button>';
