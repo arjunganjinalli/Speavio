@@ -175,7 +175,8 @@ document.addEventListener('DOMContentLoaded',function(){
         if($('assist-fab'))$('assist-fab').classList.remove('hidden');
 
         db.collection('users').doc(S.authUser.uid).get().then(function(doc){
-            if(doc.exists){
+            var needsOnboarding=!doc.exists||(doc.exists&&!doc.data().role);
+            if(!needsOnboarding){
                 S.userProfile=doc.data();
                 if(!appInitialized){
                     runAuthenticatedStartup();
@@ -185,6 +186,7 @@ document.addEventListener('DOMContentLoaded',function(){
                     showSetupTab('home');
                 }
             }else{
+                if(doc.exists)S.userProfile=doc.data();
                 switchScreen('onboarding');
                 if(typeof initOnboardingScreen==='function')initOnboardingScreen();
             }
