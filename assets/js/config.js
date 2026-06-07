@@ -157,7 +157,8 @@ var S={
     _langManualOverride:false,
     authReady:false,
     isAuthenticated:false,
-    authUser:null
+    authUser:null,
+    userProfile:null
 };
 
 var $=function(id){return document.getElementById(id)};

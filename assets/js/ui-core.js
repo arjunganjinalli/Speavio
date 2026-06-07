@@ -152,6 +152,7 @@ function showSetupTab(tab){
     }
     if(tab==='home')refreshHomeProgressSnapshot();
     if(tab==='practice'||tab==='presentation')renderScriptLibraryOptions();
+    if(tab==='settings'&&typeof loadProfileIntoSettings==='function')loadProfileIntoSettings();
 }
 
 function refreshAdvancedState(){

@@ -214,6 +214,38 @@
                 </section>
 
                 <section id="panel-settings" class="setup-panel" role="tabpanel">
+                    <div class="mb-4">
+                        <button onclick="toggleCollapse('profile-section')" class="w-full flex items-center justify-between text-sm font-medium text-sf-200">
+                            <span><i class="fas fa-user-circle text-sage-400 mr-1.5"></i>Profile</span>
+                            <i class="fas fa-chevron-down text-sf-300 text-xs transition-transform" id="profile-section-arrow"></i>
+                        </button>
+                        <div id="profile-section" class="collapse-content">
+                            <div class="pt-3 space-y-3">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-sf-200 mb-1.5">Full Name</label>
+                                        <input id="profile-name" type="text" placeholder="Your full name" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all" autocomplete="name">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-sf-200 mb-1.5">Date of Birth</label>
+                                        <input id="profile-dob" type="date" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 outline-none transition-all">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-sf-200 mb-1.5">School</label>
+                                    <input id="profile-school" type="text" placeholder="Your school name" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all" autocomplete="organization">
+                                </div>
+                                <div>
+                                    <label id="profile-grade-label" class="block text-sm font-medium text-sf-200 mb-1.5">Grade</label>
+                                    <input id="profile-grade" type="text" placeholder="e.g. Grade 10 / Year 2" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all">
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <button onclick="saveProfileFromSettings()" class="px-5 py-2.5 rounded-xl bg-sage-500/15 border border-sage-500/25 text-sage-400 text-sm font-semibold hover:bg-sage-500/25 transition-all">Save Profile</button>
+                                    <span id="profile-save-status" class="text-xs text-sf-300"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-sf-200 mb-2"><i class="fas fa-language text-sage-400 mr-1.5"></i><span data-i18n="systemLanguage">System Language</span></label>
@@ -331,6 +363,81 @@
         </div>
     </div>
 
+    <!-- ONBOARDING -->
+    <div id="onboarding-screen" class="screen flex-col items-center justify-center min-h-screen p-4">
+        <div class="onboarding-card w-full max-w-md">
+            <div class="mb-6">
+                <div class="flex items-center justify-between mb-1">
+                    <h1 class="text-2xl font-display font-bold text-sf-50">Set Up Your Account</h1>
+                    <span id="ob-step-label" class="text-xs text-sf-300">Step 1 of 3</span>
+                </div>
+                <div class="ob-progress-bar mt-3">
+                    <div id="ob-progress-fill" class="ob-progress-fill" style="width:33.33%"></div>
+                </div>
+            </div>
+
+            <div id="ob-step-1">
+                <p class="text-sm text-sf-200 mb-5">How will you use Voqua?</p>
+                <div class="space-y-3">
+                    <button class="onboarding-role-card w-full" data-role="student" onclick="selectOnboardingRole('student')">
+                        <div class="flex items-center gap-4">
+                            <div class="ob-role-icon"><i class="fas fa-user-graduate text-xl"></i></div>
+                            <div class="text-left">
+                                <div class="font-display font-semibold text-sf-50">I'm a Student</div>
+                                <div class="text-xs text-sf-300 mt-0.5">Practice scripts, get AI feedback, track progress</div>
+                            </div>
+                        </div>
+                    </button>
+                    <button class="onboarding-role-card w-full" data-role="teacher" onclick="selectOnboardingRole('teacher')">
+                        <div class="flex items-center gap-4">
+                            <div class="ob-role-icon"><i class="fas fa-chalkboard-teacher text-xl"></i></div>
+                            <div class="text-left">
+                                <div class="font-display font-semibold text-sf-50">I'm a Teacher</div>
+                                <div class="text-xs text-sf-300 mt-0.5">Create assignments, manage classes, review submissions</div>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+                <p id="ob-error-1" class="ob-error hidden mt-3">Please select a role to continue.</p>
+            </div>
+
+            <div id="ob-step-2" class="hidden space-y-4">
+                <p class="text-sm text-sf-200 mb-1">Tell us a bit about yourself.</p>
+                <div>
+                    <label class="block text-sm font-medium text-sf-200 mb-1.5">Full Name</label>
+                    <input id="ob-name" type="text" placeholder="Your full name" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all" autocomplete="name">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-sf-200 mb-1.5">Date of Birth</label>
+                    <input id="ob-dob" type="date" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-sf-200 mb-1.5">School</label>
+                    <input id="ob-school" type="text" placeholder="Your school name" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all" autocomplete="organization">
+                </div>
+                <div>
+                    <label id="ob-grade-label" class="block text-sm font-medium text-sf-200 mb-1.5">Grade</label>
+                    <input id="ob-grade" type="text" placeholder="e.g. Grade 10 / Year 2" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all">
+                </div>
+                <p id="ob-error-2" class="ob-error hidden">Please fill in all fields.</p>
+            </div>
+
+            <div id="ob-step-3" class="hidden text-center py-4">
+                <div class="w-16 h-16 rounded-full bg-sage-500/15 border border-sage-500/25 flex items-center justify-center mx-auto mb-5">
+                    <i class="fas fa-circle-check text-3xl text-sage-400"></i>
+                </div>
+                <h2 id="ob-welcome-name" class="text-2xl font-display font-bold text-sf-50 mb-2">Welcome!</h2>
+                <p class="text-sm text-sf-200">Your profile is set up and ready to go.</p>
+                <p id="ob-submit-error" class="ob-error hidden mt-3">Something went wrong. Please try again.</p>
+            </div>
+
+            <div class="flex gap-3 mt-6">
+                <button id="ob-back-btn" onclick="obBack()" class="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-sf-200 text-sm font-semibold hover:bg-white/10 transition-all hidden">Back</button>
+                <button id="ob-next-btn" onclick="obNext()" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 text-sm font-semibold hover:from-amber-400 hover:to-yellow-400 transition-all">Next</button>
+            </div>
+        </div>
+    </div>
+
     <!-- SESSION -->
     <div id="session-screen" class="screen flex-col h-screen">
         <header class="glass border-b border-white/5 px-4 py-3 flex items-center justify-between flex-shrink-0 z-10 gap-2">
@@ -439,6 +546,8 @@
 
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
     <script>
     var firebaseConfig={
         apiKey:"AIzaSyCxTXw3x1K7yoWX2kMbmRt_pyoo3hG5bIM",
@@ -452,6 +561,8 @@
     if(typeof firebase!=='undefined'&&!firebase.apps.length){firebase.initializeApp(firebaseConfig)}
     </script>
 
+    <script src="assets/js/firebase-services.js"></script>
+    <script src="assets/js/onboarding.js"></script>
     <script src="assets/js/config.js"></script>
     <script src="assets/js/ui-core.js"></script>
     <script src="assets/js/assistant.js"></script>

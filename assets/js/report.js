@@ -401,7 +401,7 @@ function exportPDF(){
         var resp=S.userResponses[i];
         var det=S.lineDetails[i];
         var isU=S.userRoles.indexOf(l.role)!==-1;
-        var scoreColor=sc!=null?(sc>=80?'#166534':sc>=50?'#92400e':'#991b1b'):'#9ca3af';
+        var scoreColor=sc!=null?(sc>=80?'#166534':sc>=50?'#8f3f0e':'#991b1b'):'#9ca3af';
         var scoreBg=sc!=null?(sc>=80?'#dcfce7':sc>=50?'#fef9c3':'#fee2e2'):'#f3f4f6';
         var rowBg=!isU?'#f9fafb':'#ffffff';
         return '<tr style="border-bottom:1px solid #e5e7eb;background:'+rowBg+'">'

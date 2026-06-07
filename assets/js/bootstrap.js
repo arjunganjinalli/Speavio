@@ -123,6 +123,7 @@ document.addEventListener('DOMContentLoaded',function(){
         clearAuthPendingTimer();
         S.isAuthenticated=false;
         S.authUser=null;
+        S.userProfile=null;
         setAuthDebug('Auth state: signed out');
         renderAuthIdentity(null);
         closeOnboarding(false);
@@ -151,6 +152,11 @@ document.addEventListener('DOMContentLoaded',function(){
         setTimeout(function(){openOnboarding(false)},350);
     }
 
+    function completeOnboardingAndStartApp(){
+        runAuthenticatedStartup();
+        appInitialized=true;
+    }
+
     function handleAuthenticatedUser(user){
         clearAuthPendingTimer();
         S.authReady=true;
@@ -167,13 +173,30 @@ document.addEventListener('DOMContentLoaded',function(){
         if($('assist-panel'))$('assist-panel').classList.remove('hidden');
         if($('assist-fab'))$('assist-fab').classList.remove('hidden');
 
-        if(!appInitialized){
-            runAuthenticatedStartup();
-            appInitialized=true;
-        }else{
-            switchScreen('setup');
-            showSetupTab('home');
-        }
+        db.collection('users').doc(S.authUser.uid).get().then(function(doc){
+            if(doc.exists){
+                S.userProfile=doc.data();
+                if(!appInitialized){
+                    runAuthenticatedStartup();
+                    appInitialized=true;
+                }else{
+                    switchScreen('setup');
+                    showSetupTab('home');
+                }
+            }else{
+                switchScreen('onboarding');
+                if(typeof initOnboardingScreen==='function')initOnboardingScreen();
+            }
+        }).catch(function(err){
+            console.error('Firestore profile check failed:',err);
+            if(!appInitialized){
+                runAuthenticatedStartup();
+                appInitialized=true;
+            }else{
+                switchScreen('setup');
+                showSetupTab('home');
+            }
+        });
     }
 
     function signOutUser(){
