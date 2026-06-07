@@ -156,6 +156,7 @@ document.addEventListener('DOMContentLoaded',function(){
         runAuthenticatedStartup();
         appInitialized=true;
     }
+    window.completeOnboardingAndStartApp=completeOnboardingAndStartApp;
 
     function handleAuthenticatedUser(user){
         clearAuthPendingTimer();
@@ -189,9 +190,16 @@ document.addEventListener('DOMContentLoaded',function(){
             }
         }).catch(function(err){
             console.error('Firestore profile check failed:',err);
+            var uid=S.authUser?S.authUser.uid:'';
+            var profileDone=uid&&localStorage.getItem('voqua_ob_'+uid);
             if(!appInitialized){
-                runAuthenticatedStartup();
-                appInitialized=true;
+                if(profileDone){
+                    runAuthenticatedStartup();
+                    appInitialized=true;
+                }else{
+                    switchScreen('onboarding');
+                    if(typeof initOnboardingScreen==='function')initOnboardingScreen();
+                }
             }else{
                 switchScreen('setup');
                 showSetupTab('home');

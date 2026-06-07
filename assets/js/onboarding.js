@@ -105,6 +105,7 @@ function submitOnboardingProfile() {
     db.collection('users').doc(S.authUser.uid).set(data)
         .then(function() {
             S.userProfile = data;
+            if(S.authUser&&S.authUser.uid)localStorage.setItem('voqua_ob_'+S.authUser.uid,'1');
             completeOnboardingAndStartApp();
         })
         .catch(function(err) {
