@@ -153,6 +153,7 @@ document.addEventListener('DOMContentLoaded',function(){
     }
 
     function completeOnboardingAndStartApp(){
+        console.log('completeOnboardingAndStartApp called');
         runAuthenticatedStartup();
         appInitialized=true;
     }
