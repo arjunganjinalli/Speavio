@@ -137,6 +137,8 @@ function showSetupTab(tab){
     $('panel-home').classList.toggle('active',tab==='home');
     $('panel-mode').classList.toggle('active',tab==='practice'||tab==='presentation');
     $('panel-settings').classList.toggle('active',tab==='settings');
+    if($('panel-classes'))$('panel-classes').classList.toggle('active',tab==='classes');
+    initClassesTab();
 
     if(tab==='practice'||tab==='presentation'){
         S.mode=tab;
@@ -153,6 +155,7 @@ function showSetupTab(tab){
     if(tab==='home')refreshHomeProgressSnapshot();
     if(tab==='practice'||tab==='presentation')renderScriptLibraryOptions();
     if(tab==='settings'&&typeof loadProfileIntoSettings==='function')loadProfileIntoSettings();
+    if(tab==='classes')renderClassesTabContent();
 }
 
 function refreshAdvancedState(){
@@ -223,6 +226,147 @@ function readStoreJSON(key,fallback){
 function writeStoreJSON(key,val){
     var writeKey=isAccountScopedStorageKey(key)?getScopedStorageKey(key):key;
     try{localStorage.setItem(writeKey,JSON.stringify(val))}catch(e){}
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CLASSES TAB
+═══════════════════════════════════════════════════════════════ */
+
+function initClassesTab(){
+    var btn=$('tab-classes');
+    if(!btn)return;
+    var show=!!(S.userProfile&&S.userProfile.role);
+    btn.classList.toggle('hidden',!show);
+}
+
+function renderClassesTabContent(){
+    var role=S.userProfile&&S.userProfile.role;
+    var teacherView=$('classes-teacher-view');
+    var studentView=$('classes-student-view');
+    if(!teacherView||!studentView)return;
+    teacherView.classList.toggle('hidden',role!=='teacher');
+    studentView.classList.toggle('hidden',role!=='student');
+    if(role==='teacher')loadTeacherClasses();
+    if(role==='student')loadStudentClasses();
+}
+
+function loadTeacherClasses(){
+    if(!S.authUser||!S.authUser.uid)return;
+    var list=$('teacher-classes-list');
+    if(!list)return;
+    list.innerHTML='<div class="text-sf-300 text-sm">Loading classes…</div>';
+    getTeacherClasses(S.authUser.uid).then(function(classes){
+        if(!classes.length){
+            list.innerHTML='<div class="text-sf-300 text-sm">No classes yet. Create your first class above.</div>';
+            return;
+        }
+        list.innerHTML=classes.map(function(c){
+            var count=(c.studentUids&&c.studentUids.length)||0;
+            return '<div class="mini-card">'
+                +'<div class="flex items-start justify-between gap-3">'
+                +'<div>'
+                +'<div class="font-display font-semibold text-sf-50">'+esc(c.className)+'</div>'
+                +'<div class="text-xs text-sf-300 mt-0.5">'+esc(c.subject)+'</div>'
+                +'</div>'
+                +'<div class="flex items-center gap-2 flex-shrink-0">'
+                +'<button onclick="copyClassCode(\'' +c.classCode+ '\')" title="Copy class code" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-copper-500/12 border border-copper-500/20 text-copper-300 text-xs font-mono font-semibold hover:bg-copper-500/22 transition-all">'
+                +'<i class="fas fa-copy text-[10px]"></i>'+esc(c.classCode)
+                +'</button>'
+                +'<span class="text-xs text-sf-300">'+count+' student'+(count===1?'':'s')+'</span>'
+                +'</div>'
+                +'</div>'
+                +'</div>';
+        }).join('');
+    }).catch(function(err){
+        list.innerHTML='<div class="text-coral-400 text-sm">Failed to load classes.</div>';
+        console.error('loadTeacherClasses error:',err);
+    });
+}
+
+function loadStudentClasses(){
+    if(!S.authUser||!S.authUser.uid)return;
+    var list=$('student-classes-list');
+    if(!list)return;
+    list.innerHTML='<div class="text-sf-300 text-sm">Loading classes…</div>';
+    getStudentClasses(S.authUser.uid).then(function(classes){
+        if(!classes.length){
+            list.innerHTML='<div class="text-sf-300 text-sm">You haven\'t joined any classes yet.</div>';
+            return;
+        }
+        list.innerHTML=classes.map(function(c){
+            return '<div class="mini-card">'
+                +'<div class="font-display font-semibold text-sf-50">'+esc(c.className)+'</div>'
+                +'<div class="text-xs text-sf-300 mt-0.5">'+esc(c.subject)+(c.school?' &middot; '+esc(c.school):'')+'</div>'
+                +'</div>';
+        }).join('');
+    }).catch(function(err){
+        list.innerHTML='<div class="text-coral-400 text-sm">Failed to load classes.</div>';
+        console.error('loadStudentClasses error:',err);
+    });
+}
+
+function handleJoinClass(){
+    var input=$('join-class-code');
+    var code=(input?input.value:'').trim().toUpperCase();
+    var errEl=$('join-class-error');
+    var successEl=$('join-class-success');
+    if(errEl)errEl.classList.add('hidden');
+    if(successEl)successEl.classList.add('hidden');
+    if(code.length!==6){
+        if(errEl){errEl.textContent='Please enter a valid 6-character class code.';errEl.classList.remove('hidden');}
+        return;
+    }
+    var school=(S.userProfile&&S.userProfile.school)||'';
+    joinClass(S.authUser.uid,code,school).then(function(classData){
+        if(successEl){successEl.textContent='Joined "'+classData.className+'" successfully!';successEl.classList.remove('hidden');}
+        if(input)input.value='';
+        loadStudentClasses();
+    }).catch(function(err){
+        if(errEl){errEl.textContent=err.message||'Failed to join class.';errEl.classList.remove('hidden');}
+    });
+}
+
+function openCreateClassModal(){
+    var modal=$('create-class-modal');
+    if(!modal)return;
+    if($('new-class-name'))$('new-class-name').value='';
+    if($('new-class-subject'))$('new-class-subject').value='';
+    var errEl=$('create-class-error');
+    if(errEl)errEl.classList.add('hidden');
+    modal.classList.remove('hidden');
+    setTimeout(function(){if($('new-class-name'))$('new-class-name').focus();},80);
+}
+
+function closeCreateClassModal(){
+    var modal=$('create-class-modal');
+    if(modal)modal.classList.add('hidden');
+}
+
+function submitCreateClass(){
+    var name=($('new-class-name')?$('new-class-name').value:'').trim();
+    var subject=($('new-class-subject')?$('new-class-subject').value:'').trim();
+    var errEl=$('create-class-error');
+    if(!name||!subject){
+        if(errEl){errEl.textContent='Please fill in class name and subject.';errEl.classList.remove('hidden');}
+        return;
+    }
+    var school=(S.userProfile&&S.userProfile.school)||'';
+    var saveBtn=$('create-class-save-btn');
+    if(saveBtn){saveBtn.disabled=true;saveBtn.textContent='Saving…';}
+    createClass(S.authUser.uid,name,subject,school).then(function(){
+        closeCreateClassModal();
+        loadTeacherClasses();
+    }).catch(function(err){
+        if(errEl){errEl.textContent=err.message||'Failed to create class.';errEl.classList.remove('hidden');}
+    }).finally(function(){
+        if(saveBtn){saveBtn.disabled=false;saveBtn.textContent='Save';}
+    });
+}
+
+function copyClassCode(code){
+    if(navigator.clipboard){
+        navigator.clipboard.writeText(code).catch(function(){});
+    }
 }
 
 function getSavedSessions(){

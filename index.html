@@ -79,6 +79,7 @@
                     <button id="tab-practice" class="setup-tab-btn" data-tab="practice" role="tab" aria-selected="false"><i class="fa-solid fa-microphone-lines mr-1.5"></i><span data-i18n="navPractice">Practice</span></button>
                     <button id="tab-presentation" class="setup-tab-btn" data-tab="presentation" role="tab" aria-selected="false"><i class="fa-solid fa-masks-theater mr-1.5"></i><span data-i18n="navPresentation">Presentation</span></button>
                     <button id="tab-settings" class="setup-tab-btn" data-tab="settings" role="tab" aria-selected="false"><i class="fa-solid fa-gear mr-1.5"></i><span data-i18n="navSettings">Settings</span></button>
+                    <button id="tab-classes" class="setup-tab-btn hidden" data-tab="classes" role="tab" aria-selected="false"><i class="fa-solid fa-chalkboard mr-1.5"></i>Classes</button>
                 </div>
 
                 <section id="panel-home" class="setup-panel active" role="tabpanel">
@@ -357,9 +358,62 @@
                         </div>
                     </div>
                 </section>
+                <section id="panel-classes" class="setup-panel" role="tabpanel">
+                    <!-- Teacher view -->
+                    <div id="classes-teacher-view" class="hidden">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-xl font-display font-semibold text-sf-50">My Classes</h2>
+                            <button onclick="openCreateClassModal()" class="px-4 py-2 rounded-xl bg-copper-500/15 border border-copper-500/25 text-copper-400 text-sm font-semibold hover:bg-copper-500/25 transition-all"><i class="fas fa-plus mr-1.5"></i>Create New Class</button>
+                        </div>
+                        <div id="teacher-classes-list" class="space-y-3">
+                            <div class="text-sf-300 text-sm">Loading classes&#8230;</div>
+                        </div>
+                    </div>
+                    <!-- Student view -->
+                    <div id="classes-student-view" class="hidden">
+                        <div class="mini-card mb-4">
+                            <h3 class="text-sf-50 font-display font-semibold mb-3">Join a Class</h3>
+                            <div class="flex gap-2">
+                                <input id="join-class-code" type="text" placeholder="Enter 6-character class code" maxlength="6" class="input-glow flex-1 bg-sf-800/60 border border-white/8 rounded-xl px-4 py-2.5 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all" style="text-transform:uppercase">
+                                <button onclick="handleJoinClass()" class="px-4 py-2.5 rounded-xl bg-sage-500/15 border border-sage-500/25 text-sage-400 text-sm font-semibold hover:bg-sage-500/25 transition-all">Join</button>
+                            </div>
+                            <p id="join-class-error" class="text-xs text-coral-400 mt-2 hidden"></p>
+                            <p id="join-class-success" class="text-xs text-sage-400 mt-2 hidden"></p>
+                        </div>
+                        <h3 class="text-sf-50 font-display font-semibold mb-3">My Classes</h3>
+                        <div id="student-classes-list" class="space-y-3">
+                            <div class="text-sf-300 text-sm">Loading classes&#8230;</div>
+                        </div>
+                    </div>
+                </section>
             </div>
 
             <p class="text-center text-sf-300 text-xs mt-6">Home is key-free &middot; Advanced AI is optional &middot; Keys stay local in your browser</p>
+        </div>
+    </div>
+
+    <!-- CREATE CLASS MODAL -->
+    <div id="create-class-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm hidden" role="dialog" aria-modal="true" aria-labelledby="create-class-modal-title">
+        <div class="glass rounded-2xl p-6 w-full max-w-md space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 id="create-class-modal-title" class="text-lg font-display font-semibold text-sf-50">Create New Class</h3>
+                <button onclick="closeCreateClassModal()" class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-sf-300 transition-colors" aria-label="Close"><i class="fas fa-xmark"></i></button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-sm font-medium text-sf-200 mb-1.5">Class Name</label>
+                    <input id="new-class-name" type="text" placeholder="e.g. English 10A" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-sf-200 mb-1.5">Subject</label>
+                    <input id="new-class-subject" type="text" placeholder="e.g. Drama, English, Speech" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all">
+                </div>
+            </div>
+            <p id="create-class-error" class="text-xs text-coral-400 hidden"></p>
+            <div class="flex gap-3 pt-1">
+                <button onclick="closeCreateClassModal()" class="flex-1 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sf-200 text-sm font-semibold hover:bg-white/10 transition-all">Cancel</button>
+                <button id="create-class-save-btn" onclick="submitCreateClass()" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 text-sm font-semibold hover:from-amber-400 hover:to-yellow-400 transition-all">Save</button>
+            </div>
         </div>
     </div>
 
@@ -563,6 +617,7 @@
 
     <script src="assets/js/firebase-services.js"></script>
     <script src="assets/js/onboarding.js"></script>
+    <script src="assets/js/classroom.js"></script>
     <script src="assets/js/config.js"></script>
     <script src="assets/js/ui-core.js"></script>
     <script src="assets/js/assistant.js"></script>
