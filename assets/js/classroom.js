@@ -54,10 +54,9 @@ function getStudentClasses(studentUid) {
 }
 
 function initClassesTab() {
-    var tab = $('panel-classes');
-    if (!tab) return;
     var role = S.userProfile && S.userProfile.role;
-    if (!role) return;
+    var btn = $('tab-classes');
+    if (btn) btn.classList.toggle('hidden', !role);
     var teacherView = $('classes-teacher-view');
     var studentView = $('classes-student-view');
     if (teacherView) teacherView.classList.toggle('hidden', role !== 'teacher');
@@ -68,7 +67,7 @@ function renderClassesTabContent() {
     if (!S.userProfile || !S.authUser) return;
     var role = S.userProfile.role;
     if (role === 'teacher') {
-        var list = $('teacher-class-list');
+        var list = $('teacher-classes-list');
         if (!list) return;
         list.innerHTML = '<div class="flex items-center gap-2 py-3"><div class="spinner"></div><span class="text-sf-300 text-sm">Loading classes...</span></div>';
         getTeacherClasses(S.authUser.uid).then(function(classes) {
@@ -89,7 +88,7 @@ function renderClassesTabContent() {
             }).join('');
         }).catch(function() { list.innerHTML = '<p class="text-coral-400 text-sm">Failed to load classes.</p>'; });
     } else {
-        var list = $('student-class-list');
+        var list = $('student-classes-list');
         if (!list) return;
         list.innerHTML = '<div class="flex items-center gap-2 py-3"><div class="spinner"></div><span class="text-sf-300 text-sm">Loading...</span></div>';
         getStudentClasses(S.authUser.uid).then(function(classes) {
@@ -112,7 +111,7 @@ var _clsCtx = { classId: '', className: '', assignmentId: '', assignmentTitle: '
 function showClassAssignments(classId, className) {
     _clsCtx.classId = classId;
     _clsCtx.className = className;
-    var list = $('teacher-class-list');
+    var list = $('teacher-classes-list');
     if (!list) return;
     list.innerHTML = '<div class="text-sf-300 text-sm">Loading assignments...</div>';
     getClassAssignments(classId).then(function(assignments) {
@@ -145,7 +144,7 @@ function showClassAssignments(classId, className) {
 function showStudentAssignments(classId, className) {
     _clsCtx.classId = classId;
     _clsCtx.className = className;
-    var list = $('student-class-list');
+    var list = $('student-classes-list');
     if (!list) return;
     list.innerHTML = '<div class="text-sf-300 text-sm">Loading assignments...</div>';
     getClassAssignments(classId).then(function(assignments) {
@@ -187,7 +186,7 @@ function startAssignment(assignmentId) {
 function viewSubmissions(assignmentId, title) {
     _clsCtx.assignmentId = assignmentId;
     _clsCtx.assignmentTitle = title;
-    var list = $('teacher-class-list');
+    var list = $('teacher-classes-list');
     if (!list) return;
     list.innerHTML = '<div class="text-sf-300 text-sm">Loading submissions...</div>';
     getAssignmentSubmissions(assignmentId).then(function(submissions) {
