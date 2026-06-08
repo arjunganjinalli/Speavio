@@ -175,6 +175,16 @@ document.addEventListener('DOMContentLoaded',function(){
         if($('assist-panel'))$('assist-panel').classList.remove('hidden');
         if($('assist-fab'))$('assist-fab').classList.remove('hidden');
 
+        // One-time migration: force all existing users through onboarding once
+        if(!localStorage.getItem('voqua_profile_reset_v2')){
+            var _resetUid=S.authUser?S.authUser.uid:'';
+            if(_resetUid){
+                localStorage.removeItem('voqua_ob_'+_resetUid);
+                localStorage.removeItem('voqua_profile_'+_resetUid);
+            }
+            localStorage.setItem('voqua_profile_reset_v2','true');
+        }
+
         db.collection('users').doc(S.authUser.uid).get().then(function(doc){
             var needsOnboarding=!doc.exists||(doc.exists&&!doc.data().role);
             if(!needsOnboarding){
