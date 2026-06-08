@@ -197,6 +197,8 @@ document.addEventListener('DOMContentLoaded',function(){
             var profileDone=uid&&localStorage.getItem('voqua_ob_'+uid);
             if(!appInitialized){
                 if(profileDone){
+                    var cachedProfile=localStorage.getItem('voqua_profile_'+uid);
+                    if(cachedProfile){try{S.userProfile=JSON.parse(cachedProfile);}catch(e){}}
                     runAuthenticatedStartup();
                     appInitialized=true;
                 }else{
