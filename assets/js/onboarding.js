@@ -102,18 +102,23 @@ function submitOnboardingProfile() {
     } else {
         data.subject = $('ob-grade').value.trim();
     }
-    db.collection('users').doc(S.authUser.uid).set(data)
+    var writePromise = db.collection('users').doc(S.authUser.uid).set(data);
+    var timeoutPromise = new Promise(function(_, reject) {
+        setTimeout(function() { reject(new Error('Firestore write timed out after 10s')); }, 10000);
+    });
+    Promise.race([writePromise, timeoutPromise])
         .then(function() {
             console.log('Firestore write success');
             S.userProfile = data;
-            if(S.authUser&&S.authUser.uid)localStorage.setItem('voqua_ob_'+S.authUser.uid,'1');
+            if(S.authUser&&S.authUser.uid) localStorage.setItem('voqua_ob_'+S.authUser.uid,'1');
             completeOnboardingAndStartApp();
         })
         .catch(function(err) {
-            console.error('Failed to save profile:', err);
+            console.error('Firestore write failed or timed out:', err.message);
             var errEl = $('ob-submit-error');
             if (errEl) errEl.classList.remove('hidden');
-            if (nextBtn) { nextBtn.disabled = false; nextBtn.textContent = "Let's get started"; }
+            var nextBtn = $('ob-next-btn');
+            if (nextBtn) { nextBtn.disabled = false; nextBtn.textContent = "Let\u2019s get started"; }
         });
 }
 
