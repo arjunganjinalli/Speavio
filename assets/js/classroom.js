@@ -343,10 +343,3 @@ function submitGrade(submissionId) {
         });
 }
 
-function showClassAssignments(classId, className){
-    toast('Loading assignments for '+className+'...','info');
-}
-
-function showStudentAssignments(classId, className){
-    toast('Loading assignments for '+className+'...','info');
-}
