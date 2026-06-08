@@ -126,12 +126,11 @@ function showClassAssignments(classId, className) {
             html += assignments.map(function(a) {
                 var safeId = a.id.replace(/'/g, "\\'");
                 var safeTitle = esc(a.title).replace(/'/g, "\\'");
-                return '<div class="mini-card mb-3">'
-                    + '<div class="flex items-start justify-between gap-2 flex-wrap">'
-                    + '<div><div class="font-display font-semibold text-sf-50">' + esc(a.title) + '</div>'
-                    + '<div class="text-xs text-sf-300 mt-0.5">Due: ' + esc(a.dueDate || 'No due date') + '</div></div>'
-                    + '<button onclick="viewSubmissions(\'' + safeId + '\',\'' + safeTitle + '\')" class="action-btn action-btn--sage flex-shrink-0">View Submissions</button>'
-                    + '</div></div>';
+                return '<div class="mini-card mb-4">'
+                    + '<div class="font-display font-bold text-lg text-sf-50 mb-1">' + esc(a.title) + '</div>'
+                    + '<div class="text-sm text-sf-300 mb-4"><i class="fas fa-calendar-alt mr-1.5"></i>Due: ' + esc(a.dueDate || 'No due date') + '</div>'
+                    + '<button onclick="viewSubmissions(\'' + safeId + '\',\'' + safeTitle + '\')" style="min-height:44px" class="w-full font-display font-semibold rounded-xl px-4 py-3 bg-sage-500/15 border border-sage-500/25 text-sage-400 hover:bg-sage-500/25 transition-all cursor-pointer"><i class="fas fa-eye mr-2"></i>View Submissions</button>'
+                    + '</div>';
             }).join('');
         }
         list.innerHTML = html;
@@ -158,11 +157,11 @@ function showStudentAssignments(classId, className) {
         } else {
             html += assignments.map(function(a) {
                 var safeId = a.id.replace(/'/g, "\\'");
-                return '<div class="mini-card mb-3">'
-                    + '<div class="font-display font-semibold text-sf-50">' + esc(a.title) + '</div>'
-                    + '<div class="text-xs text-sf-300 mt-0.5 mb-2">Due: ' + esc(a.dueDate || 'No due date') + '</div>'
-                    + (a.instructions ? '<p class="text-sm text-sf-200 mb-2">' + esc(a.instructions) + '</p>' : '')
-                    + '<button onclick="startAssignment(\'' + safeId + '\')" class="action-btn action-btn--copper w-full justify-center">Start Assignment</button>'
+                return '<div class="mini-card mb-4">'
+                    + '<div class="font-display font-bold text-lg text-sf-50 mb-1">' + esc(a.title) + '</div>'
+                    + '<div class="text-sm text-sf-300 mb-3"><i class="fas fa-calendar-alt mr-1.5"></i>Due: ' + esc(a.dueDate || 'No due date') + '</div>'
+                    + (a.instructions ? '<p class="text-sm text-sf-200 mb-4">' + esc(a.instructions) + '</p>' : '<div class="mb-4"></div>')
+                    + '<button onclick="startAssignment(\'' + safeId + '\')" style="min-height:44px" class="w-full font-display font-semibold rounded-xl px-4 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 hover:from-amber-400 hover:to-yellow-400 transition-all cursor-pointer border-0"><i class="fas fa-play mr-2"></i>Start Assignment</button>'
                     + '</div>';
             }).join('');
         }

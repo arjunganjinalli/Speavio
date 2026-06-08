@@ -132,6 +132,14 @@ document.addEventListener('DOMContentLoaded',function(){
         switchScreen('login');
     }
 
+    function applyRoleTabVisibility(){
+        var isTeacher=S.userProfile&&S.userProfile.role==='teacher';
+        var practiceTab=$('tab-practice');
+        var presentationTab=$('tab-presentation');
+        if(practiceTab)practiceTab.classList.toggle('hidden',isTeacher);
+        if(presentationTab)presentationTab.classList.toggle('hidden',isTeacher);
+    }
+
     function runAuthenticatedStartup(){
         switchScreen('setup');
         applySystemLanguage();
@@ -145,6 +153,7 @@ document.addEventListener('DOMContentLoaded',function(){
         }
         refreshAdvancedState();
         refreshHomeProgressSnapshot();
+        applyRoleTabVisibility();
         showSetupTab('home');
         renderScriptLibraryOptions();
         renderAllHintPills();
@@ -154,6 +163,7 @@ document.addEventListener('DOMContentLoaded',function(){
 
     function completeOnboardingAndStartApp(){
         console.log('completeOnboardingAndStartApp called');
+        applyRoleTabVisibility();
         runAuthenticatedStartup();
         appInitialized=true;
     }
