@@ -2,6 +2,9 @@
     CLASSROOM
 ═══════════════════════════════════════════════════════════════ */
 
+var _studentClasses = [];
+var _teacherClasses = [];
+
 function generateClassCode() {
     var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     var code = '';
@@ -72,6 +75,7 @@ function renderClassesTabContent() {
         list.innerHTML = '<div class="flex items-center gap-2 py-3"><div class="spinner"></div><span class="text-sf-300 text-sm">Loading classes...</span></div>';
         getTeacherClasses(S.authUser.uid).then(function(classes) {
             if (!classes.length) { list.innerHTML = '<p class="text-sf-300 text-sm">No classes yet. Create one above.</p>'; return; }
+            _teacherClasses = classes;
             renderClassCards(list, classes, role);
         }).catch(function() { list.innerHTML = '<p class="text-coral-400 text-sm">Failed to load classes.</p>'; });
     } else {
@@ -80,6 +84,7 @@ function renderClassesTabContent() {
         list.innerHTML = '<div class="flex items-center gap-2 py-3"><div class="spinner"></div><span class="text-sf-300 text-sm">Loading...</span></div>';
         getStudentClasses(S.authUser.uid).then(function(classes) {
             if (!classes.length) { list.innerHTML = '<p class="text-sf-300 text-sm">No classes joined yet.</p>'; return; }
+            _studentClasses = classes;
             renderClassCards(list, classes, role);
         }).catch(function() { list.innerHTML = '<p class="text-coral-400 text-sm">Failed to load classes.</p>'; });
     }
@@ -101,11 +106,11 @@ function renderClassCards(list, classes, role) {
         card.className = 'min-h-[180px] rounded-2xl overflow-hidden bg-white/5 border border-white/10 cursor-pointer hover:border-white/25 hover:-translate-y-1 hover:shadow-xl transition-all';
         card.setAttribute('role', 'button');
         card.setAttribute('tabindex', '0');
-        card.onclick = function() { openClassPage(c, role); };
+        card.setAttribute('onclick', 'openClassPageByIndex(' + index + ', \'' + role + '\')');
         card.onkeydown = function(event) {
             if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
-                openClassPage(c, role);
+                openClassPageByIndex(index, role);
             }
         };
         card.innerHTML = '<div class="h-24 px-5 py-4 flex items-end" style="background:' + gradients[index % gradients.length] + '">'
@@ -119,6 +124,11 @@ function renderClassCards(list, classes, role) {
             + '</div></div>';
         list.appendChild(card);
     });
+}
+
+function openClassPageByIndex(index, role) {
+    var classes = role === 'teacher' ? _teacherClasses : _studentClasses;
+    openClassPage(classes[index], role);
 }
 
 var _clsCtx = { classId: '', className: '', classObj: null, role: '', activeTab: 'assignments', assignmentId: '', assignmentTitle: '', scriptMap: {} };
