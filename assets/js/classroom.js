@@ -106,7 +106,7 @@ function renderClassCards(list, classes, role) {
         card.className = 'min-h-[180px] rounded-2xl overflow-hidden bg-white/5 border border-white/10 cursor-pointer hover:border-white/25 hover:-translate-y-1 hover:shadow-xl transition-all';
         card.setAttribute('role', 'button');
         card.setAttribute('tabindex', '0');
-        card.setAttribute('onclick', 'openClassPageByIndex(' + index + ', \'' + role + '\')');
+        card.onclick = (function(i, r) { return function() { openClassPageByIndex(i, r); }; })(index, role);
         card.onkeydown = function(event) {
             if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
