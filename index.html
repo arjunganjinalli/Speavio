@@ -392,6 +392,31 @@
         </div>
     </div>
 
+    <!-- CLASS PAGE -->
+    <div id="class-screen" class="screen flex-col min-h-screen">
+        <header class="glass border-b border-white/5 px-4 py-4 sm:py-5 flex-shrink-0">
+            <div class="w-full max-w-5xl mx-auto">
+                <div class="flex items-center gap-3 sm:gap-4">
+                    <button onclick="closeClassPage()" class="w-11 h-11 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 flex items-center justify-center transition-colors flex-shrink-0" aria-label="Back to classes">
+                        <i class="fas fa-arrow-left text-sf-100"></i>
+                    </button>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-sm text-sf-300 mb-0.5">Class</p>
+                        <h1 id="class-page-title" class="text-2xl sm:text-3xl font-display font-bold text-sf-50 truncate">Class</h1>
+                    </div>
+                    <span id="class-page-code" class="px-3 py-2 rounded-xl bg-copper-500/15 border border-copper-500/25 text-copper-400 text-sm sm:text-base font-mono font-bold flex-shrink-0"></span>
+                </div>
+                <nav id="class-page-teacher-tabs" class="hidden mt-5 flex gap-2" role="tablist" aria-label="Class sections">
+                    <button id="class-tab-assignments" onclick="showClassPageTab('assignments')" class="action-btn action-btn--copper min-h-[44px] px-5 text-sm" role="tab">Assignments</button>
+                    <button id="class-tab-students" onclick="showClassPageTab('students')" class="action-btn min-h-[44px] px-5 text-sm" role="tab">Students</button>
+                </nav>
+            </div>
+        </header>
+        <main class="flex-1 w-full px-4 py-6 sm:py-8">
+            <div id="class-page-content" class="w-full max-w-5xl mx-auto"></div>
+        </main>
+    </div>
+
     <!-- CREATE CLASS MODAL -->
     <div id="create-class-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm hidden" role="dialog" aria-modal="true" aria-labelledby="create-class-modal-title">
         <div class="glass rounded-2xl p-6 w-full max-w-md space-y-4">

@@ -66,6 +66,7 @@ function initClassesTab() {
 function renderClassesTabContent() {
     if (!S.userProfile || !S.authUser) return;
     var role = S.userProfile.role;
+    _classPageClasses = {};
     if (role === 'teacher') {
         var list = $('teacher-classes-list');
         if (!list) return;
@@ -74,16 +75,16 @@ function renderClassesTabContent() {
             if (!classes.length) { list.innerHTML = '<p class="text-sf-300 text-sm">No classes yet. Create one above.</p>'; return; }
             list.innerHTML = classes.map(function(c) {
                 var safeId = c.id.replace(/'/g, "\\'");
-                var safeName = esc(c.className).replace(/'/g, "\\'");
-                return '<div class="mini-card mb-3 cursor-pointer hover:border-copper-500/30 transition-all" onclick="showClassAssignments(\'' + safeId + '\',\'' + safeName + '\')">'
+                _classPageClasses[c.id] = c;
+                return '<div class="mini-card mb-3 cursor-pointer hover:border-copper-500/30 transition-all" onclick="openClassPage(_classPageClasses[\'' + safeId + '\'],\'teacher\')" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openClassPage(_classPageClasses[\'' + safeId + '\'],\'teacher\')}">'
                     + '<div class="flex items-center justify-between gap-2 flex-wrap">'
-                    + '<div><div class="font-display font-semibold text-sf-50">' + esc(c.className) + '</div>'
-                    + '<div class="text-xs text-sf-300">' + esc(c.subject) + '</div></div>'
+                    + '<div><div class="font-display font-semibold text-lg text-sf-50">' + esc(c.className) + '</div>'
+                    + '<div class="text-sm text-sf-300">' + esc(c.subject) + '</div></div>'
                     + '<div class="flex items-center gap-2">'
-                    + '<span class="px-2.5 py-1 rounded-lg bg-copper-500/15 border border-copper-500/25 text-copper-400 text-xs font-mono font-bold">' + esc(c.classCode) + '</span>'
-                    + '<span class="text-xs text-sf-300">' + ((c.studentUids && c.studentUids.length) || 0) + ' student(s)</span>'
+                    + '<span class="px-2.5 py-1 rounded-lg bg-copper-500/15 border border-copper-500/25 text-copper-400 text-sm font-mono font-bold">' + esc(c.classCode) + '</span>'
+                    + '<span class="text-sm text-sf-300">' + ((c.studentUids && c.studentUids.length) || 0) + ' student(s)</span>'
                     + '</div></div>'
-                    + '<div class="text-xs text-copper-400 mt-2"><i class="fas fa-arrow-right mr-1"></i>Click to view assignments</div>'
+                    + '<div class="text-sm text-copper-400 mt-3"><i class="fas fa-arrow-right mr-1"></i>Open class</div>'
                     + '</div>';
             }).join('');
         }).catch(function() { list.innerHTML = '<p class="text-coral-400 text-sm">Failed to load classes.</p>'; });
@@ -95,45 +96,81 @@ function renderClassesTabContent() {
             if (!classes.length) { list.innerHTML = '<p class="text-sf-300 text-sm">No classes joined yet.</p>'; return; }
             list.innerHTML = classes.map(function(c) {
                 var safeId = c.id.replace(/'/g, "\\'");
-                var safeName = esc(c.className).replace(/'/g, "\\'");
-                return '<div class="mini-card mb-3 cursor-pointer hover:border-copper-500/30 transition-all" onclick="showStudentAssignments(\'' + safeId + '\',\'' + safeName + '\')">'
-                    + '<div class="font-display font-semibold text-sf-50">' + esc(c.className) + '</div>'
-                    + '<div class="text-xs text-sf-300 mb-1">' + esc(c.subject) + '</div>'
-                    + '<div class="text-xs text-copper-400"><i class="fas fa-arrow-right mr-1"></i>Click to view assignments</div>'
+                _classPageClasses[c.id] = c;
+                return '<div class="mini-card mb-3 cursor-pointer hover:border-copper-500/30 transition-all" onclick="openClassPage(_classPageClasses[\'' + safeId + '\'],\'student\')" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openClassPage(_classPageClasses[\'' + safeId + '\'],\'student\')}">'
+                    + '<div class="font-display font-semibold text-lg text-sf-50">' + esc(c.className) + '</div>'
+                    + '<div class="text-sm text-sf-300 mb-2">' + esc(c.subject) + '</div>'
+                    + '<div class="text-sm text-copper-400"><i class="fas fa-arrow-right mr-1"></i>Open class</div>'
                     + '</div>';
             }).join('');
         }).catch(function() { list.innerHTML = '<p class="text-coral-400 text-sm">Failed to load classes.</p>'; });
     }
 }
 
-var _clsCtx = { classId: '', className: '', assignmentId: '', assignmentTitle: '', scriptMap: {} };
+var _classPageClasses = {};
+var _clsCtx = { classId: '', className: '', classObj: null, role: '', activeTab: 'assignments', assignmentId: '', assignmentTitle: '', scriptMap: {} };
+
+function openClassPage(classObj, role) {
+    if (!classObj) return;
+    _clsCtx.classId = classObj.id;
+    _clsCtx.className = classObj.className || 'Class';
+    _clsCtx.classObj = classObj;
+    _clsCtx.role = role;
+    _clsCtx.activeTab = 'assignments';
+    _clsCtx.scriptMap = {};
+    $('class-page-title').textContent = _clsCtx.className;
+    $('class-page-code').textContent = classObj.classCode || '';
+    $('class-page-code').classList.toggle('hidden', !classObj.classCode);
+    $('class-page-teacher-tabs').classList.toggle('hidden', role !== 'teacher');
+    switchScreen('class');
+    if (role === 'teacher') showClassPageTab('assignments');
+    else showStudentAssignments(classObj.id, _clsCtx.className);
+}
+
+function closeClassPage() {
+    switchScreen('setup');
+    showSetupTab('classes');
+}
+
+function showClassPageTab(tab) {
+    if (_clsCtx.role !== 'teacher') return;
+    _clsCtx.activeTab = tab;
+    var assignmentsTab = $('class-tab-assignments');
+    var studentsTab = $('class-tab-students');
+    assignmentsTab.className = 'action-btn min-h-[44px] px-5 text-sm' + (tab === 'assignments' ? ' action-btn--copper' : '');
+    studentsTab.className = 'action-btn min-h-[44px] px-5 text-sm' + (tab === 'students' ? ' action-btn--copper' : '');
+    assignmentsTab.setAttribute('aria-selected', tab === 'assignments' ? 'true' : 'false');
+    studentsTab.setAttribute('aria-selected', tab === 'students' ? 'true' : 'false');
+    if (tab === 'students') renderClassStudents();
+    else showClassAssignments(_clsCtx.classId, _clsCtx.className);
+}
 
 function showClassAssignments(classId, className) {
     _clsCtx.classId = classId;
     _clsCtx.className = className;
-    var list = $('teacher-classes-list');
+    var list = $('class-page-content');
     if (!list) return;
-    list.innerHTML = '<div class="text-sf-300 text-sm">Loading assignments...</div>';
+    list.innerHTML = '<div class="flex items-center gap-3 py-4"><div class="spinner"></div><span class="text-sf-300 text-base">Loading assignments...</span></div>';
     getClassAssignments(classId).then(function(assignments) {
-        var html = '<div class="flex items-center justify-between mb-4 flex-wrap gap-2">'
-            + '<button onclick="renderClassesTabContent()" class="action-btn"><i class="fas fa-arrow-left mr-1.5"></i>Back to Classes</button>'
-            + '<button onclick="openCreateAssignmentModal()" class="action-btn action-btn--copper"><i class="fas fa-plus mr-1.5"></i>New Assignment</button>'
+        var html = '<div class="flex items-center justify-between mb-6 flex-wrap gap-3">'
+            + '<div><h2 class="font-display font-bold text-2xl text-sf-50">Assignments</h2><p class="text-base text-sf-300 mt-1">Create work and review student submissions.</p></div>'
+            + '<button onclick="openCreateAssignmentModal()" class="action-btn action-btn--copper min-h-[44px] px-5 text-sm"><i class="fas fa-plus mr-1.5"></i>New Assignment</button>'
             + '</div>'
-            + '<h3 class="font-display font-semibold text-sf-50 mb-3">' + esc(className) + ' — Assignments</h3>';
+            + '<div class="space-y-4">';
         if (!assignments.length) {
-            html += '<p class="text-sf-300 text-sm">No assignments yet. Create one above.</p>';
+            html += '<div class="mini-card"><p class="text-sf-300 text-base">No assignments yet. Create one above.</p></div>';
         } else {
             html += assignments.map(function(a) {
                 var safeId = a.id.replace(/'/g, "\\'");
                 var safeTitle = esc(a.title).replace(/'/g, "\\'");
-                return '<div class="mini-card mb-4">'
-                    + '<div class="font-display font-bold text-lg text-sf-50 mb-1">' + esc(a.title) + '</div>'
-                    + '<div class="text-sm text-sf-300 mb-4"><i class="fas fa-calendar-alt mr-1.5"></i>Due: ' + esc(a.dueDate || 'No due date') + '</div>'
-                    + '<button onclick="viewSubmissions(\'' + safeId + '\',\'' + safeTitle + '\')" style="min-height:44px" class="w-full font-display font-semibold rounded-xl px-4 py-3 bg-sage-500/15 border border-sage-500/25 text-sage-400 hover:bg-sage-500/25 transition-all cursor-pointer"><i class="fas fa-eye mr-2"></i>View Submissions</button>'
+                return '<div class="mini-card">'
+                    + '<div class="font-display font-bold text-xl text-sf-50 mb-2">' + esc(a.title) + '</div>'
+                    + '<div class="text-base text-sf-300 mb-5"><i class="fas fa-calendar-alt mr-1.5"></i>Due: ' + esc(a.dueDate || 'No due date') + '</div>'
+                    + '<button onclick="viewSubmissions(\'' + safeId + '\',\'' + safeTitle + '\')" class="w-full min-h-[44px] font-display font-semibold rounded-xl px-4 py-3 bg-sage-500/15 border border-sage-500/25 text-sage-400 hover:bg-sage-500/25 transition-all cursor-pointer"><i class="fas fa-eye mr-2"></i>View Submissions</button>'
                     + '</div>';
             }).join('');
         }
-        list.innerHTML = html;
+        list.innerHTML = html + '</div>';
     }).catch(function(err) {
         list.innerHTML = '<p class="text-coral-400 text-sm">Failed to load assignments.</p>';
         console.error(err);
@@ -143,29 +180,27 @@ function showClassAssignments(classId, className) {
 function showStudentAssignments(classId, className) {
     _clsCtx.classId = classId;
     _clsCtx.className = className;
-    var list = $('student-classes-list');
+    var list = $('class-page-content');
     if (!list) return;
-    list.innerHTML = '<div class="text-sf-300 text-sm">Loading assignments...</div>';
+    list.innerHTML = '<div class="flex items-center gap-3 py-4"><div class="spinner"></div><span class="text-sf-300 text-base">Loading assignments...</span></div>';
     getClassAssignments(classId).then(function(assignments) {
         assignments.forEach(function(a) { _clsCtx.scriptMap[a.id] = a.script || ''; });
-        var html = '<div class="mb-4">'
-            + '<button onclick="renderClassesTabContent()" class="action-btn"><i class="fas fa-arrow-left mr-1.5"></i>Back to Classes</button>'
-            + '</div>'
-            + '<h3 class="font-display font-semibold text-sf-50 mb-3">' + esc(className) + ' — Assignments</h3>';
+        var html = '<div class="mb-6"><h2 class="font-display font-bold text-2xl text-sf-50">Assignments</h2>'
+            + '<p class="text-base text-sf-300 mt-1">Choose an assignment when you are ready to practice.</p></div><div class="space-y-4">';
         if (!assignments.length) {
-            html += '<p class="text-sf-300 text-sm">No assignments yet.</p>';
+            html += '<div class="mini-card"><p class="text-sf-300 text-base">No assignments yet.</p></div>';
         } else {
             html += assignments.map(function(a) {
                 var safeId = a.id.replace(/'/g, "\\'");
-                return '<div class="mini-card mb-4">'
-                    + '<div class="font-display font-bold text-lg text-sf-50 mb-1">' + esc(a.title) + '</div>'
-                    + '<div class="text-sm text-sf-300 mb-3"><i class="fas fa-calendar-alt mr-1.5"></i>Due: ' + esc(a.dueDate || 'No due date') + '</div>'
-                    + (a.instructions ? '<p class="text-sm text-sf-200 mb-4">' + esc(a.instructions) + '</p>' : '<div class="mb-4"></div>')
-                    + '<button onclick="startAssignment(\'' + safeId + '\')" style="min-height:44px" class="w-full font-display font-semibold rounded-xl px-4 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 hover:from-amber-400 hover:to-yellow-400 transition-all cursor-pointer border-0"><i class="fas fa-play mr-2"></i>Start Assignment</button>'
+                return '<div class="mini-card">'
+                    + '<div class="font-display font-bold text-xl text-sf-50 mb-2">' + esc(a.title) + '</div>'
+                    + '<div class="text-base text-sf-300 mb-3"><i class="fas fa-calendar-alt mr-1.5"></i>Due: ' + esc(a.dueDate || 'No due date') + '</div>'
+                    + (a.instructions ? '<p class="text-base leading-relaxed text-sf-200 mb-5">' + esc(a.instructions) + '</p>' : '<div class="mb-5"></div>')
+                    + '<button onclick="startAssignment(\'' + safeId + '\')" class="w-full min-h-[48px] font-display font-semibold text-base rounded-xl px-4 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 hover:from-amber-400 hover:to-yellow-400 transition-all cursor-pointer border-0"><i class="fas fa-play mr-2"></i>Start Assignment</button>'
                     + '</div>';
             }).join('');
         }
-        list.innerHTML = html;
+        list.innerHTML = html + '</div>';
     }).catch(function(err) {
         list.innerHTML = '<p class="text-coral-400 text-sm">Failed to load assignments.</p>';
         console.error(err);
@@ -178,25 +213,44 @@ function startAssignment(assignmentId) {
     var input = $('script-input');
     if (input) input.value = script;
     if (typeof updateParse === 'function') updateParse();
+    switchScreen('setup');
     showSetupTab('practice');
     toast('Assignment loaded. Press Start Practice when ready.', 'success');
+}
+
+function renderClassStudents() {
+    var list = $('class-page-content');
+    if (!list) return;
+    var students = (_clsCtx.classObj && _clsCtx.classObj.studentUids) || [];
+    var html = '<div class="mb-6"><h2 class="font-display font-bold text-2xl text-sf-50">Students</h2>'
+        + '<p class="text-base text-sf-300 mt-1">' + students.length + ' enrolled student' + (students.length === 1 ? '' : 's') + '</p></div>'
+        + '<div class="space-y-3">';
+    if (!students.length) {
+        html += '<div class="mini-card"><p class="text-sf-300 text-base">No students have joined this class yet.</p></div>';
+    } else {
+        html += students.map(function(uid, index) {
+            return '<div class="mini-card flex items-center gap-4">'
+                + '<div class="w-11 h-11 rounded-xl bg-sage-500/15 border border-sage-500/25 text-sage-400 flex items-center justify-center flex-shrink-0"><i class="fas fa-user-graduate"></i></div>'
+                + '<div><div class="font-display font-semibold text-lg text-sf-50">Student ' + (index + 1) + '</div>'
+                + '<div class="text-sm text-sf-300 font-mono break-all">' + esc(uid) + '</div></div></div>';
+        }).join('');
+    }
+    list.innerHTML = html + '</div>';
 }
 
 function viewSubmissions(assignmentId, title) {
     _clsCtx.assignmentId = assignmentId;
     _clsCtx.assignmentTitle = title;
-    var list = $('teacher-classes-list');
+    var list = $('class-page-content');
     if (!list) return;
-    list.innerHTML = '<div class="text-sf-300 text-sm">Loading submissions...</div>';
+    list.innerHTML = '<div class="flex items-center gap-3 py-4"><div class="spinner"></div><span class="text-sf-300 text-base">Loading submissions...</span></div>';
     getAssignmentSubmissions(assignmentId).then(function(submissions) {
-        var safeClassId = _clsCtx.classId.replace(/'/g, "\\'");
-        var safeClassName = esc(_clsCtx.className).replace(/'/g, "\\'");
-        var html = '<div class="flex items-center justify-between mb-4 flex-wrap gap-2">'
-            + '<button onclick="showClassAssignments(\'' + safeClassId + '\',\'' + safeClassName + '\')" class="action-btn"><i class="fas fa-arrow-left mr-1.5"></i>Back to Assignments</button>'
+        var html = '<div class="flex items-center justify-between mb-6 flex-wrap gap-3">'
+            + '<button onclick="showClassPageTab(\'assignments\')" class="action-btn min-h-[44px] text-sm"><i class="fas fa-arrow-left mr-1.5"></i>Back to Assignments</button>'
             + '</div>'
-            + '<h3 class="font-display font-semibold text-sf-50 mb-3">Submissions — ' + esc(title) + '</h3>';
+            + '<h2 class="font-display font-bold text-2xl text-sf-50 mb-4">Submissions — ' + esc(title) + '</h2>';
         if (!submissions.length) {
-            html += '<p class="text-sf-300 text-sm">No submissions yet.</p>';
+            html += '<div class="mini-card"><p class="text-sf-300 text-base">No submissions yet.</p></div>';
         } else {
             html += submissions.map(function(s) {
                 var safeSubId = s.id.replace(/'/g, "\\'");
@@ -204,19 +258,19 @@ function viewSubmissions(assignmentId, title) {
                 return '<div class="mini-card mb-3">'
                     + '<div class="flex items-center justify-between gap-2 flex-wrap">'
                     + '<div>'
-                    + '<div class="text-xs text-sf-300">Student UID: <span class="text-sf-100 font-mono">' + esc(s.studentUid ? s.studentUid.slice(0, 8) + '...' : 'Unknown') + '</span></div>'
-                    + '<div class="text-xs text-sf-300 mt-0.5">AI Score: <span class="text-copper-400 font-semibold">' + (s.aiScore != null ? s.aiScore : '—') + '</span>'
+                    + '<div class="text-base text-sf-300">Student UID: <span class="text-sf-100 font-mono">' + esc(s.studentUid ? s.studentUid.slice(0, 8) + '...' : 'Unknown') + '</span></div>'
+                    + '<div class="text-sm text-sf-300 mt-1">AI Score: <span class="text-copper-400 font-semibold">' + (s.aiScore != null ? s.aiScore : '—') + '</span>'
                     + ' · Status: <span class="' + statusClass + ' font-semibold">' + esc(s.status) + '</span></div>'
-                    + (s.teacherGrade ? '<div class="text-xs text-sf-300 mt-0.5">Grade: <span class="text-sage-400 font-semibold">' + esc(s.teacherGrade) + '</span></div>' : '')
-                    + (s.teacherComment ? '<div class="text-xs text-sf-200 mt-0.5">' + esc(s.teacherComment) + '</div>' : '')
+                    + (s.teacherGrade ? '<div class="text-sm text-sf-300 mt-1">Grade: <span class="text-sage-400 font-semibold">' + esc(s.teacherGrade) + '</span></div>' : '')
+                    + (s.teacherComment ? '<div class="text-sm text-sf-200 mt-1">' + esc(s.teacherComment) + '</div>' : '')
                     + '</div>'
-                    + '<button onclick="gradeSubmissionUI(\'' + safeSubId + '\')" class="action-btn action-btn--sage flex-shrink-0">Grade</button>'
+                    + '<button onclick="gradeSubmissionUI(\'' + safeSubId + '\')" class="action-btn action-btn--sage min-h-[44px] px-5 text-sm flex-shrink-0">Grade</button>'
                     + '</div></div>';
             }).join('');
         }
         list.innerHTML = html;
     }).catch(function(err) {
-        list.innerHTML = '<p class="text-coral-400 text-sm">Failed to load submissions.</p>';
+        list.innerHTML = '<p class="text-coral-400 text-base">Failed to load submissions.</p>';
         console.error(err);
     });
 }
