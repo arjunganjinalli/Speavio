@@ -399,6 +399,8 @@
                     <div class="min-w-0 flex-1">
                         <p class="text-sm text-sf-300 mb-0.5">Class</p>
                         <h1 id="class-page-title" class="text-2xl sm:text-3xl font-display font-bold text-sf-50 truncate">Class</h1>
+                        <p id="class-page-subject" class="text-base text-sf-100 mt-1"></p>
+                        <p id="class-page-description" class="text-sm text-sf-300 mt-1 hidden"></p>
                     </div>
                     <span id="class-page-code" class="px-3 py-2 rounded-xl bg-copper-500/15 border border-copper-500/25 text-copper-400 text-sm sm:text-base font-mono font-bold flex-shrink-0"></span>
                 </div>
@@ -428,6 +430,10 @@
                 <div>
                     <label class="block text-sm font-medium text-sf-200 mb-1.5">Subject</label>
                     <input id="new-class-subject" type="text" placeholder="e.g. Drama, English, Speech" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-sf-200 mb-1.5">Description <span class="text-sf-300">(optional)</span></label>
+                    <textarea id="new-class-description" rows="3" placeholder="What will students learn in this class?" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all resize-y"></textarea>
                 </div>
             </div>
             <p id="create-class-error" class="text-xs text-coral-400 hidden"></p>

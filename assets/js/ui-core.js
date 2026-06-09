@@ -340,6 +340,7 @@ function openCreateClassModal(){
     if(!modal)return;
     if($('new-class-name'))$('new-class-name').value='';
     if($('new-class-subject'))$('new-class-subject').value='';
+    if($('new-class-description'))$('new-class-description').value='';
     var errEl=$('create-class-error');
     if(errEl)errEl.classList.add('hidden');
     modal.classList.remove('hidden');
@@ -354,6 +355,7 @@ function closeCreateClassModal(){
 function submitCreateClass(){
     var name=($('new-class-name')?$('new-class-name').value:'').trim();
     var subject=($('new-class-subject')?$('new-class-subject').value:'').trim();
+    var description=($('new-class-description')?$('new-class-description').value:'').trim();
     var errEl=$('create-class-error');
     if(!name||!subject){
         if(errEl){errEl.textContent='Please fill in class name and subject.';errEl.classList.remove('hidden');}
@@ -362,7 +364,7 @@ function submitCreateClass(){
     var school=(S.userProfile&&S.userProfile.school)||'';
     var saveBtn=$('create-class-save-btn');
     if(saveBtn){saveBtn.disabled=true;saveBtn.textContent='Saving…';}
-    createClass(S.authUser.uid,name,subject,school).then(function(){
+    createClass(S.authUser.uid,name,subject,description,school).then(function(){
         closeCreateClassModal();
         loadTeacherClasses();
     }).catch(function(err){

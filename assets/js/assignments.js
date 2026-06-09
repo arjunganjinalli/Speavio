@@ -19,7 +19,6 @@ function createAssignment(classId, teacherUid, title, instructions, script, dueD
 function getClassAssignments(classId) {
     return db.collection('assignments')
         .where('classId', '==', classId)
-        .orderBy('dueDate')
         .get()
         .then(function(snapshot) {
             return snapshot.docs.map(function(doc) {
@@ -34,7 +33,6 @@ function getStudentAssignments(studentUid) {
         var promises = classes.map(function(c) {
             return db.collection('assignments')
                 .where('classId', '==', c.id)
-                .orderBy('dueDate')
                 .get()
                 .then(function(snapshot) {
                     return snapshot.docs.map(function(doc) {

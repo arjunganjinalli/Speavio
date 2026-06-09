@@ -14,12 +14,13 @@ function generateClassCode() {
     return code;
 }
 
-function createClass(teacherUid, className, subject, school) {
+function createClass(teacherUid, className, subject, description, school) {
     var classCode = generateClassCode();
     return db.collection('classes').add({
         teacherUid:  teacherUid,
         className:   className,
         subject:     subject,
+        description: description,
         school:      school,
         classCode:   classCode,
         studentUids: [],
@@ -140,6 +141,9 @@ function openClassPage(classObj, role) {
     _clsCtx.activeTab = 'assignments';
     _clsCtx.scriptMap = {};
     $('class-page-title').textContent = _clsCtx.className;
+    $('class-page-subject').textContent = classObj.subject || '';
+    $('class-page-description').textContent = classObj.description || '';
+    $('class-page-description').classList.toggle('hidden', !classObj.description);
     $('class-page-code').textContent = classObj.classCode || '';
     $('class-page-code').classList.toggle('hidden', !classObj.classCode);
     $('class-page-teacher-tabs').classList.toggle('hidden', role !== 'teacher');
@@ -217,7 +221,10 @@ function showStudentAssignments(classId, className) {
                     + '<div class="font-display font-bold text-xl text-sf-50 mb-2">' + esc(a.title) + '</div>'
                     + '<div class="text-base text-sf-300 mb-3"><i class="fas fa-calendar-alt mr-1.5"></i>Due: ' + esc(a.dueDate || 'No due date') + '</div>'
                     + (a.instructions ? '<p class="text-base leading-relaxed text-sf-200 mb-5">' + esc(a.instructions) + '</p>' : '<div class="mb-5"></div>')
-                    + '<button onclick="startAssignment(\'' + safeId + '\')" class="w-full min-h-[48px] font-display font-semibold text-base rounded-xl px-4 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 hover:from-amber-400 hover:to-yellow-400 transition-all cursor-pointer border-0"><i class="fas fa-play mr-2"></i>Start Assignment</button>'
+                    + '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">'
+                    + '<button onclick="startAssignment(\'' + safeId + '\',\'practice\')" class="w-full min-h-[48px] font-display font-semibold text-base rounded-xl px-4 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 hover:from-amber-400 hover:to-yellow-400 transition-all cursor-pointer border-0"><i class="fas fa-microphone-lines mr-2"></i>Start Practice</button>'
+                    + '<button onclick="startAssignment(\'' + safeId + '\',\'presentation\')" class="w-full min-h-[48px] font-display font-semibold text-base rounded-xl px-4 py-3 bg-sage-500/15 border border-sage-500/25 text-sage-400 hover:bg-sage-500/25 transition-all cursor-pointer"><i class="fas fa-masks-theater mr-2"></i>Start Presentation</button>'
+                    + '</div>'
                     + '</div>';
             }).join('');
         }
@@ -228,15 +235,17 @@ function showStudentAssignments(classId, className) {
     });
 }
 
-function startAssignment(assignmentId) {
+function startAssignment(assignmentId, mode) {
     var script = _clsCtx.scriptMap[assignmentId] || '';
+    mode = mode === 'presentation' ? 'presentation' : 'practice';
     S.currentAssignmentId = assignmentId;
+    S.mode = mode;
     var input = $('script-input');
     if (input) input.value = script;
     if (typeof updateParse === 'function') updateParse();
     switchScreen('setup');
-    showSetupTab('practice');
-    toast('Assignment loaded. Press Start Practice when ready.', 'success');
+    showSetupTab(mode);
+    toast('Assignment loaded. Press Start ' + (mode === 'presentation' ? 'Presentation' : 'Practice') + ' when ready.', 'success');
 }
 
 function renderClassStudents() {
