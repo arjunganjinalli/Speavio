@@ -66,27 +66,13 @@ function initClassesTab() {
 function renderClassesTabContent() {
     if (!S.userProfile || !S.authUser) return;
     var role = S.userProfile.role;
-    _classPageClasses = {};
     if (role === 'teacher') {
         var list = $('teacher-classes-list');
         if (!list) return;
         list.innerHTML = '<div class="flex items-center gap-2 py-3"><div class="spinner"></div><span class="text-sf-300 text-sm">Loading classes...</span></div>';
         getTeacherClasses(S.authUser.uid).then(function(classes) {
             if (!classes.length) { list.innerHTML = '<p class="text-sf-300 text-sm">No classes yet. Create one above.</p>'; return; }
-            list.innerHTML = classes.map(function(c) {
-                var safeId = c.id.replace(/'/g, "\\'");
-                _classPageClasses[c.id] = c;
-                return '<div class="mini-card mb-3 cursor-pointer hover:border-copper-500/30 transition-all" onclick="openClassPage(_classPageClasses[\'' + safeId + '\'],\'teacher\')" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openClassPage(_classPageClasses[\'' + safeId + '\'],\'teacher\')}">'
-                    + '<div class="flex items-center justify-between gap-2 flex-wrap">'
-                    + '<div><div class="font-display font-semibold text-lg text-sf-50">' + esc(c.className) + '</div>'
-                    + '<div class="text-sm text-sf-300">' + esc(c.subject) + '</div></div>'
-                    + '<div class="flex items-center gap-2">'
-                    + '<span class="px-2.5 py-1 rounded-lg bg-copper-500/15 border border-copper-500/25 text-copper-400 text-sm font-mono font-bold">' + esc(c.classCode) + '</span>'
-                    + '<span class="text-sm text-sf-300">' + ((c.studentUids && c.studentUids.length) || 0) + ' student(s)</span>'
-                    + '</div></div>'
-                    + '<div class="text-sm text-copper-400 mt-3"><i class="fas fa-arrow-right mr-1"></i>Open class</div>'
-                    + '</div>';
-            }).join('');
+            renderClassCards(list, classes, role);
         }).catch(function() { list.innerHTML = '<p class="text-coral-400 text-sm">Failed to load classes.</p>'; });
     } else {
         var list = $('student-classes-list');
@@ -94,20 +80,47 @@ function renderClassesTabContent() {
         list.innerHTML = '<div class="flex items-center gap-2 py-3"><div class="spinner"></div><span class="text-sf-300 text-sm">Loading...</span></div>';
         getStudentClasses(S.authUser.uid).then(function(classes) {
             if (!classes.length) { list.innerHTML = '<p class="text-sf-300 text-sm">No classes joined yet.</p>'; return; }
-            list.innerHTML = classes.map(function(c) {
-                var safeId = c.id.replace(/'/g, "\\'");
-                _classPageClasses[c.id] = c;
-                return '<div class="mini-card mb-3 cursor-pointer hover:border-copper-500/30 transition-all" onclick="openClassPage(_classPageClasses[\'' + safeId + '\'],\'student\')" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openClassPage(_classPageClasses[\'' + safeId + '\'],\'student\')}">'
-                    + '<div class="font-display font-semibold text-lg text-sf-50">' + esc(c.className) + '</div>'
-                    + '<div class="text-sm text-sf-300 mb-2">' + esc(c.subject) + '</div>'
-                    + '<div class="text-sm text-copper-400"><i class="fas fa-arrow-right mr-1"></i>Open class</div>'
-                    + '</div>';
-            }).join('');
+            renderClassCards(list, classes, role);
         }).catch(function() { list.innerHTML = '<p class="text-coral-400 text-sm">Failed to load classes.</p>'; });
     }
 }
 
-var _classPageClasses = {};
+function renderClassCards(list, classes, role) {
+    var gradients = [
+        'linear-gradient(135deg, #C8956C, #E8B88A)',
+        'linear-gradient(135deg, #5BB882, #A8E0C0)',
+        'linear-gradient(135deg, #D4736E, #E89590)',
+        'linear-gradient(135deg, #6C8EC8, #B0C8E8)',
+        'linear-gradient(135deg, #956CC8, #C4A8E0)',
+        'linear-gradient(135deg, #C8B86C, #E8DCA8)'
+    ];
+    list.innerHTML = '';
+    classes.forEach(function(c, index) {
+        var studentCount = (c.studentUids && c.studentUids.length) || 0;
+        var card = document.createElement('div');
+        card.className = 'min-h-[180px] rounded-2xl overflow-hidden bg-white/5 border border-white/10 cursor-pointer hover:border-white/25 hover:-translate-y-1 hover:shadow-xl transition-all';
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
+        card.onclick = function() { openClassPage(c, role); };
+        card.onkeydown = function(event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                openClassPage(c, role);
+            }
+        };
+        card.innerHTML = '<div class="h-24 px-5 py-4 flex items-end" style="background:' + gradients[index % gradients.length] + '">'
+            + '<h3 class="font-display font-bold text-2xl text-white leading-tight drop-shadow-md">' + esc(c.className || 'Untitled Class') + '</h3>'
+            + '</div>'
+            + '<div class="p-5">'
+            + '<p class="text-base text-sf-100 mb-4">' + esc(c.subject || 'No subject') + '</p>'
+            + '<div class="flex items-center justify-between gap-3 flex-wrap">'
+            + '<span class="px-2.5 py-1 rounded-lg bg-copper-500/15 border border-copper-500/25 text-copper-400 text-sm font-mono font-bold">' + esc(c.classCode || 'No code') + '</span>'
+            + '<span class="text-sm text-sf-300"><i class="fas fa-user-group mr-1.5"></i>' + studentCount + ' student' + (studentCount === 1 ? '' : 's') + '</span>'
+            + '</div></div>';
+        list.appendChild(card);
+    });
+}
+
 var _clsCtx = { classId: '', className: '', classObj: null, role: '', activeTab: 'assignments', assignmentId: '', assignmentTitle: '', scriptMap: {} };
 
 function openClassPage(classObj, role) {
