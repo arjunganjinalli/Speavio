@@ -239,24 +239,33 @@ function initClassesTab(){
     btn.classList.toggle('hidden',!show);
 }
 
-function renderClassesTabContent(){
-    var role=S.userProfile&&S.userProfile.role;
-    var teacherView=$('classes-teacher-view');
-    var studentView=$('classes-student-view');
-    if(!teacherView||!studentView)return;
-    teacherView.classList.toggle('hidden',role!=='teacher');
-    studentView.classList.toggle('hidden',role!=='student');
-    if(role==='teacher')loadTeacherClasses();
-    if(role==='student')getStudentClasses(S.authUser.uid).then(function(classes){
-        if(!classes.length){
-            $('student-classes-list').innerHTML='<p class="text-sf-300 text-sm">No classes joined yet.</p>';
-            return;
-        }
-        _studentClasses=classes;
-        renderClassCards($('student-classes-list'),classes,'student');
-    }).catch(function(){
-        $('student-classes-list').innerHTML='<p class="text-coral-400 text-sm">Failed to load classes.</p>';
-    });
+function renderClassesTabContent() {
+    if (!S.userProfile || !S.authUser) return;
+    var role = S.userProfile.role;
+    var teacherView = $('classes-teacher-view');
+    var studentView = $('classes-student-view');
+    if (!teacherView || !studentView) return;
+    teacherView.classList.toggle('hidden', role !== 'teacher');
+    studentView.classList.toggle('hidden', role !== 'student');
+    if (role === 'teacher') {
+        var list = $('teacher-classes-list');
+        if (!list) return;
+        list.innerHTML = '<div class="flex items-center gap-2 py-3"><div class="spinner"></div><span class="text-sf-300 text-sm">Loading classes...</span></div>';
+        getTeacherClasses(S.authUser.uid).then(function(classes) {
+            if (!classes.length) { list.innerHTML = '<p class="text-sf-300 text-sm">No classes yet. Create one above.</p>'; return; }
+            _teacherClasses = classes;
+            renderClassCards(list, classes, 'teacher');
+        }).catch(function() { list.innerHTML = '<p class="text-coral-400 text-sm">Failed to load classes.</p>'; });
+    } else {
+        var list = $('student-classes-list');
+        if (!list) return;
+        list.innerHTML = '<div class="flex items-center gap-2 py-3"><div class="spinner"></div><span class="text-sf-300 text-sm">Loading...</span></div>';
+        getStudentClasses(S.authUser.uid).then(function(classes) {
+            if (!classes.length) { list.innerHTML = '<p class="text-sf-300 text-sm">No classes joined yet.</p>'; return; }
+            _studentClasses = classes;
+            renderClassCards(list, classes, 'student');
+        }).catch(function() { list.innerHTML = '<p class="text-coral-400 text-sm">Failed to load classes.</p>'; });
+    }
 }
 
 function loadTeacherClasses(){
@@ -329,7 +338,7 @@ function handleJoinClass(){
     joinClass(S.authUser.uid,code,school).then(function(classData){
         if(successEl){successEl.textContent='Joined "'+classData.className+'" successfully!';successEl.classList.remove('hidden');}
         if(input)input.value='';
-        loadStudentClasses();
+        renderClassesTabContent();
     }).catch(function(err){
         if(errEl){errEl.textContent=err.message||'Failed to join class.';errEl.classList.remove('hidden');}
     });
@@ -366,7 +375,7 @@ function submitCreateClass(){
     if(saveBtn){saveBtn.disabled=true;saveBtn.textContent='Saving…';}
     createClass(S.authUser.uid,name,subject,description,school).then(function(){
         closeCreateClassModal();
-        loadTeacherClasses();
+        renderClassesTabContent();
     }).catch(function(err){
         if(errEl){errEl.textContent=err.message||'Failed to create class.';errEl.classList.remove('hidden');}
     }).finally(function(){
