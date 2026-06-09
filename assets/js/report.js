@@ -237,6 +237,10 @@ function shareScorecardImage(){
 }
 
 function renderReportUI(){
+    if(typeof _activeAssignment !== 'undefined' && _activeAssignment){
+        renderAssignmentCompletion();
+        return;
+    }
     S.screen='complete';
 
     /* ── Gather all stats ── */
@@ -349,6 +353,10 @@ function playLatestRecording(){
 function showReport(){
     stopSpeaking();
     releaseMicStream();
+    if(typeof _activeAssignment !== 'undefined' && _activeAssignment){
+        renderAssignmentCompletion();
+        return;
+    }
     switchScreen('complete');
     renderReportUI();
 }

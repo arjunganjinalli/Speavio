@@ -95,7 +95,7 @@ function startSession(){
     $('lang-badge').textContent=LANG[S.language].badge;
     $('hint-ctrl').classList.toggle('hidden',S.mode!=='presentation');
     renderAllHintPills();
-    switchScreen('session');
+    switchScreen(typeof _activeAssignment !== 'undefined' && _activeAssignment ? 'assignment' : 'session');
 
     if(S.mode==='practice'){
         /* Practice mode: show line picker instead of starting at line 0 */
@@ -121,7 +121,7 @@ function startSession(){
    At the very end, batch-evaluates everything and shows the report.
 ═══════════════════════════════════════════════════════════════ */
 function presentationAutoFlow(){
-    if(S.screen!=='session'||S.mode!=='presentation')return;
+    if((S.screen!=='session'&&S.screen!=='assignment')||S.mode!=='presentation')return;
 
     var line=S.lines[S.currentLine];
     if(!line){finishPresentation();return}
@@ -134,7 +134,7 @@ function presentationAutoFlow(){
         renderSession();
 
         speak(line.text,function(){
-            if(S.screen!=='session'||S.mode!=='presentation')return;
+            if((S.screen!=='session'&&S.screen!=='assignment')||S.mode!=='presentation')return;
             if(S.lines[S.currentLine]!==line)return; /* line already changed, skip */
             if(S.currentLine>=S.lines.length-1){
                 finishPresentation();
@@ -149,7 +149,7 @@ function presentationAutoFlow(){
 
         /* Brief pause so user sees "Your Turn" before recording starts */
         setTimeout(function(){
-            if(S.screen!=='session'||S.mode!=='presentation')return;
+            if((S.screen!=='session'&&S.screen!=='assignment')||S.mode!=='presentation')return;
 
             /* Auto-reveal hint based on hint level */
             if(S.hintLevel!=='none'){
@@ -164,7 +164,7 @@ function presentationAutoFlow(){
 
             /* Start recording after another brief pause */
             setTimeout(function(){
-                if(S.screen!=='session'||S.mode!=='presentation'||S.isRecording)return;
+                if((S.screen!=='session'&&S.screen!=='assignment')||S.mode!=='presentation'||S.isRecording)return;
                 startRec();
             },600);
         },500);
@@ -175,6 +175,14 @@ function presentationAutoFlow(){
 function finishPresentation(){
     S.screen='report_pending';
     releaseMicStream();
+
+    if(typeof _activeAssignment !== 'undefined' && _activeAssignment){
+        switchScreen('assignment');
+        $('assignment-result').classList.remove('hidden');
+        $('assignment-result').innerHTML='<div class="flex items-center justify-center gap-3 py-12"><div class="spinner"></div><span class="text-sf-300">Evaluating your assignment...</span></div>';
+        batchEvaluatePresentation();
+        return;
+    }
 
     /* Switch to report screen and show loading */
     switchScreen('complete');

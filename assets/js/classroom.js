@@ -130,8 +130,11 @@ function openClassPageByIndex(index, role) {
     openClassPage(classes[index], role);
 }
 
-var _clsCtx = { classId: '', className: '', classObj: null, role: '', activeTab: 'assignments', assignmentId: '', assignmentTitle: '', scriptMap: {} };
+var _clsCtx = { classId: '', className: '', classObj: null, role: '', activeTab: 'assignments', assignmentId: '', assignmentTitle: '', scriptMap: {}, assignmentMap: {} };
 var _classStudentsRenderId = 0;
+var _classStudentNames = {};
+var _activeAssignment = null;
+var _assignmentSessionRunning = false;
 
 function openClassPage(classObj, role) {
     if (!classObj) return;
@@ -191,7 +194,7 @@ function showClassAssignments(classId, className) {
                 var safeTitle = esc(a.title).replace(/'/g, "\\'");
                 return '<div class="mini-card">'
                     + '<div class="font-display font-bold text-xl text-sf-50 mb-2">' + esc(a.title) + '</div>'
-                    + '<div class="text-base text-sf-300 mb-5"><i class="fas fa-calendar-alt mr-1.5"></i>Due: ' + esc(a.dueDate || 'No due date') + '</div>'
+                    + '<div class="text-base text-sf-300 mb-5"><i class="fas fa-calendar-alt mr-1.5"></i>Due: ' + esc(formatAssignmentDue(a.dueDate)) + '</div>'
                     + '<button onclick="viewSubmissions(\'' + safeId + '\',\'' + safeTitle + '\')" class="w-full min-h-[44px] font-display font-semibold rounded-xl px-4 py-3 bg-sage-500/15 border border-sage-500/25 text-sage-400 hover:bg-sage-500/25 transition-all cursor-pointer"><i class="fas fa-eye mr-2"></i>View Submissions</button>'
                     + '</div>';
             }).join('');
@@ -210,7 +213,11 @@ function showStudentAssignments(classId, className) {
     if (!list) return;
     list.innerHTML = '<div class="flex items-center gap-3 py-4"><div class="spinner"></div><span class="text-sf-300 text-base">Loading assignments...</span></div>';
     getClassAssignments(classId).then(function(assignments) {
-        assignments.forEach(function(a) { _clsCtx.scriptMap[a.id] = a.script || ''; });
+        _clsCtx.assignmentMap = {};
+        assignments.forEach(function(a) {
+            _clsCtx.scriptMap[a.id] = a.script || '';
+            _clsCtx.assignmentMap[a.id] = a;
+        });
         var html = '<div class="mb-6"><h2 class="font-display font-bold text-2xl text-sf-50">Assignments</h2>'
             + '<p class="text-base text-sf-300 mt-1">Choose an assignment when you are ready to practice.</p></div><div class="space-y-4">';
         if (!assignments.length) {
@@ -225,7 +232,7 @@ function showStudentAssignments(classId, className) {
                     : practiceButton + presentationButton;
                 return '<div class="mini-card">'
                     + '<div class="font-display font-bold text-xl text-sf-50 mb-2">' + esc(a.title) + '</div>'
-                    + '<div class="text-base text-sf-300 mb-3"><i class="fas fa-calendar-alt mr-1.5"></i>Due: ' + esc(a.dueDate || 'No due date') + '</div>'
+                    + '<div class="text-base text-sf-300 mb-3"><i class="fas fa-calendar-alt mr-1.5"></i>Due: ' + esc(formatAssignmentDue(a.dueDate)) + '</div>'
                     + (a.instructions ? '<p class="text-base leading-relaxed text-sf-200 mb-5">' + esc(a.instructions) + '</p>' : '<div class="mb-5"></div>')
                     + '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">' + assignmentButtons + '</div>'
                     + '</div>';
@@ -239,16 +246,102 @@ function showStudentAssignments(classId, className) {
 }
 
 function startAssignment(assignmentId, mode) {
-    var script = _clsCtx.scriptMap[assignmentId] || '';
+    var assignment = _clsCtx.assignmentMap[assignmentId] || {};
+    var script = assignment.script || _clsCtx.scriptMap[assignmentId] || '';
     mode = mode === 'presentation' ? 'presentation' : 'practice';
+    _activeAssignment = {
+        id: assignmentId,
+        title: assignment.title || 'Assignment',
+        script: script,
+        type: assignment.type || mode
+    };
     S.currentAssignmentId = assignmentId;
     S.mode = mode;
+    $('assignment-class-name').textContent = _clsCtx.className;
+    $('assignment-page-title').textContent = _activeAssignment.title;
+    $('assignment-mode-badge').textContent = (mode === 'presentation' ? 'Presentation' : 'Practice') + ' Assignment';
+    $('assignment-script-readonly').textContent = script;
+    $('assignment-preview').classList.remove('hidden');
+    $('assignment-session-mount').classList.add('hidden');
+    $('assignment-result').classList.add('hidden');
+    switchScreen('assignment');
+}
+
+function formatAssignmentDue(value) {
+    if (!value) return 'No due date';
+    var date = new Date(value);
+    return isNaN(date.getTime()) ? value : date.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+function launchAssignmentSession() {
+    if (!_activeAssignment) return;
     var input = $('script-input');
-    if (input) input.value = script;
+    if (input) input.value = _activeAssignment.script;
+    S.mode = _activeAssignment.type === 'presentation' ? 'presentation' : 'practice';
     if (typeof updateParse === 'function') updateParse();
-    switchScreen('setup');
-    showSetupTab(mode);
-    toast('Assignment loaded. Press Start ' + (mode === 'presentation' ? 'Presentation' : 'Practice') + ' when ready.', 'success');
+    S.userRoles = S.userRoles.filter(function(role) { return S.roles.indexOf(role) !== -1; });
+    if (!S.userRoles.length && S.roles.length) S.userRoles = [S.roles[0]];
+    moveAssignmentSessionElements(true);
+    _assignmentSessionRunning = true;
+    startSession();
+}
+
+function moveAssignmentSessionElements(toAssignment) {
+    var target = toAssignment ? $('assignment-session-mount') : $('session-screen');
+    ['session-progress-track', 'dialogue-context', 'interaction-area'].forEach(function(id) {
+        var el = $(id);
+        if (el && target) target.appendChild(el);
+    });
+    if (toAssignment) {
+        $('assignment-preview').classList.add('hidden');
+        $('assignment-result').classList.add('hidden');
+        $('assignment-session-mount').classList.remove('hidden');
+        $('assignment-session-mount').classList.add('flex');
+    } else if ($('assignment-session-mount')) {
+        $('assignment-session-mount').classList.add('hidden');
+        $('assignment-session-mount').classList.remove('flex');
+    }
+}
+
+function closeAssignmentSession() {
+    releaseMicStream();
+    stopSpeaking();
+    moveAssignmentSessionElements(false);
+    _assignmentSessionRunning = false;
+    _activeAssignment = null;
+    switchScreen('class');
+    showStudentAssignments(_clsCtx.classId, _clsCtx.className);
+}
+
+function renderAssignmentCompletion() {
+    var scores = Object.keys(S.lineScores).map(function(key) { return S.lineScores[key]; }).filter(function(score) { return score != null; });
+    var avg = scores.length ? Math.round(scores.reduce(function(total, score) { return total + score; }, 0) / scores.length) : 0;
+    _assignmentSessionRunning = false;
+    moveAssignmentSessionElements(false);
+    switchScreen('assignment');
+    $('assignment-preview').classList.add('hidden');
+    $('assignment-result').classList.remove('hidden');
+    $('assignment-result').innerHTML = '<div class="glass rounded-2xl p-7 text-center">'
+        + '<p class="text-sm text-sf-300 mb-2">Assignment complete</p>'
+        + '<div class="text-6xl font-display font-bold text-sage-400 mb-2">' + avg + '</div>'
+        + '<p class="text-base text-sf-200 mb-6">Average score</p>'
+        + '<button onclick="submitActiveAssignment()" class="w-full min-h-[52px] rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 font-display font-bold text-base"><i class="fas fa-paper-plane mr-2"></i>Submit Assignment</button>'
+        + '</div>';
+}
+
+function submitActiveAssignment() {
+    if (!_activeAssignment || !S.authUser) return;
+    var scores = Object.keys(S.lineScores).map(function(key) { return S.lineScores[key]; }).filter(function(score) { return score != null; });
+    var avg = scores.length ? Math.round(scores.reduce(function(total, score) { return total + score; }, 0) / scores.length) : 0;
+    var transcript = JSON.stringify(S.userResponses || {});
+    submitAssignment(_activeAssignment.id, S.authUser.uid, transcript, avg, null).then(function() {
+        toast('Assignment submitted.', 'success');
+        _activeAssignment = null;
+        switchScreen('class');
+        showStudentAssignments(_clsCtx.classId, _clsCtx.className);
+    }).catch(function(err) {
+        toast(err.message || 'Failed to submit assignment.', 'error');
+    });
 }
 
 function renderClassStudents(message, isError) {
@@ -284,17 +377,54 @@ function renderClassStudents(message, isError) {
     })).then(function(studentProfiles) {
         var studentsList = $('class-students-list');
         if (!studentsList || _clsCtx.activeTab !== 'students' || renderId !== _classStudentsRenderId) return;
+        _classStudentNames = {};
         studentsList.innerHTML = studentProfiles.map(function(student) {
             var safeUid = student.uid.replace(/'/g, "\\'");
             var shortUid = student.uid.length > 12 ? student.uid.slice(0, 12) + '...' : student.uid;
+            _classStudentNames[student.uid] = student.fullName || shortUid;
             return '<div class="mini-card flex items-center justify-between gap-4 flex-wrap">'
                 + '<div class="flex items-center gap-4 min-w-0">'
                 + '<div class="w-11 h-11 rounded-xl bg-sage-500/15 border border-sage-500/25 text-sage-400 flex items-center justify-center flex-shrink-0"><i class="fas fa-user-graduate"></i></div>'
                 + '<div class="min-w-0"><div class="font-display font-semibold text-lg text-sf-50">' + esc(student.fullName || shortUid) + '</div>'
                 + '<div class="text-sm text-sf-300 font-mono truncate">' + esc(shortUid) + '</div></div></div>'
-                + '<button onclick="removeStudentFromClass(\'' + safeUid + '\')" class="action-btn action-btn--coral min-h-[44px] px-4 text-sm flex-shrink-0"><i class="fas fa-user-minus"></i>Remove</button>'
+                + '<div class="flex gap-2 flex-wrap">'
+                + '<button onclick="viewStudentGrades(\'' + safeUid + '\')" class="action-btn action-btn--sage min-h-[44px] px-4 text-sm"><i class="fas fa-chart-line"></i>View Grades</button>'
+                + '<button onclick="removeStudentFromClass(\'' + safeUid + '\')" class="action-btn action-btn--coral min-h-[44px] px-4 text-sm"><i class="fas fa-user-minus"></i>Remove</button>'
+                + '</div>'
                 + '</div>';
         }).join('');
+    });
+}
+
+function viewStudentGrades(uid, fullName) {
+    fullName = fullName || _classStudentNames[uid] || uid.slice(0, 12);
+    _clsCtx.gradeStudentUid = uid;
+    _clsCtx.gradeStudentName = fullName;
+    var list = $('class-page-content');
+    if (!list) return;
+    list.innerHTML = '<div class="flex items-center gap-3 py-4"><div class="spinner"></div><span class="text-sf-300 text-base">Loading grades...</span></div>';
+    db.collection('submissions').where('studentUid', '==', uid).get().then(function(snapshot) {
+        var submissions = snapshot.docs.map(function(doc) { return Object.assign({ id: doc.id }, doc.data()); });
+        return Promise.all(submissions.map(function(submission) {
+            return db.collection('assignments').doc(submission.assignmentId).get().then(function(doc) {
+                submission.assignmentTitle = doc.exists ? (doc.data().title || 'Assignment') : 'Assignment';
+                return submission;
+            });
+        }));
+    }).then(function(submissions) {
+        var html = '<button onclick="showClassPageTab(\'students\')" class="action-btn min-h-[44px] text-sm mb-6"><i class="fas fa-arrow-left"></i>Back to Students</button>'
+            + '<h2 class="font-display font-bold text-2xl text-sf-50 mb-5">' + esc(fullName) + ' — Grades</h2>';
+        if (!submissions.length) html += '<div class="mini-card text-sf-300">No submissions yet.</div>';
+        else html += submissions.map(function(submission) {
+            var safeId = submission.id.replace(/'/g, "\\'");
+            return '<div class="mini-card mb-3 flex items-center justify-between gap-4 flex-wrap"><div>'
+                + '<div class="font-display font-semibold text-lg text-sf-50">' + esc(submission.assignmentTitle) + '</div>'
+                + '<div class="text-sm text-sf-300 mt-1">AI Score: <span class="text-copper-400">' + (submission.aiScore != null ? submission.aiScore : '—') + '</span> · Grade: <span class="text-sage-400">' + esc(submission.teacherGrade || 'Not graded') + '</span> · ' + esc(submission.status || 'submitted') + '</div>'
+                + '</div><button onclick="gradeSubmissionUI(\'' + safeId + '\')" class="action-btn action-btn--sage min-h-[44px] px-4 text-sm">Grade</button></div>';
+        }).join('');
+        list.innerHTML = html;
+    }).catch(function(err) {
+        list.innerHTML = '<p class="text-coral-400 text-base">' + esc(err.message || 'Failed to load grades.') + '</p>';
     });
 }
 
@@ -333,6 +463,8 @@ function removeStudentFromClass(uid) {
 function viewSubmissions(assignmentId, title) {
     _clsCtx.assignmentId = assignmentId;
     _clsCtx.assignmentTitle = title;
+    _clsCtx.gradeStudentUid = '';
+    _clsCtx.gradeStudentName = '';
     var list = $('class-page-content');
     if (!list) return;
     list.innerHTML = '<div class="flex items-center gap-3 py-4"><div class="spinner"></div><span class="text-sf-300 text-base">Loading submissions...</span></div>';
@@ -388,8 +520,9 @@ function openCreateAssignmentModal() {
         + '<textarea id="new-assign-instructions" rows="2" placeholder="Notes for students..." class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none" style="width:100%;box-sizing:border-box;resize:vertical;"></textarea></div>'
         + '<div><label style="display:block;font-size:13px;color:#A8A6A1;margin-bottom:6px;">Script *</label>'
         + '<textarea id="new-assign-script" rows="5" placeholder="Paste the dialogue script here..." class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none" style="width:100%;box-sizing:border-box;resize:vertical;"></textarea></div>'
-        + '<div><label style="display:block;font-size:13px;color:#A8A6A1;margin-bottom:6px;">Due Date *</label>'
-        + '<input id="new-assign-due" type="date" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 outline-none" style="width:100%;box-sizing:border-box;"></div>'
+        + '<div><label style="display:block;font-size:13px;color:#A8A6A1;margin-bottom:6px;">Due Date and Time *</label>'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><input id="new-assign-due-date" type="date" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 outline-none">'
+        + '<input id="new-assign-due-time" type="time" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 outline-none"></div></div>'
         + '<p id="new-assign-error" style="font-size:12px;color:#E8756A;display:none;"></p>'
         + '<div style="display:flex;gap:10px;">'
         + '<button onclick="closeAssignmentModal()" style="flex:1;padding:10px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#A8A6A1;font-size:13px;font-weight:600;cursor:pointer;">Cancel</button>'
@@ -409,7 +542,9 @@ function submitCreateAssignment() {
     var title = (document.getElementById('new-assign-title') ? document.getElementById('new-assign-title').value : '').trim();
     var instructions = (document.getElementById('new-assign-instructions') ? document.getElementById('new-assign-instructions').value : '').trim();
     var script = (document.getElementById('new-assign-script') ? document.getElementById('new-assign-script').value : '').trim();
-    var due = (document.getElementById('new-assign-due') ? document.getElementById('new-assign-due').value : '').trim();
+    var dueDate = (document.getElementById('new-assign-due-date') ? document.getElementById('new-assign-due-date').value : '').trim();
+    var dueTime = (document.getElementById('new-assign-due-time') ? document.getElementById('new-assign-due-time').value : '').trim();
+    var due = dueDate && dueTime ? dueDate + 'T' + dueTime : '';
     var typeInput = document.querySelector('input[name="new-assign-type"]:checked');
     var type = typeInput ? typeInput.value : '';
     var errEl = document.getElementById('new-assign-error');
@@ -474,7 +609,8 @@ function submitGrade(submissionId) {
         .then(function() {
             closeGradeModal();
             toast('Submission graded.', 'success');
-            viewSubmissions(_clsCtx.assignmentId, _clsCtx.assignmentTitle);
+            if (_clsCtx.gradeStudentUid) viewStudentGrades(_clsCtx.gradeStudentUid, _clsCtx.gradeStudentName);
+            else viewSubmissions(_clsCtx.assignmentId, _clsCtx.assignmentTitle);
         })
         .catch(function(err) {
             if (errEl) { errEl.textContent = err.message || 'Failed to save grade.'; errEl.style.display = 'block'; }

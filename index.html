@@ -415,6 +415,32 @@
         </main>
     </div>
 
+    <!-- ASSIGNMENT SESSION -->
+    <div id="assignment-screen" class="screen flex-col h-screen">
+        <header class="glass border-b border-white/5 px-4 py-4 flex-shrink-0">
+            <div class="w-full max-w-5xl mx-auto flex items-center gap-3">
+                <button onclick="closeAssignmentSession()" class="w-11 h-11 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 flex items-center justify-center flex-shrink-0" aria-label="Back to class"><i class="fas fa-arrow-left text-sf-100"></i></button>
+                <div class="min-w-0 flex-1">
+                    <p id="assignment-class-name" class="text-sm text-sf-300"></p>
+                    <h1 id="assignment-page-title" class="text-2xl font-display font-bold text-sf-50 truncate">Assignment</h1>
+                </div>
+                <button id="assignment-mode-badge" disabled class="px-3 py-2 rounded-xl bg-copper-500/15 border border-copper-500/25 text-copper-400 text-sm font-semibold disabled:opacity-100">Assignment Mode</button>
+            </div>
+        </header>
+        <main class="flex-1 w-full flex flex-col min-h-0">
+            <div id="assignment-preview" class="max-w-5xl mx-auto px-4 py-8">
+                <div class="glass rounded-2xl p-5 sm:p-7">
+                    <h2 class="font-display font-bold text-xl text-sf-50 mb-3">Script</h2>
+                    <pre id="assignment-script-readonly" class="whitespace-pre-wrap text-base leading-relaxed text-sf-100 bg-white/3 border border-white/8 rounded-xl p-4 max-h-[55vh] overflow-y-auto"></pre>
+                    <button onclick="launchAssignmentSession()" class="w-full min-h-[52px] mt-5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 font-display font-bold text-base"><i class="fas fa-play mr-2"></i>Start Assignment</button>
+                    <button disabled class="w-full min-h-[48px] mt-3 rounded-xl bg-white/5 border border-white/10 text-sf-300 font-display font-semibold disabled:opacity-50"><i class="fas fa-paper-plane mr-2"></i>Submit Assignment</button>
+                </div>
+            </div>
+            <div id="assignment-session-mount" class="hidden flex-1 flex-col min-h-0"></div>
+            <div id="assignment-result" class="hidden max-w-3xl mx-auto px-4 py-10"></div>
+        </main>
+    </div>
+
     <!-- CREATE CLASS MODAL -->
     <div id="create-class-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm hidden" role="dialog" aria-modal="true" aria-labelledby="create-class-modal-title">
         <div class="glass rounded-2xl p-6 w-full max-w-md space-y-4">
@@ -544,7 +570,7 @@
                 <button id="help-btn" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors flex-shrink-0" aria-label="Help" title="How does this work?"><i class="fas fa-question text-sm text-sf-200"></i></button>
             </div>
         </header>
-        <div class="progress-track flex-shrink-0"><div id="progress-fill" class="progress-fill" style="width:0%"></div></div>
+        <div id="session-progress-track" class="progress-track flex-shrink-0"><div id="progress-fill" class="progress-fill" style="width:0%"></div></div>
         <div id="dialogue-context" class="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-3" role="log" aria-label="Dialogue"></div>
         <div id="interaction-area" class="flex-shrink-0 glass border-t border-white/5 p-4 min-h-[120px]"></div>
     </div>
