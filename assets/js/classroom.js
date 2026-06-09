@@ -100,30 +100,28 @@ function renderClassCards(list, classes, role) {
         'linear-gradient(135deg, #C8B86C, #E8DCA8)'
     ];
     list.innerHTML = '';
+    var grid = document.createElement('div');
+    grid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-4';
     classes.forEach(function(c, index) {
         var studentCount = (c.studentUids && c.studentUids.length) || 0;
-        var card = document.createElement('div');
-        card.className = 'min-h-[180px] rounded-2xl overflow-hidden bg-white/5 border border-white/10 cursor-pointer hover:border-white/25 hover:-translate-y-1 hover:shadow-xl transition-all';
-        card.setAttribute('role', 'button');
-        card.setAttribute('tabindex', '0');
-        card.onclick = (function(i, r) { return function() { openClassPageByIndex(i, r); }; })(index, role);
-        card.onkeydown = function(event) {
-            if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                openClassPageByIndex(index, role);
-            }
-        };
-        card.innerHTML = '<div class="h-24 px-5 py-4 flex items-end" style="background:' + gradients[index % gradients.length] + '">'
+        var btn = document.createElement('button');
+        btn.className = 'min-h-[180px] rounded-2xl overflow-hidden bg-white/5 border border-white/10 cursor-pointer hover:border-white/25 hover:-translate-y-1 hover:shadow-xl transition-all text-left w-full';
+        btn.type = 'button';
+        btn.innerHTML = '<div class="h-24 px-5 py-4 flex items-end" style="background:' + gradients[index % gradients.length] + '">'
             + '<h3 class="font-display font-bold text-2xl text-white leading-tight drop-shadow-md">' + esc(c.className || 'Untitled Class') + '</h3>'
             + '</div>'
             + '<div class="p-5">'
             + '<p class="text-base text-sf-100 mb-4">' + esc(c.subject || 'No subject') + '</p>'
             + '<div class="flex items-center justify-between gap-3 flex-wrap">'
-            + '<span class="px-2.5 py-1 rounded-lg bg-copper-500/15 border border-copper-500/25 text-copper-400 text-sm font-mono font-bold">' + esc(c.classCode || 'No code') + '</span>'
+            + '<span class="px-2.5 py-1 rounded-lg bg-copper-500/15 border border-copper-500/25 text-copper-400 text-sm font-mono font-bold">' + esc(c.classCode || '') + '</span>'
             + '<span class="text-sm text-sf-300"><i class="fas fa-user-group mr-1.5"></i>' + studentCount + ' student' + (studentCount === 1 ? '' : 's') + '</span>'
             + '</div></div>';
-        list.appendChild(card);
+        btn.addEventListener('click', (function(classObj, r) {
+            return function() { openClassPage(classObj, r); };
+        })(c, role));
+        grid.appendChild(btn);
     });
+    list.appendChild(grid);
 }
 
 function openClassPageByIndex(index, role) {
