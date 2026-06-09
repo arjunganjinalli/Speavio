@@ -247,7 +247,16 @@ function renderClassesTabContent(){
     teacherView.classList.toggle('hidden',role!=='teacher');
     studentView.classList.toggle('hidden',role!=='student');
     if(role==='teacher')loadTeacherClasses();
-    if(role==='student')loadStudentClasses();
+    if(role==='student')getStudentClasses(S.authUser.uid).then(function(classes){
+        if(!classes.length){
+            $('student-classes-list').innerHTML='<p class="text-sf-300 text-sm">No classes joined yet.</p>';
+            return;
+        }
+        _studentClasses=classes;
+        renderClassCards($('student-classes-list'),classes,'student');
+    }).catch(function(){
+        $('student-classes-list').innerHTML='<p class="text-coral-400 text-sm">Failed to load classes.</p>';
+    });
 }
 
 function loadTeacherClasses(){
