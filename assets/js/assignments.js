@@ -2,7 +2,7 @@
     ASSIGNMENTS
 ═══════════════════════════════════════════════════════════════ */
 
-function createAssignment(classId, teacherUid, title, instructions, script, dueDate) {
+function createAssignment(classId, teacherUid, title, instructions, script, dueDate, type) {
     return db.collection('assignments').add({
         classId:      classId,
         teacherUid:   teacherUid,
@@ -10,6 +10,7 @@ function createAssignment(classId, teacherUid, title, instructions, script, dueD
         instructions: instructions,
         script:       script,
         dueDate:      dueDate,
+        type:         type,
         createdAt:    firebase.firestore.FieldValue.serverTimestamp()
     }).then(function(docRef) {
         return docRef.id;

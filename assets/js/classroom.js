@@ -131,6 +131,7 @@ function openClassPageByIndex(index, role) {
 }
 
 var _clsCtx = { classId: '', className: '', classObj: null, role: '', activeTab: 'assignments', assignmentId: '', assignmentTitle: '', scriptMap: {} };
+var _classStudentsRenderId = 0;
 
 function openClassPage(classObj, role) {
     if (!classObj) return;
@@ -217,14 +218,16 @@ function showStudentAssignments(classId, className) {
         } else {
             html += assignments.map(function(a) {
                 var safeId = a.id.replace(/'/g, "\\'");
+                var practiceButton = '<button onclick="startAssignment(\'' + safeId + '\',\'practice\')" class="w-full min-h-[48px] font-display font-semibold text-base rounded-xl px-4 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 hover:from-amber-400 hover:to-yellow-400 transition-all cursor-pointer border-0"><i class="fas fa-microphone-lines mr-2"></i>Start Practice</button>';
+                var presentationButton = '<button onclick="startAssignment(\'' + safeId + '\',\'presentation\')" class="w-full min-h-[48px] font-display font-semibold text-base rounded-xl px-4 py-3 bg-sage-500/15 border border-sage-500/25 text-sage-400 hover:bg-sage-500/25 transition-all cursor-pointer"><i class="fas fa-masks-theater mr-2"></i>Start Presentation</button>';
+                var assignmentButtons = a.type === 'practice' ? practiceButton
+                    : a.type === 'presentation' ? presentationButton
+                    : practiceButton + presentationButton;
                 return '<div class="mini-card">'
                     + '<div class="font-display font-bold text-xl text-sf-50 mb-2">' + esc(a.title) + '</div>'
                     + '<div class="text-base text-sf-300 mb-3"><i class="fas fa-calendar-alt mr-1.5"></i>Due: ' + esc(a.dueDate || 'No due date') + '</div>'
                     + (a.instructions ? '<p class="text-base leading-relaxed text-sf-200 mb-5">' + esc(a.instructions) + '</p>' : '<div class="mb-5"></div>')
-                    + '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">'
-                    + '<button onclick="startAssignment(\'' + safeId + '\',\'practice\')" class="w-full min-h-[48px] font-display font-semibold text-base rounded-xl px-4 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 hover:from-amber-400 hover:to-yellow-400 transition-all cursor-pointer border-0"><i class="fas fa-microphone-lines mr-2"></i>Start Practice</button>'
-                    + '<button onclick="startAssignment(\'' + safeId + '\',\'presentation\')" class="w-full min-h-[48px] font-display font-semibold text-base rounded-xl px-4 py-3 bg-sage-500/15 border border-sage-500/25 text-sage-400 hover:bg-sage-500/25 transition-all cursor-pointer"><i class="fas fa-masks-theater mr-2"></i>Start Presentation</button>'
-                    + '</div>'
+                    + '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">' + assignmentButtons + '</div>'
                     + '</div>';
             }).join('');
         }
@@ -248,24 +251,83 @@ function startAssignment(assignmentId, mode) {
     toast('Assignment loaded. Press Start ' + (mode === 'presentation' ? 'Presentation' : 'Practice') + ' when ready.', 'success');
 }
 
-function renderClassStudents() {
+function renderClassStudents(message, isError) {
     var list = $('class-page-content');
     if (!list) return;
+    var renderId = ++_classStudentsRenderId;
     var students = (_clsCtx.classObj && _clsCtx.classObj.studentUids) || [];
     var html = '<div class="mb-6"><h2 class="font-display font-bold text-2xl text-sf-50">Students</h2>'
         + '<p class="text-base text-sf-300 mt-1">' + students.length + ' enrolled student' + (students.length === 1 ? '' : 's') + '</p></div>'
-        + '<div class="space-y-3">';
+        + '<div class="mini-card mb-5">'
+        + '<label for="class-add-student-uid" class="block text-sm font-semibold text-sf-100 mb-2">Add Student by UID</label>'
+        + '<div class="flex flex-col sm:flex-row gap-3">'
+        + '<input id="class-add-student-uid" type="text" placeholder="Student UID" class="input-glow flex-1 bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none">'
+        + '<button onclick="addStudentToClass()" class="action-btn action-btn--sage min-h-[44px] px-5 text-sm"><i class="fas fa-user-plus"></i>Add</button>'
+        + '</div>'
+        + '<p id="class-student-message" class="text-sm mt-3 ' + (isError ? 'text-coral-400' : 'text-sage-400') + '">' + esc(message || '') + '</p>'
+        + '</div>'
+        + '<div id="class-students-list" class="space-y-3">';
     if (!students.length) {
         html += '<div class="mini-card"><p class="text-sf-300 text-base">No students have joined this class yet.</p></div>';
     } else {
-        html += students.map(function(uid, index) {
-            return '<div class="mini-card flex items-center gap-4">'
-                + '<div class="w-11 h-11 rounded-xl bg-sage-500/15 border border-sage-500/25 text-sage-400 flex items-center justify-center flex-shrink-0"><i class="fas fa-user-graduate"></i></div>'
-                + '<div><div class="font-display font-semibold text-lg text-sf-50">Student ' + (index + 1) + '</div>'
-                + '<div class="text-sm text-sf-300 font-mono break-all">' + esc(uid) + '</div></div></div>';
-        }).join('');
+        html += '<div class="flex items-center gap-3 py-4"><div class="spinner"></div><span class="text-sf-300 text-base">Loading student names...</span></div>';
     }
     list.innerHTML = html + '</div>';
+    if (!students.length) return;
+    Promise.all(students.map(function(uid) {
+        return db.collection('users').doc(uid).get().then(function(doc) {
+            var data = doc.exists ? doc.data() : null;
+            return { uid: uid, fullName: data && data.fullName ? data.fullName : '' };
+        }).catch(function() {
+            return { uid: uid, fullName: '' };
+        });
+    })).then(function(studentProfiles) {
+        var studentsList = $('class-students-list');
+        if (!studentsList || _clsCtx.activeTab !== 'students' || renderId !== _classStudentsRenderId) return;
+        studentsList.innerHTML = studentProfiles.map(function(student) {
+            var safeUid = student.uid.replace(/'/g, "\\'");
+            var shortUid = student.uid.length > 12 ? student.uid.slice(0, 12) + '...' : student.uid;
+            return '<div class="mini-card flex items-center justify-between gap-4 flex-wrap">'
+                + '<div class="flex items-center gap-4 min-w-0">'
+                + '<div class="w-11 h-11 rounded-xl bg-sage-500/15 border border-sage-500/25 text-sage-400 flex items-center justify-center flex-shrink-0"><i class="fas fa-user-graduate"></i></div>'
+                + '<div class="min-w-0"><div class="font-display font-semibold text-lg text-sf-50">' + esc(student.fullName || shortUid) + '</div>'
+                + '<div class="text-sm text-sf-300 font-mono truncate">' + esc(shortUid) + '</div></div></div>'
+                + '<button onclick="removeStudentFromClass(\'' + safeUid + '\')" class="action-btn action-btn--coral min-h-[44px] px-4 text-sm flex-shrink-0"><i class="fas fa-user-minus"></i>Remove</button>'
+                + '</div>';
+        }).join('');
+    });
+}
+
+function addStudentToClass() {
+    var input = $('class-add-student-uid');
+    var uid = input ? input.value.trim() : '';
+    if (!uid) {
+        renderClassStudents('Enter a student UID.', true);
+        return;
+    }
+    db.collection('classes').doc(_clsCtx.classId).update({
+        studentUids: firebase.firestore.FieldValue.arrayUnion(uid)
+    }).then(function() {
+        var students = (_clsCtx.classObj && _clsCtx.classObj.studentUids) || [];
+        if (students.indexOf(uid) === -1) students.push(uid);
+        _clsCtx.classObj.studentUids = students;
+        renderClassStudents('Student added.', false);
+    }).catch(function(err) {
+        renderClassStudents(err.message || 'Failed to add student.', true);
+    });
+}
+
+function removeStudentFromClass(uid) {
+    db.collection('classes').doc(_clsCtx.classId).update({
+        studentUids: firebase.firestore.FieldValue.arrayRemove(uid)
+    }).then(function() {
+        _clsCtx.classObj.studentUids = ((_clsCtx.classObj && _clsCtx.classObj.studentUids) || []).filter(function(studentUid) {
+            return studentUid !== uid;
+        });
+        renderClassStudents('Student removed.', false);
+    }).catch(function(err) {
+        renderClassStudents(err.message || 'Failed to remove student.', true);
+    });
 }
 
 function viewSubmissions(assignmentId, title) {
@@ -317,6 +379,11 @@ function openCreateAssignmentModal() {
         + '<div style="display:flex;flex-direction:column;gap:14px;margin-top:12px;">'
         + '<div><label style="display:block;font-size:13px;color:#A8A6A1;margin-bottom:6px;">Title *</label>'
         + '<input id="new-assign-title" type="text" placeholder="e.g. Chapter 3 Dialogue" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none" style="width:100%;box-sizing:border-box;"></div>'
+        + '<fieldset><legend style="display:block;font-size:13px;color:#A8A6A1;margin-bottom:8px;">Assignment Type *</legend>'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
+        + '<label style="display:flex;align-items:center;gap:8px;padding:12px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);cursor:pointer;"><input type="radio" name="new-assign-type" value="practice" required checked> Practice</label>'
+        + '<label style="display:flex;align-items:center;gap:8px;padding:12px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);cursor:pointer;"><input type="radio" name="new-assign-type" value="presentation" required> Presentation</label>'
+        + '</div></fieldset>'
         + '<div><label style="display:block;font-size:13px;color:#A8A6A1;margin-bottom:6px;">Instructions</label>'
         + '<textarea id="new-assign-instructions" rows="2" placeholder="Notes for students..." class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none" style="width:100%;box-sizing:border-box;resize:vertical;"></textarea></div>'
         + '<div><label style="display:block;font-size:13px;color:#A8A6A1;margin-bottom:6px;">Script *</label>'
@@ -343,14 +410,16 @@ function submitCreateAssignment() {
     var instructions = (document.getElementById('new-assign-instructions') ? document.getElementById('new-assign-instructions').value : '').trim();
     var script = (document.getElementById('new-assign-script') ? document.getElementById('new-assign-script').value : '').trim();
     var due = (document.getElementById('new-assign-due') ? document.getElementById('new-assign-due').value : '').trim();
+    var typeInput = document.querySelector('input[name="new-assign-type"]:checked');
+    var type = typeInput ? typeInput.value : '';
     var errEl = document.getElementById('new-assign-error');
-    if (!title || !script || !due) {
-        if (errEl) { errEl.textContent = 'Title, script, and due date are required.'; errEl.style.display = 'block'; }
+    if (!title || !script || !due || !type) {
+        if (errEl) { errEl.textContent = 'Title, assignment type, script, and due date are required.'; errEl.style.display = 'block'; }
         return;
     }
     var saveBtn = document.getElementById('new-assign-save-btn');
     if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
-    createAssignment(_clsCtx.classId, S.authUser.uid, title, instructions, script, due)
+    createAssignment(_clsCtx.classId, S.authUser.uid, title, instructions, script, due, type)
         .then(function() {
             closeAssignmentModal();
             toast('Assignment created.', 'success');
