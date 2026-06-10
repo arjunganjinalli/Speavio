@@ -571,14 +571,74 @@ function renderAssignmentCompletion() {
         + '<div class="text-6xl font-display font-bold text-sage-400 mb-2">' + avg + '</div>'
         + '<p class="text-base text-sf-200 mb-6">Average score</p>'
         + '<button onclick="redoActiveAssignment()" class="w-full min-h-[52px] mb-3 rounded-xl bg-white/5 border border-white/10 text-sf-100 font-display font-bold text-base hover:bg-white/10 transition-colors"><i class="fas fa-rotate-right mr-2"></i>Redo Assignment</button>'
+        + '<button onclick="downloadAssignmentRecordings()" class="w-full min-h-[52px] mb-3 rounded-xl bg-copper-500/15 border border-copper-500/30 text-copper-400 font-display font-bold text-base hover:bg-copper-500/25 transition-colors"><i class="fas fa-download mr-2"></i>Download My Recording</button>'
         + '<p id="assignment-submit-progress" class="hidden text-sm text-sf-200 mb-3"></p>'
-        + '<button id="assignment-submit-btn" onclick="submitActiveAssignment()" class="w-full min-h-[52px] rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 font-display font-bold text-base disabled:opacity-50 disabled:cursor-not-allowed"><i class="fas fa-paper-plane mr-2"></i>Submit Assignment</button>'
+        + '<button id="assignment-submit-btn" onclick="requestAssignmentSubmission()" class="w-full min-h-[52px] rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 font-display font-bold text-base disabled:opacity-50 disabled:cursor-not-allowed"><i class="fas fa-paper-plane mr-2"></i>Submit Assignment</button>'
         + '</div>';
 }
 
 function redoActiveAssignment() {
     if (!_activeAssignment) return;
     launchAssignmentSession();
+}
+
+function downloadAssignmentRecordings() {
+    Object.keys(S.audioClips || {}).forEach(function(lineIndex) {
+        var blob = S.audioClips[lineIndex];
+        if (!blob || blob.size < 100) return;
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'speavio-assignment-line-' + (parseInt(lineIndex, 10) + 1) + '.webm';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+    });
+    toast('Recording downloaded.', 'success');
+}
+
+function requestAssignmentSubmission() {
+    if (!_activeAssignment || !S.authUser) return;
+    if (localStorage.getItem('speavio_skip_recording_warning_' + S.authUser.uid) === 'true') {
+        submitActiveAssignment();
+        return;
+    }
+    openAssignmentSubmissionWarning();
+}
+
+function openAssignmentSubmissionWarning() {
+    closeAssignmentSubmissionWarning();
+    var overlay = document.createElement('div');
+    overlay.id = 'assignment-submission-warning-overlay';
+    overlay.className = 'help-overlay';
+    overlay.innerHTML = '<div class="help-modal" style="max-width:480px;position:relative;">'
+        + '<button class="close-help" onclick="closeAssignmentSubmissionWarning()" aria-label="Close"><i class="fas fa-xmark"></i></button>'
+        + '<div class="w-14 h-14 mx-auto mb-4 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 text-2xl"><i class="fas fa-triangle-exclamation"></i></div>'
+        + '<h2 class="text-2xl font-display font-bold text-white text-center mb-3">Before You Submit</h2>'
+        + '<p class="text-sf-200 text-base leading-relaxed text-center mb-6">Your recording will be permanently deleted from Speavio after your teacher grades this assignment. If you want to keep a copy, close this and click Download My Recording first.</p>'
+        + '<label class="flex items-center gap-3 min-h-[44px] rounded-xl bg-white/5 border border-white/10 px-4 mb-4 text-sf-100 cursor-pointer">'
+        + '<input id="assignment-skip-recording-warning" type="checkbox" class="w-5 h-5 accent-amber-500">'
+        + '<span>Don\'t remind me again</span></label>'
+        + '<button onclick="confirmAssignmentSubmissionWarning()" class="w-full min-h-[52px] rounded-xl bg-gradient-to-r from-copper-500 to-amber-500 text-sf-900 font-display font-bold text-base hover:brightness-110 transition-all">Submit, I Understand</button>'
+        + '</div>';
+    document.body.appendChild(overlay);
+    requestAnimationFrame(function() { overlay.classList.add('open'); });
+}
+
+function closeAssignmentSubmissionWarning() {
+    var overlay = $('assignment-submission-warning-overlay');
+    if (overlay) overlay.remove();
+}
+
+function confirmAssignmentSubmissionWarning() {
+    if (!_activeAssignment || !S.authUser) return;
+    var checkbox = $('assignment-skip-recording-warning');
+    if (checkbox && checkbox.checked) {
+        localStorage.setItem('speavio_skip_recording_warning_' + S.authUser.uid, 'true');
+    }
+    closeAssignmentSubmissionWarning();
+    submitActiveAssignment();
 }
 
 function submitActiveAssignment() {
