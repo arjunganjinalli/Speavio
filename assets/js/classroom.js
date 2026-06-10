@@ -195,7 +195,10 @@ function showClassAssignments(classId, className) {
                 return '<div class="mini-card">'
                     + '<div class="font-display font-bold text-xl text-sf-50 mb-2">' + esc(a.title) + '</div>'
                     + '<div class="text-base text-sf-300 mb-5"><i class="fas fa-calendar-alt mr-1.5"></i>Due: ' + esc(formatAssignmentDue(a.dueDate)) + '</div>'
+                    + '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">'
                     + '<button onclick="viewSubmissions(\'' + safeId + '\',\'' + safeTitle + '\')" class="w-full min-h-[44px] font-display font-semibold rounded-xl px-4 py-3 bg-sage-500/15 border border-sage-500/25 text-sage-400 hover:bg-sage-500/25 transition-all cursor-pointer"><i class="fas fa-eye mr-2"></i>View Submissions</button>'
+                    + '<button onclick="deleteClassAssignment(\'' + safeId + '\')" class="w-full min-h-[44px] font-display font-semibold rounded-xl px-4 py-3 bg-coral-500/15 border border-coral-500/25 text-coral-400 hover:bg-coral-500/25 transition-all cursor-pointer"><i class="fas fa-trash mr-2"></i>Delete</button>'
+                    + '</div>'
                     + '</div>';
             }).join('');
         }
@@ -203,6 +206,30 @@ function showClassAssignments(classId, className) {
     }).catch(function(err) {
         list.innerHTML = '<p class="text-coral-400 text-sm">Failed to load assignments.</p>';
         console.error(err);
+    });
+}
+
+function deleteClassAssignment(assignmentId) {
+    if (!confirm('Delete this assignment? This cannot be undone.')) return;
+    var list = $('class-page-content');
+    if (list) list.innerHTML = '<div class="flex items-center gap-3 py-4"><div class="spinner"></div><span class="text-sf-300 text-base">Deleting assignment...</span></div>';
+    db.collection('submissions').where('assignmentId', '==', assignmentId).get().then(function(snapshot) {
+        var docs = snapshot.docs;
+        var batches = [];
+        for (var i = 0; i < docs.length; i += 500) {
+            var batch = db.batch();
+            docs.slice(i, i + 500).forEach(function(doc) { batch.delete(doc.ref); });
+            batches.push(batch.commit());
+        }
+        return Promise.all(batches);
+    }).then(function() {
+        return db.collection('assignments').doc(assignmentId).delete();
+    }).then(function() {
+        toast('Assignment deleted.', 'success');
+        showClassAssignments(_clsCtx.classId, _clsCtx.className);
+    }).catch(function(err) {
+        toast(err.message || 'Failed to delete assignment.', 'error');
+        showClassAssignments(_clsCtx.classId, _clsCtx.className);
     });
 }
 

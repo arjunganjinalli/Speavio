@@ -215,13 +215,16 @@
                 </section>
 
                 <section id="panel-settings" class="setup-panel" role="tabpanel">
-                    <div class="mb-4">
-                        <button onclick="toggleCollapse('profile-section')" class="w-full flex items-center justify-between text-sm font-medium text-sf-200">
-                            <span><i class="fas fa-user-circle text-sage-400 mr-1.5"></i>Profile</span>
-                            <i class="fas fa-chevron-down text-sf-300 text-xs transition-transform" id="profile-section-arrow"></i>
+                    <div class="mini-card mb-4 p-0 overflow-hidden">
+                        <button onclick="toggleCollapse('profile-section')" class="w-full min-h-[72px] px-5 py-4 flex items-center justify-between gap-4 text-left hover:bg-white/5 transition-colors">
+                            <span class="flex items-center gap-4">
+                                <span class="w-12 h-12 rounded-xl bg-sage-500/15 border border-sage-500/25 flex items-center justify-center flex-shrink-0"><i class="fas fa-user-circle text-sage-400 text-2xl"></i></span>
+                                <span class="font-display font-bold text-base text-sf-50">Profile</span>
+                            </span>
+                            <i class="fas fa-chevron-down text-sf-300 text-sm transition-transform" id="profile-section-arrow"></i>
                         </button>
                         <div id="profile-section" class="collapse-content">
-                            <div class="pt-3 space-y-3">
+                            <div class="px-5 pb-5 pt-2 space-y-3 border-t border-white/5">
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
                                         <label class="block text-sm font-medium text-sf-200 mb-1.5">Full Name</label>
@@ -244,6 +247,33 @@
                                     <button onclick="saveProfileFromSettings()" class="px-5 py-2.5 rounded-xl bg-sage-500/15 border border-sage-500/25 text-sage-400 text-sm font-semibold hover:bg-sage-500/25 transition-all">Save Profile</button>
                                     <span id="profile-save-status" class="text-xs text-sf-300"></span>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mini-card mb-4 p-0 overflow-hidden">
+                        <button onclick="toggleCollapse('audio-devices-section')" class="w-full min-h-[72px] px-5 py-4 flex items-center justify-between gap-4 text-left hover:bg-white/5 transition-colors">
+                            <span class="flex items-center gap-4">
+                                <span class="w-12 h-12 rounded-xl bg-copper-500/15 border border-copper-500/25 flex items-center justify-center flex-shrink-0"><i class="fas fa-headphones text-copper-400 text-xl"></i></span>
+                                <span class="font-display font-bold text-base text-sf-50">Audio Devices</span>
+                            </span>
+                            <i class="fas fa-chevron-down text-sf-300 text-sm transition-transform" id="audio-devices-section-arrow"></i>
+                        </button>
+                        <div id="audio-devices-section" class="collapse-content">
+                            <div class="px-5 pb-5 pt-4 space-y-4 border-t border-white/5">
+                                <button onclick="loadAudioDevices()" class="w-full min-h-[44px] rounded-xl bg-white/5 border border-white/10 text-sf-100 text-sm font-semibold hover:bg-white/10 transition-colors"><i class="fas fa-rotate mr-2"></i>Refresh Devices</button>
+                                <div>
+                                    <label for="preferred-mic-select" class="block text-sm font-medium text-sf-200 mb-2">Microphone</label>
+                                    <select id="preferred-mic-select" onchange="setPreferredAudioDevice('mic',this.value)" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 outline-none transition-all appearance-none cursor-pointer">
+                                        <option value="">System default</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="preferred-speaker-select" class="block text-sm font-medium text-sf-200 mb-2">Speaker</label>
+                                    <select id="preferred-speaker-select" onchange="setPreferredAudioDevice('speaker',this.value)" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 outline-none transition-all appearance-none cursor-pointer">
+                                        <option value="">System default</option>
+                                    </select>
+                                </div>
+                                <p id="audio-devices-status" class="text-xs text-sf-300">Speaker selection requires Chrome</p>
                             </div>
                         </div>
                     </div>
@@ -351,30 +381,6 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <button onclick="toggleCollapse('audio-devices-section')" class="w-full flex items-center justify-between text-sm font-medium text-sf-200">
-                                        <span><i class="fas fa-headphones text-copper-500 mr-1.5"></i>Audio Devices</span>
-                                        <i class="fas fa-chevron-down text-sf-300 text-xs transition-transform" id="audio-devices-section-arrow"></i>
-                                    </button>
-                                    <div id="audio-devices-section" class="collapse-content">
-                                        <div class="pt-3 space-y-4">
-                                            <div>
-                                                <label for="preferred-mic-select" class="block text-xs text-sf-300 mb-1.5">Microphone Input</label>
-                                                <select id="preferred-mic-select" onchange="setPreferredAudioDevice('mic',this.value)" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-3 py-2.5 text-sm text-sf-50 outline-none transition-all appearance-none cursor-pointer">
-                                                    <option value="">System default</option>
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label for="preferred-speaker-select" class="block text-xs text-sf-300 mb-1.5">Speaker Output</label>
-                                                <select id="preferred-speaker-select" onchange="setPreferredAudioDevice('speaker',this.value)" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-3 py-2.5 text-sm text-sf-50 outline-none transition-all appearance-none cursor-pointer">
-                                                    <option value="">System default</option>
-                                                </select>
-                                            </div>
-                                            <button onclick="loadAudioDevices()" class="w-full min-h-[44px] rounded-xl bg-white/5 border border-white/10 text-sf-100 text-sm font-semibold hover:bg-white/10 transition-colors"><i class="fas fa-rotate mr-2"></i>Refresh Devices</button>
-                                            <p id="audio-devices-status" class="text-xs text-sf-300">Speaker selection requires Chrome and a supported output device.</p>
                                         </div>
                                     </div>
                                 </div>

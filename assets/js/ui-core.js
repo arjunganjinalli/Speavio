@@ -94,6 +94,7 @@ function toggleCollapse(id){
     var el=$(id),ar=$(id+'-arrow');
     el.classList.toggle('open');
     if(ar)ar.style.transform=el.classList.contains('open')?'rotate(180deg)':'';
+    if(id==='audio-devices-section'&&el.classList.contains('open'))loadAudioDevices();
 }
 function setTTSProvider(p){
     S.ttsProvider=p;
@@ -155,7 +156,6 @@ function showSetupTab(tab){
     if(tab==='home')refreshHomeProgressSnapshot();
     if(tab==='practice'||tab==='presentation')renderScriptLibraryOptions();
     if(tab==='settings'&&typeof loadProfileIntoSettings==='function')loadProfileIntoSettings();
-    if(tab==='settings')loadAudioDevices();
     if(tab==='classes')renderClassesTabContent();
 }
 
@@ -169,7 +169,7 @@ function loadAudioDevices(){
     navigator.mediaDevices.enumerateDevices().then(function(devices){
         renderAudioDeviceSelect('preferred-mic-select',devices.filter(function(d){return d.kind==='audioinput'}),S.preferredMicId,'Microphone');
         renderAudioDeviceSelect('preferred-speaker-select',devices.filter(function(d){return d.kind==='audiooutput'}),S.preferredSpeakerId,'Speaker');
-        if(status)status.textContent='Device names may appear after microphone permission is granted. Speaker selection requires Chrome.';
+        if(status)status.textContent='Speaker selection requires Chrome';
     }).catch(function(err){
         if(status)status.textContent='Could not load audio devices.';
         console.error('enumerateDevices error:',err);
