@@ -242,11 +242,11 @@ function showClassAssignments(classId, className) {
                 return '<div class="mini-card relative">'
                     + '<button onclick="toggleClassroomMenu(event,\'assignment-menu-' + safeId + '\')" class="absolute top-3 right-3 w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 text-sf-100 text-xl flex items-center justify-center transition-colors" aria-label="Assignment options">&#8942;</button>'
                     + '<div id="assignment-menu-' + safeId + '" class="classroom-overflow-menu hidden absolute top-12 right-3 z-30 min-w-[180px] rounded-xl bg-sf-800 border border-white/10 shadow-xl p-1">'
-                    + '<button onclick="openAssignmentSubmissions(event,\'' + safeId + '\')" class="w-full text-left px-3 py-2.5 rounded-lg text-sm text-sf-100 hover:bg-white/5">View Submissions</button>'
                     + '<button onclick="openDeleteAssignmentModal(event,\'' + safeId + '\')" class="w-full text-left px-3 py-2.5 rounded-lg text-sm text-coral-400 hover:bg-coral-500/10">Delete Assignment</button>'
                     + '</div>'
                     + '<div class="font-display font-bold text-xl text-sf-50 mb-2 pr-10">' + esc(a.title) + '</div>'
                     + '<div class="text-base text-sf-300 mb-5"><i class="fas fa-calendar-alt mr-1.5"></i>Due: ' + esc(formatAssignmentDue(a.dueDate)) + '</div>'
+                    + '<button onclick="openAssignmentSubmissions(event,\'' + safeId + '\')" class="w-full min-h-[44px] font-display font-semibold rounded-xl px-4 py-3 bg-sage-500/15 border border-sage-500/25 text-sage-400 hover:bg-sage-500/25 transition-all cursor-pointer"><i class="fas fa-eye mr-2"></i>View Submissions</button>'
                     + '</div>';
             }).join('');
         }
