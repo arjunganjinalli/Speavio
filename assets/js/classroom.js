@@ -611,15 +611,17 @@ function viewStudentGrades(uid, fullName) {
             });
         }));
     }).then(function(submissions) {
+        _clsCtx.submissionMap = _clsCtx.submissionMap || {};
         var html = '<button onclick="showClassPageTab(\'students\')" class="action-btn min-h-[44px] text-sm mb-6"><i class="fas fa-arrow-left"></i>Back to Students</button>'
             + '<h2 class="font-display font-bold text-2xl text-sf-50 mb-5">' + esc(fullName) + ' — Grades</h2>';
         if (!submissions.length) html += '<div class="mini-card text-sf-300">No submissions yet.</div>';
         else html += submissions.map(function(submission) {
             var safeId = submission.id.replace(/'/g, "\\'");
+            _clsCtx.submissionMap[submission.id] = submission;
             return '<div class="mini-card mb-3 flex items-center justify-between gap-4 flex-wrap"><div>'
                 + '<div class="font-display font-semibold text-lg text-sf-50">' + esc(submission.assignmentTitle) + '</div>'
                 + '<div class="text-sm text-sf-300 mt-1">AI Score: <span class="text-copper-400">' + (submission.aiScore != null ? submission.aiScore : '—') + '</span> · Grade: <span class="text-sage-400">' + esc(submission.teacherGrade || 'Not graded') + '</span> · ' + esc(submission.status || 'submitted') + '</div>'
-                + '</div><button onclick="gradeSubmissionUI(\'' + safeId + '\')" class="action-btn action-btn--sage min-h-[44px] px-4 text-sm">Grade</button></div>';
+                + '</div><button onclick="openGradeSubmissionById(\'' + safeId + '\')" class="action-btn action-btn--sage min-h-[44px] px-4 text-sm">Grade</button></div>';
         }).join('');
         list.innerHTML = html;
     }).catch(function(err) {
@@ -754,7 +756,7 @@ function openSubmissionDetail(submission, studentName) {
     }).join('');
     html += submission.status === 'graded'
         ? '<div class="mini-card mt-6"><h3 class="font-display font-semibold text-lg text-sf-50 mb-2">Teacher Grade: ' + esc(submission.teacherGrade || 'Graded') + '</h3><p class="text-sf-200">' + esc(submission.teacherComment || 'No comment') + '</p></div>'
-        : '<button onclick="gradeSubmissionUI(\'' + submission.id.replace(/'/g, "\\'") + '\')" class="action-btn action-btn--sage min-h-[48px] px-6 text-base mt-4">Grade Submission</button>';
+        : '<button onclick="openGradeSubmissionById(\'' + submission.id.replace(/'/g, "\\'") + '\')" class="action-btn action-btn--sage min-h-[48px] px-6 text-base mt-4">Grade Submission</button>';
     list.innerHTML = html;
 }
 
@@ -943,9 +945,40 @@ function submitCreateAssignment() {
         });
 }
 
-function gradeSubmissionUI(submissionId) {
+function openGradeSubmissionById(submissionId) {
+    var submission = _clsCtx.submissionMap && _clsCtx.submissionMap[submissionId];
+    gradeSubmissionUI(submissionId, submission || {});
+}
+
+function useSuggestedGrade(grade) {
+    var input = $('grade-input');
+    if (input) input.value = grade;
+}
+
+function gradeSubmissionUI(submissionId, submission) {
     var existing = document.getElementById('grade-submission-overlay');
     if (existing) existing.parentNode.removeChild(existing);
+    submission = submission || {};
+    var scores = Object.values(submission.lineScores || {}).filter(function(s) { return s != null; }).map(Number).filter(function(s) { return !isNaN(s); });
+    var avg = scores.length ? Math.round(scores.reduce(function(a, b) { return a + b; }, 0) / scores.length) : null;
+    var suggestedGrade = avg == null ? '' : avg >= 90 ? 'A' : avg >= 80 ? 'B' : avg >= 70 ? 'C' : avg >= 60 ? 'D' : 'F';
+    var excellent = scores.filter(function(score) { return score >= 80; }).length;
+    var good = scores.filter(function(score) { return score >= 60 && score < 80; }).length;
+    var needsWork = scores.filter(function(score) { return score < 60; }).length;
+    var highest = scores.length ? Math.max.apply(Math, scores) : null;
+    var lowest = scores.length ? Math.min.apply(Math, scores) : null;
+    var recorded = Object.keys(submission.lineRecordings || {}).length;
+    var totalLines = Object.keys(submission.lineTexts || {}).length || Object.keys(submission.lineScores || {}).length;
+    var bannerColor = avg >= 80 ? '#63C58B' : avg >= 60 ? '#D6A85F' : '#E8756A';
+    var bannerBg = avg >= 80 ? 'rgba(99,197,139,.12)' : avg >= 60 ? 'rgba(214,168,95,.12)' : 'rgba(232,117,106,.12)';
+    var suggestionHtml = avg == null ? '' : '<div style="padding:14px;border-radius:14px;background:' + bannerBg + ';border:1px solid ' + bannerColor + '55;color:' + bannerColor + ';">'
+        + '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">'
+        + '<div style="font-size:15px;font-weight:700;"><i class="fas fa-sparkles" style="margin-right:7px;"></i>AI Suggested Grade: ' + suggestedGrade + ' <span style="font-size:12px;font-weight:500;">(avg score ' + avg + '/100)</span></div>'
+        + '<button onclick="useSuggestedGrade(\'' + suggestedGrade + '\')" style="padding:8px 12px;border-radius:10px;background:' + bannerColor + ';border:none;color:#111;font-size:12px;font-weight:700;cursor:pointer;">Use This Grade</button>'
+        + '</div>'
+        + '<div style="font-size:12px;line-height:1.6;margin-top:8px;color:#D4D1CB;">' + scores.length + ' lines scored — ' + excellent + ' excellent, ' + good + ' good, ' + needsWork + ' needs work</div>'
+        + '<div style="font-size:12px;line-height:1.6;color:#D4D1CB;">Highest: ' + highest + ' · Lowest: ' + lowest + ' · Recorded: ' + recorded + '/' + totalLines + ' lines</div>'
+        + '</div>';
     var overlay = document.createElement('div');
     overlay.id = 'grade-submission-overlay';
     overlay.className = 'help-overlay';
@@ -953,6 +986,7 @@ function gradeSubmissionUI(submissionId) {
         + '<button class="close-help" onclick="closeGradeModal()" aria-label="Close"><i class="fas fa-xmark"></i></button>'
         + '<h2>Grade Submission</h2>'
         + '<div style="display:flex;flex-direction:column;gap:14px;margin-top:12px;">'
+        + suggestionHtml
         + '<div><label style="display:block;font-size:13px;color:#A8A6A1;margin-bottom:6px;">Grade</label>'
         + '<input id="grade-input" type="text" placeholder="e.g. A, 85, Pass..." class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none" style="width:100%;box-sizing:border-box;"></div>'
         + '<div><label style="display:block;font-size:13px;color:#A8A6A1;margin-bottom:6px;">Comment</label>'
