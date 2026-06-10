@@ -354,6 +354,30 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div>
+                                    <button onclick="toggleCollapse('audio-devices-section')" class="w-full flex items-center justify-between text-sm font-medium text-sf-200">
+                                        <span><i class="fas fa-headphones text-copper-500 mr-1.5"></i>Audio Devices</span>
+                                        <i class="fas fa-chevron-down text-sf-300 text-xs transition-transform" id="audio-devices-section-arrow"></i>
+                                    </button>
+                                    <div id="audio-devices-section" class="collapse-content">
+                                        <div class="pt-3 space-y-4">
+                                            <div>
+                                                <label for="preferred-mic-select" class="block text-xs text-sf-300 mb-1.5">Microphone Input</label>
+                                                <select id="preferred-mic-select" onchange="setPreferredAudioDevice('mic',this.value)" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-3 py-2.5 text-sm text-sf-50 outline-none transition-all appearance-none cursor-pointer">
+                                                    <option value="">System default</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label for="preferred-speaker-select" class="block text-xs text-sf-300 mb-1.5">Speaker Output</label>
+                                                <select id="preferred-speaker-select" onchange="setPreferredAudioDevice('speaker',this.value)" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-3 py-2.5 text-sm text-sf-50 outline-none transition-all appearance-none cursor-pointer">
+                                                    <option value="">System default</option>
+                                                </select>
+                                            </div>
+                                            <button onclick="loadAudioDevices()" class="w-full min-h-[44px] rounded-xl bg-white/5 border border-white/10 text-sf-100 text-sm font-semibold hover:bg-white/10 transition-colors"><i class="fas fa-rotate mr-2"></i>Refresh Devices</button>
+                                            <p id="audio-devices-status" class="text-xs text-sf-300">Speaker selection requires Chrome and a supported output device.</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -432,7 +456,12 @@
                 <div class="glass rounded-2xl p-5 sm:p-7">
                     <h2 class="font-display font-bold text-xl text-sf-50 mb-3">Script</h2>
                     <pre id="assignment-script-readonly" class="whitespace-pre-wrap text-base leading-relaxed text-sf-100 bg-white/3 border border-white/8 rounded-xl p-4 max-h-[55vh] overflow-y-auto"></pre>
-                    <button onclick="launchAssignmentSession()" class="w-full min-h-[52px] mt-5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 font-display font-bold text-base"><i class="fas fa-play mr-2"></i>Start Assignment</button>
+                    <div class="mt-5">
+                        <h3 class="font-display font-semibold text-lg text-sf-50 mb-2">Choose your role(s)</h3>
+                        <div id="assignment-role-pills" class="flex flex-wrap gap-2"></div>
+                        <p id="assignment-role-help" class="text-sm text-sf-300 mt-2">Choose at least one role to begin.</p>
+                    </div>
+                    <button id="assignment-start-btn" disabled onclick="launchAssignmentSession()" class="w-full min-h-[52px] mt-5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 font-display font-bold text-base disabled:opacity-40 disabled:cursor-not-allowed"><i class="fas fa-play mr-2"></i>Start Assignment</button>
                     <button disabled class="w-full min-h-[48px] mt-3 rounded-xl bg-white/5 border border-white/10 text-sf-300 font-display font-semibold disabled:opacity-50"><i class="fas fa-paper-plane mr-2"></i>Submit Assignment</button>
                 </div>
             </div>

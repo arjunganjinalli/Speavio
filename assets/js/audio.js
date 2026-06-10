@@ -70,11 +70,20 @@ function speakEL(text,vid,onEnd,isUserLine){
         if(blob.size<100)throw new Error('');
         var u=URL.createObjectURL(blob);
         S.ttsAudio=new Audio(u);
+        applyPreferredSpeaker(S.ttsAudio);
         if(S.npcSlowReplay&&!isUserLine)S.ttsAudio.playbackRate=0.5;
         S.ttsAudio.onended=function(){S.isSpeaking=false;URL.revokeObjectURL(u);if(onEnd)onEnd()};
         S.ttsAudio.onerror=function(){S.isSpeaking=false;URL.revokeObjectURL(u);speakBrowser(text,onEnd,isUserLine)};
         S.ttsAudio.play();
     }).catch(function(){S.isSpeaking=false;speakBrowser(text,onEnd,isUserLine)});
+}
+function applyPreferredSpeaker(audioElement){
+    if(audioElement&&S.preferredSpeakerId&&typeof audioElement.setSinkId==='function'){
+        audioElement.setSinkId(S.preferredSpeakerId).catch(function(err){
+            console.warn('Could not select preferred speaker:',err);
+        });
+    }
+    return audioElement;
 }
 function stopSpeaking(){
     if(S.ttsAudio){S.ttsAudio.pause();S.ttsAudio.currentTime=0;S.ttsAudio=null}
@@ -234,7 +243,8 @@ function ensureMicStream(){
     /* If we already have a live stream, reuse it */
     if(S._micStream&&S._micStream.active)return Promise.resolve(S._micStream);
     /* Otherwise request a fresh one */
-    return navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+    var audioConstraints=S.preferredMicId?{deviceId:{exact:S.preferredMicId}}:true;
+    return navigator.mediaDevices.getUserMedia({audio:audioConstraints}).then(function(stream){
         S._micStream=stream;
         return stream;
     });

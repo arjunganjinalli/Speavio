@@ -155,7 +155,48 @@ function showSetupTab(tab){
     if(tab==='home')refreshHomeProgressSnapshot();
     if(tab==='practice'||tab==='presentation')renderScriptLibraryOptions();
     if(tab==='settings'&&typeof loadProfileIntoSettings==='function')loadProfileIntoSettings();
+    if(tab==='settings')loadAudioDevices();
     if(tab==='classes')renderClassesTabContent();
+}
+
+function loadAudioDevices(){
+    var status=$('audio-devices-status');
+    if(!navigator.mediaDevices||!navigator.mediaDevices.enumerateDevices){
+        if(status)status.textContent='Audio device selection is not supported in this browser.';
+        return;
+    }
+    if(status)status.textContent='Loading audio devices...';
+    navigator.mediaDevices.enumerateDevices().then(function(devices){
+        renderAudioDeviceSelect('preferred-mic-select',devices.filter(function(d){return d.kind==='audioinput'}),S.preferredMicId,'Microphone');
+        renderAudioDeviceSelect('preferred-speaker-select',devices.filter(function(d){return d.kind==='audiooutput'}),S.preferredSpeakerId,'Speaker');
+        if(status)status.textContent='Device names may appear after microphone permission is granted. Speaker selection requires Chrome.';
+    }).catch(function(err){
+        if(status)status.textContent='Could not load audio devices.';
+        console.error('enumerateDevices error:',err);
+    });
+}
+
+function renderAudioDeviceSelect(id,devices,selectedId,label){
+    var select=$(id);
+    if(!select)return;
+    select.innerHTML='<option value="">System default</option>';
+    devices.forEach(function(device,index){
+        var option=document.createElement('option');
+        option.value=device.deviceId;
+        option.textContent=device.label||label+' '+(index+1);
+        select.appendChild(option);
+    });
+    select.value=selectedId||'';
+}
+
+function setPreferredAudioDevice(kind,deviceId){
+    if(kind==='mic'){
+        S.preferredMicId=deviceId;
+        if(typeof releaseMicStream==='function')releaseMicStream();
+    }else{
+        S.preferredSpeakerId=deviceId;
+        if(S.ttsAudio&&typeof applyPreferredSpeaker==='function')applyPreferredSpeaker(S.ttsAudio);
+    }
 }
 
 function refreshAdvancedState(){

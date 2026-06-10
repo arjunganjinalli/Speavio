@@ -47,8 +47,8 @@ function getStudentAssignments(studentUid) {
     });
 }
 
-function submitAssignment(assignmentId, studentUid, transcript, aiScore, recordingUrl) {
-    return db.collection('submissions').add({
+function submitAssignment(assignmentId, studentUid, transcript, aiScore, recordingUrl, submissionId) {
+    var data = {
         assignmentId:    assignmentId,
         studentUid:      studentUid,
         transcript:      transcript,
@@ -58,8 +58,32 @@ function submitAssignment(assignmentId, studentUid, transcript, aiScore, recordi
         teacherComment:  '',
         status:          'submitted',
         submittedAt:     firebase.firestore.FieldValue.serverTimestamp()
-    }).then(function(docRef) {
+    };
+    if (submissionId) {
+        return db.collection('submissions').doc(submissionId).set(data).then(function() {
+            return submissionId;
+        });
+    }
+    return db.collection('submissions').add(data).then(function(docRef) {
         return docRef.id;
+    });
+}
+
+function getStudentAssignmentSubmissions(assignmentIds, studentUid) {
+    if (!assignmentIds.length) return Promise.resolve([]);
+    var queries = [];
+    for (var i = 0; i < assignmentIds.length; i += 10) {
+        queries.push(db.collection('submissions')
+            .where('assignmentId', 'in', assignmentIds.slice(i, i + 10))
+            .where('studentUid', '==', studentUid)
+            .get());
+    }
+    return Promise.all(queries).then(function(snapshots) {
+        return snapshots.reduce(function(submissions, snapshot) {
+            return submissions.concat(snapshot.docs.map(function(doc) {
+                return Object.assign({ id: doc.id }, doc.data());
+            }));
+        }, []);
     });
 }
 

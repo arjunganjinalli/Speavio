@@ -213,6 +213,16 @@ function showStudentAssignments(classId, className) {
     if (!list) return;
     list.innerHTML = '<div class="flex items-center gap-3 py-4"><div class="spinner"></div><span class="text-sf-300 text-base">Loading assignments...</span></div>';
     getClassAssignments(classId).then(function(assignments) {
+        return getStudentAssignmentSubmissions(assignments.map(function(a) { return a.id; }), S.authUser.uid)
+            .then(function(submissions) {
+                return { assignments: assignments, submissions: submissions };
+            });
+    }).then(function(result) {
+        var assignments = result.assignments;
+        var submissionMap = {};
+        result.submissions.forEach(function(submission) {
+            submissionMap[submission.assignmentId] = submission;
+        });
         _clsCtx.assignmentMap = {};
         assignments.forEach(function(a) {
             _clsCtx.scriptMap[a.id] = a.script || '';
@@ -225,13 +235,18 @@ function showStudentAssignments(classId, className) {
         } else {
             html += assignments.map(function(a) {
                 var safeId = a.id.replace(/'/g, "\\'");
-                var practiceButton = '<button onclick="startAssignment(\'' + safeId + '\',\'practice\')" class="w-full min-h-[48px] font-display font-semibold text-base rounded-xl px-4 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 hover:from-amber-400 hover:to-yellow-400 transition-all cursor-pointer border-0"><i class="fas fa-microphone-lines mr-2"></i>Start Practice</button>';
-                var presentationButton = '<button onclick="startAssignment(\'' + safeId + '\',\'presentation\')" class="w-full min-h-[48px] font-display font-semibold text-base rounded-xl px-4 py-3 bg-sage-500/15 border border-sage-500/25 text-sage-400 hover:bg-sage-500/25 transition-all cursor-pointer"><i class="fas fa-masks-theater mr-2"></i>Start Presentation</button>';
+                var submission = submissionMap[a.id];
+                var safeSubmissionId = submission ? submission.id.replace(/'/g, "\\'") : '';
+                var buttonLabel = submission ? 'Resubmit' : 'Start';
+                var practiceButton = '<button onclick="startAssignment(\'' + safeId + '\',\'practice\',\'' + safeSubmissionId + '\')" class="w-full min-h-[48px] font-display font-semibold text-base rounded-xl px-4 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 hover:from-amber-400 hover:to-yellow-400 transition-all cursor-pointer border-0"><i class="fas fa-microphone-lines mr-2"></i>' + buttonLabel + (submission ? '' : ' Practice') + '</button>';
+                var presentationButton = '<button onclick="startAssignment(\'' + safeId + '\',\'presentation\',\'' + safeSubmissionId + '\')" class="w-full min-h-[48px] font-display font-semibold text-base rounded-xl px-4 py-3 bg-sage-500/15 border border-sage-500/25 text-sage-400 hover:bg-sage-500/25 transition-all cursor-pointer"><i class="fas fa-masks-theater mr-2"></i>' + buttonLabel + (submission ? '' : ' Presentation') + '</button>';
                 var assignmentButtons = a.type === 'practice' ? practiceButton
                     : a.type === 'presentation' ? presentationButton
                     : practiceButton + presentationButton;
                 return '<div class="mini-card">'
-                    + '<div class="font-display font-bold text-xl text-sf-50 mb-2">' + esc(a.title) + '</div>'
+                    + '<div class="flex items-start justify-between gap-3 mb-2"><div class="font-display font-bold text-xl text-sf-50">' + esc(a.title) + '</div>'
+                    + (submission ? '<span class="px-2.5 py-1 rounded-lg bg-sage-500/15 border border-sage-500/25 text-sage-400 text-sm font-semibold"><i class="fas fa-circle-check mr-1.5"></i>Submitted</span>' : '')
+                    + '</div>'
                     + '<div class="text-base text-sf-300 mb-3"><i class="fas fa-calendar-alt mr-1.5"></i>Due: ' + esc(formatAssignmentDue(a.dueDate)) + '</div>'
                     + (a.instructions ? '<p class="text-base leading-relaxed text-sf-200 mb-5">' + esc(a.instructions) + '</p>' : '<div class="mb-5"></div>')
                     + '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">' + assignmentButtons + '</div>'
@@ -245,18 +260,26 @@ function showStudentAssignments(classId, className) {
     });
 }
 
-function startAssignment(assignmentId, mode) {
+function startAssignment(assignmentId, mode, submissionId) {
     var assignment = _clsCtx.assignmentMap[assignmentId] || {};
     var script = assignment.script || _clsCtx.scriptMap[assignmentId] || '';
     mode = mode === 'presentation' ? 'presentation' : 'practice';
+    var lines = parseScript(script);
+    var roles = [];
+    lines.forEach(function(line) {
+        if (roles.indexOf(line.role) === -1) roles.push(line.role);
+    });
     _activeAssignment = {
         id: assignmentId,
         title: assignment.title || 'Assignment',
         script: script,
-        type: assignment.type || mode
+        type: assignment.type || mode,
+        roles: roles,
+        submissionId: submissionId || ''
     };
     S.currentAssignmentId = assignmentId;
     S.mode = mode;
+    S.userRoles = [];
     $('assignment-class-name').textContent = _clsCtx.className;
     $('assignment-page-title').textContent = _activeAssignment.title;
     $('assignment-mode-badge').textContent = (mode === 'presentation' ? 'Presentation' : 'Practice') + ' Assignment';
@@ -264,7 +287,32 @@ function startAssignment(assignmentId, mode) {
     $('assignment-preview').classList.remove('hidden');
     $('assignment-session-mount').classList.add('hidden');
     $('assignment-result').classList.add('hidden');
+    renderAssignmentRolePicker();
     switchScreen('assignment');
+}
+
+function renderAssignmentRolePicker() {
+    var mount = $('assignment-role-pills');
+    var startBtn = $('assignment-start-btn');
+    if (!mount || !startBtn || !_activeAssignment) return;
+    mount.innerHTML = '';
+    _activeAssignment.roles.forEach(function(role) {
+        var selected = S.userRoles.indexOf(role) !== -1;
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'role-pill ' + (selected ? 'selected' : '');
+        button.innerHTML = (selected ? '<i class="fas fa-check mr-1.5 text-[10px]"></i>' : '') + esc(role);
+        button.addEventListener('click', function() {
+            var index = S.userRoles.indexOf(role);
+            if (index === -1) S.userRoles.push(role);
+            else S.userRoles.splice(index, 1);
+            renderAssignmentRolePicker();
+        });
+        mount.appendChild(button);
+    });
+    startBtn.disabled = !S.userRoles.length;
+    var help = $('assignment-role-help');
+    if (help) help.textContent = _activeAssignment.roles.length ? 'Choose at least one role to begin.' : 'No roles were found in this script.';
 }
 
 function formatAssignmentDue(value) {
@@ -275,12 +323,20 @@ function formatAssignmentDue(value) {
 
 function launchAssignmentSession() {
     if (!_activeAssignment) return;
+    if (!S.userRoles.length) {
+        toast('Choose at least one role before starting.', 'error');
+        return;
+    }
     var input = $('script-input');
     if (input) input.value = _activeAssignment.script;
     S.mode = _activeAssignment.type === 'presentation' ? 'presentation' : 'practice';
     if (typeof updateParse === 'function') updateParse();
     S.userRoles = S.userRoles.filter(function(role) { return S.roles.indexOf(role) !== -1; });
-    if (!S.userRoles.length && S.roles.length) S.userRoles = [S.roles[0]];
+    if (!S.userRoles.length) {
+        renderAssignmentRolePicker();
+        toast('Choose at least one valid role before starting.', 'error');
+        return;
+    }
     moveAssignmentSessionElements(true);
     _assignmentSessionRunning = true;
     startSession();
@@ -325,8 +381,14 @@ function renderAssignmentCompletion() {
         + '<p class="text-sm text-sf-300 mb-2">Assignment complete</p>'
         + '<div class="text-6xl font-display font-bold text-sage-400 mb-2">' + avg + '</div>'
         + '<p class="text-base text-sf-200 mb-6">Average score</p>'
+        + '<button onclick="redoActiveAssignment()" class="w-full min-h-[52px] mb-3 rounded-xl bg-white/5 border border-white/10 text-sf-100 font-display font-bold text-base hover:bg-white/10 transition-colors"><i class="fas fa-rotate-right mr-2"></i>Redo Assignment</button>'
         + '<button onclick="submitActiveAssignment()" class="w-full min-h-[52px] rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 font-display font-bold text-base"><i class="fas fa-paper-plane mr-2"></i>Submit Assignment</button>'
         + '</div>';
+}
+
+function redoActiveAssignment() {
+    if (!_activeAssignment) return;
+    launchAssignmentSession();
 }
 
 function submitActiveAssignment() {
@@ -334,7 +396,7 @@ function submitActiveAssignment() {
     var scores = Object.keys(S.lineScores).map(function(key) { return S.lineScores[key]; }).filter(function(score) { return score != null; });
     var avg = scores.length ? Math.round(scores.reduce(function(total, score) { return total + score; }, 0) / scores.length) : 0;
     var transcript = JSON.stringify(S.userResponses || {});
-    submitAssignment(_activeAssignment.id, S.authUser.uid, transcript, avg, null).then(function() {
+    submitAssignment(_activeAssignment.id, S.authUser.uid, transcript, avg, null, _activeAssignment.submissionId).then(function() {
         toast('Assignment submitted.', 'success');
         _activeAssignment = null;
         switchScreen('class');
