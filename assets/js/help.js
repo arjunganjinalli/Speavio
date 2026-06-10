@@ -7,8 +7,8 @@ function openHelp(){
         el.className='help-overlay';
         el.innerHTML='<div class="help-modal" style="position:relative">'
             +'<button class="close-help" onclick="closeHelp()" aria-label="Close"><i class="fas fa-xmark"></i></button>'
-            +'<h2><i class="fas fa-circle-question mr-2 text-copper-400"></i>How Voqua Works</h2>'
-            +'<p>Voqua helps you practice dialogues and presentations using AI-powered speech evaluation. Here\'s how to use it:</p>'
+            +'<h2><i class="fas fa-circle-question mr-2 text-copper-400"></i>How Speavio Works</h2>'
+            +'<p>Speavio helps you practice dialogues and presentations using AI-powered speech evaluation. Here\'s how to use it:</p>'
             +'<h3><i class="fas fa-gear mr-1.5"></i>Setup</h3>'
             +'<ul>'
             +'<li>API key is optional and configured in <strong>Settings</strong></li>'

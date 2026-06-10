@@ -218,7 +218,7 @@ function shareScorecardImage(){
             var filename='voqua-scorecard-'+Date.now()+'.png';
             var file=new File([blob],filename,{type:'image/png'});
             if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
-                return navigator.share({title:'My Voqua Scorecard',text:'My latest Voqua report',files:[file]})
+                return navigator.share({title:'My Speavio Scorecard',text:'My latest Speavio report',files:[file]})
                     .then(function(){toast('Scorecard shared.','success')})
                     .catch(function(err){if(err&&err.name!=='AbortError')throw err});
             }
@@ -371,7 +371,7 @@ function exportPrint(){
     var statusRecording=rs.getPropertyValue('--sf-status-recording').trim()||'#D4736E';
     var rows=S.lines.map(function(l,i){var sc=S.lineScores[i],resp=S.userResponses[i],det=S.lineDetails[i],isU=S.userRoles.indexOf(l.role)!==-1;return '<tr style="border-bottom:1px solid #ddd;'+(!isU?'opacity:.68':'')+'"><td style="padding:8px;font-size:13px">'+(i+1)+'</td><td style="padding:8px;font-size:13px;font-weight:600">'+esc(l.role)+'</td><td style="padding:8px;font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(l.text)+'</td><td style="padding:8px;font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(resp?esc(resp):'--')+'</td><td style="padding:8px;font-size:13px;text-align:center;'+(sc!=null&&sc<50?'color:'+statusRecording+';font-weight:700':'')+'">'+(sc!=null?sc:'--')+'</td><td style="padding:8px;font-size:12px;color:#555;max-width:160px">'+(det&&det.encouragement?esc(det.encouragement):'--')+'</td></tr>'}).join('');
     var modeLabel=S.mode==='presentation'?'Presentation':'Practice';
-    var html='<!DOCTYPE html><html><head><title>Voqua Report</title><style>body{font-family:system-ui,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;color:#222}h1{font-size:28px;margin-bottom:4px;color:'+chartPrimary+'}h2{font-size:16px;color:#666;font-weight:400;margin-bottom:20px}.stats{display:flex;gap:24px;margin-bottom:24px}.stat{text-align:center}.stat .val{font-size:32px;font-weight:700}.stat .lbl{font-size:12px;color:#888}table{width:100%;border-collapse:collapse}th{text-align:left;padding:8px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#888;border-bottom:2px solid #ddd}</style></head><body><h1>Voqua Report</h1><h2>'+LANG[S.language].name+' &middot; '+modeLabel+' &middot; '+new Date().toLocaleDateString()+'</h2><div class="stats"><div class="stat"><div class="val">'+avg+'</div><div class="lbl">Average</div></div><div class="stat"><div class="val">'+(scores.length?Math.max.apply(null,scores):0)+'</div><div class="lbl">Best</div></div><div class="stat"><div class="val">'+S.lines.length+'</div><div class="lbl">Lines</div></div><div class="stat"><div class="val">'+(elapsed>=60?Math.floor(elapsed/60)+'m '+elapsed%60+'s':elapsed+'s')+'</div><div class="lbl">Time</div></div></div><table><thead><tr><th>#</th><th>Role</th><th>Expected</th><th>You Said</th><th>Score</th><th>Feedback</th></tr></thead><tbody>'+rows+'</tbody></table><script>window.onload=function(){window.print()}<\/script></body></html>';
+    var html='<!DOCTYPE html><html><head><title>Speavio Report</title><style>body{font-family:system-ui,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;color:#222}h1{font-size:28px;margin-bottom:4px;color:'+chartPrimary+'}h2{font-size:16px;color:#666;font-weight:400;margin-bottom:20px}.stats{display:flex;gap:24px;margin-bottom:24px}.stat{text-align:center}.stat .val{font-size:32px;font-weight:700}.stat .lbl{font-size:12px;color:#888}table{width:100%;border-collapse:collapse}th{text-align:left;padding:8px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#888;border-bottom:2px solid #ddd}</style></head><body><h1>Speavio Report</h1><h2>'+LANG[S.language].name+' &middot; '+modeLabel+' &middot; '+new Date().toLocaleDateString()+'</h2><div class="stats"><div class="stat"><div class="val">'+avg+'</div><div class="lbl">Average</div></div><div class="stat"><div class="val">'+(scores.length?Math.max.apply(null,scores):0)+'</div><div class="lbl">Best</div></div><div class="stat"><div class="val">'+S.lines.length+'</div><div class="lbl">Lines</div></div><div class="stat"><div class="val">'+(elapsed>=60?Math.floor(elapsed/60)+'m '+elapsed%60+'s':elapsed+'s')+'</div><div class="lbl">Time</div></div></div><table><thead><tr><th>#</th><th>Role</th><th>Expected</th><th>You Said</th><th>Score</th><th>Feedback</th></tr></thead><tbody>'+rows+'</tbody></table><script>window.onload=function(){window.print()}<\/script></body></html>';
     var w=window.open('','_blank');
     if(w){w.document.write(html);w.document.close()}else toast('Pop-up blocked.','error');
 }
@@ -424,7 +424,7 @@ function exportPDF(){
             +'</tr>';
     }).join('');
 
-    var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Voqua Report</title>'
+    var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Speavio Report</title>'
         +'<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>'
         +'<style>'
         +'*{box-sizing:border-box;margin:0;padding:0}'
@@ -442,7 +442,7 @@ function exportPDF(){
         +'.footer{margin-top:30px;padding-top:10px;border-top:1px solid #e5e7eb;font-size:10px;color:#d1d5db;text-align:center}'
         +'</style></head><body>'
         +'<div class="header">'
-        +'<div class="brand">Voqua</div>'
+        +'<div class="brand">Speavio</div>'
         +'<div class="subtitle">'+LANG[S.language].name+' &nbsp;&middot;&nbsp; '+modeLabel+' Mode &nbsp;&middot;&nbsp; '+new Date().toLocaleDateString()+' &nbsp;&middot;&nbsp; '+(elapsed>=60?Math.floor(elapsed/60)+'m '+elapsed%60+'s':elapsed+'s')+'</div>'
         +'</div>'
         +'<div class="stats-grid">'
@@ -457,7 +457,7 @@ function exportPDF(){
         +distBar
         +'<p class="section-title">Line by Line Breakdown</p>'
         +'<table><thead><tr><th>#</th><th>Role</th><th>Expected</th><th>You Said</th><th>Score</th><th>Feedback</th></tr></thead><tbody>'+rows+'</tbody></table>'
-        +'<div class="footer">Generated by Voqua &middot; AI-powered speech coaching &middot; '+new Date().toISOString()+'</div>'
+        +'<div class="footer">Generated by Speavio &middot; AI-powered speech coaching &middot; '+new Date().toISOString()+'</div>'
         +'<script>window.onload=function(){html2pdf().set({margin:[8,8,8,8],filename:"'+fileName+'",image:{type:"jpeg",quality:0.98},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}}).from(document.body).save().then(function(){setTimeout(function(){window.close()},500);});}<\/script>'
         +'</body></html>';
 
