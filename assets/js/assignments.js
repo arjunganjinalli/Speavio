@@ -47,14 +47,15 @@ function getStudentAssignments(studentUid) {
     });
 }
 
-function submitAssignment(assignmentId, studentUid, transcript, aiScore, recordingData, submissionId) {
+function submitAssignment(assignmentId, studentUid, lineRecordings, lineScores, lineDetails, lineResponses, lineTexts) {
     var data = {
         assignmentId:    assignmentId,
         studentUid:      studentUid,
-        transcript:      transcript,
-        aiScore:         aiScore,
-        recordingUrl:    null,
-        recordingData:   recordingData,
+        lineRecordings:  lineRecordings,
+        lineScores:      lineScores,
+        lineDetails:     lineDetails,
+        lineResponses:   lineResponses,
+        lineTexts:       lineTexts,
         teacherGrade:    '',
         teacherComment:  '',
         status:          'submitted',
@@ -65,8 +66,7 @@ function submitAssignment(assignmentId, studentUid, transcript, aiScore, recordi
         .where('studentUid', '==', studentUid)
         .get()
         .then(function(snapshot) {
-            var existing = submissionId ? snapshot.docs.filter(function(doc) { return doc.id === submissionId; })[0] : null;
-            existing = existing || snapshot.docs[0];
+            var existing = snapshot.docs[0];
             if (existing) {
                 return existing.ref.set(data).then(function() { return existing.id; });
             }

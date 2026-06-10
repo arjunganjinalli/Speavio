@@ -440,6 +440,7 @@ function renderAssignmentCompletion() {
         + '<div class="text-6xl font-display font-bold text-sage-400 mb-2">' + avg + '</div>'
         + '<p class="text-base text-sf-200 mb-6">Average score</p>'
         + '<button onclick="redoActiveAssignment()" class="w-full min-h-[52px] mb-3 rounded-xl bg-white/5 border border-white/10 text-sf-100 font-display font-bold text-base hover:bg-white/10 transition-colors"><i class="fas fa-rotate-right mr-2"></i>Redo Assignment</button>'
+        + '<p id="assignment-submit-progress" class="hidden text-sm text-sf-200 mb-3"></p>'
         + '<button id="assignment-submit-btn" onclick="submitActiveAssignment()" class="w-full min-h-[52px] rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 font-display font-bold text-base disabled:opacity-50 disabled:cursor-not-allowed"><i class="fas fa-paper-plane mr-2"></i>Submit Assignment</button>'
         + '</div>';
 }
@@ -452,15 +453,28 @@ function redoActiveAssignment() {
 function submitActiveAssignment() {
     if (!_activeAssignment || !S.authUser) return;
     var submitBtn = $('assignment-submit-btn');
+    var progress = $('assignment-submit-progress');
     if (submitBtn) submitBtn.disabled = true;
-    var scores = Object.keys(S.lineScores).map(function(key) { return S.lineScores[key]; }).filter(function(score) { return score != null; });
-    var avg = scores.length ? Math.round(scores.reduce(function(total, score) { return total + score; }, 0) / scores.length) : 0;
-    var transcript = JSON.stringify(S.userResponses || {});
-    var clipKeys = Object.keys(S.audioClips || {}).sort(function(a, b) { return Number(a) - Number(b); });
-    var recording = clipKeys.length ? S.audioClips[clipKeys[clipKeys.length - 1]] : null;
-    var recordingPromise = recording ? blobToBase64(recording) : Promise.resolve(null);
-    recordingPromise.then(function(recordingData) {
-        return submitAssignment(_activeAssignment.id, S.authUser.uid, transcript, avg, recordingData, _activeAssignment.submissionId);
+    if (progress) { progress.classList.remove('hidden'); progress.textContent = 'Preparing submission...'; }
+    var lineRecordings = {};
+    var lineTexts = {};
+    Object.keys(S.lines || {}).forEach(function(index) {
+        if (S.userRoles.indexOf(S.lines[index].role) !== -1) lineTexts[index] = S.lines[index].text;
+    });
+    var conversions = Object.keys(S.audioClips || {}).map(function(index) {
+        return blobToBase64(S.audioClips[index]).then(function(data) { lineRecordings[index] = data; });
+    });
+    Promise.all(conversions).then(function() {
+        if (progress) progress.textContent = 'Submitting...';
+        return submitAssignment(
+            _activeAssignment.id,
+            S.authUser.uid,
+            lineRecordings,
+            Object.assign({}, S.lineScores || {}),
+            Object.assign({}, S.lineDetails || {}),
+            Object.assign({}, S.userResponses || {}),
+            lineTexts
+        );
     }).then(function() {
         toast('Assignment submitted.', 'success');
         _activeAssignment = null;
@@ -468,6 +482,7 @@ function submitActiveAssignment() {
         showStudentAssignments(_clsCtx.classId, _clsCtx.className);
     }).catch(function(err) {
         toast(err.message || 'Failed to submit assignment.', 'error');
+        if (progress) progress.textContent = 'Submission failed. Please try again.';
         if (submitBtn) submitBtn.disabled = false;
     });
 }
@@ -599,12 +614,24 @@ function removeStudentFromClass(uid) {
 function viewSubmissions(assignmentId, title) {
     _clsCtx.assignmentId = assignmentId;
     _clsCtx.assignmentTitle = title;
+    _clsCtx.submissionMap = {};
     _clsCtx.gradeStudentUid = '';
     _clsCtx.gradeStudentName = '';
     var list = $('class-page-content');
     if (!list) return;
     list.innerHTML = '<div class="flex items-center gap-3 py-4"><div class="spinner"></div><span class="text-sf-300 text-base">Loading submissions...</span></div>';
     getAssignmentSubmissions(assignmentId).then(function(submissions) {
+        return Promise.all(submissions.map(function(submission) {
+            return db.collection('users').doc(submission.studentUid).get().then(function(doc) {
+                var data = doc.exists ? doc.data() : null;
+                submission.studentName = data && data.fullName ? data.fullName : shortStudentUid(submission.studentUid);
+                return submission;
+            }).catch(function() {
+                submission.studentName = shortStudentUid(submission.studentUid);
+                return submission;
+            });
+        }));
+    }).then(function(submissions) {
         var html = '<div class="flex items-center justify-between mb-6 flex-wrap gap-3">'
             + '<button onclick="showClassPageTab(\'assignments\')" class="action-btn min-h-[44px] text-sm"><i class="fas fa-arrow-left mr-1.5"></i>Back to Assignments</button>'
             + '</div>'
@@ -614,21 +641,16 @@ function viewSubmissions(assignmentId, title) {
         } else {
             html += submissions.map(function(s) {
                 var safeSubId = s.id.replace(/'/g, "\\'");
-                var statusClass = s.status === 'graded' ? 'text-sage-400' : 'text-copper-400';
-                return '<div class="mini-card mb-3">'
-                    + '<div class="flex items-center justify-between gap-2 flex-wrap">'
-                    + '<div>'
-                    + '<div class="text-base text-sf-300">Student UID: <span class="text-sf-100 font-mono">' + esc(s.studentUid ? s.studentUid.slice(0, 8) + '...' : 'Unknown') + '</span></div>'
-                    + '<div class="text-sm text-sf-300 mt-1">AI Score: <span class="text-copper-400 font-semibold">' + (s.aiScore != null ? s.aiScore : '—') + '</span>'
-                    + ' · Status: <span class="' + statusClass + ' font-semibold">' + esc(s.status) + '</span></div>'
-                    + (s.teacherGrade ? '<div class="text-sm text-sf-300 mt-1">Grade: <span class="text-sage-400 font-semibold">' + esc(s.teacherGrade) + '</span></div>' : '')
-                    + (s.teacherComment ? '<div class="text-sm text-sf-200 mt-1">' + esc(s.teacherComment) + '</div>' : '')
-                    + '</div>'
-                    + '<button onclick="gradeSubmissionUI(\'' + safeSubId + '\')" class="action-btn action-btn--sage min-h-[44px] px-5 text-sm flex-shrink-0">Grade</button>'
-                    + '</div>'
-                    + (s.recordingData ? '<audio controls preload="metadata" class="w-full mt-4" src="' + esc(s.recordingData) + '"></audio>'
-                        : '<p class="text-sm text-sf-300 mt-4">' + (s.status === 'graded' ? 'Recording removed after grading' : 'No recording') + '</p>')
-                    + '</div>';
+                _clsCtx.submissionMap = _clsCtx.submissionMap || {};
+                _clsCtx.submissionMap[s.id] = s;
+                var avg = submissionAverage(s.lineScores);
+                var statusClass = s.status === 'graded' ? 'bg-sage-500/15 border-sage-500/25 text-sage-400' : 'bg-copper-500/15 border-copper-500/25 text-copper-400';
+                return '<button onclick="openSubmissionDetailById(\'' + safeSubId + '\')" class="mini-card mb-3 w-full text-left hover:border-white/20 transition-colors cursor-pointer">'
+                    + '<div class="flex items-center justify-between gap-4 flex-wrap"><div>'
+                    + '<div class="font-display font-semibold text-lg text-sf-50">' + esc(s.studentName) + '</div>'
+                    + '<div class="text-sm text-sf-300 mt-1">Overall AI Score: <span class="text-copper-400 font-semibold">' + avg + '</span></div>'
+                    + '</div><span class="px-3 py-1.5 rounded-lg border text-sm font-semibold ' + statusClass + '">' + esc(s.status || 'submitted') + '</span></div>'
+                    + '</button>';
             }).join('');
         }
         list.innerHTML = html;
@@ -636,6 +658,52 @@ function viewSubmissions(assignmentId, title) {
         list.innerHTML = '<p class="text-coral-400 text-base">Failed to load submissions.</p>';
         console.error(err);
     });
+}
+
+function shortStudentUid(uid) {
+    return uid ? (uid.length > 12 ? uid.slice(0, 12) + '...' : uid) : 'Unknown student';
+}
+
+function submissionAverage(lineScores) {
+    var scores = Object.keys(lineScores || {}).map(function(index) { return Number(lineScores[index]); }).filter(function(score) { return !isNaN(score); });
+    return scores.length ? Math.round(scores.reduce(function(total, score) { return total + score; }, 0) / scores.length) : 0;
+}
+
+function openSubmissionDetailById(submissionId) {
+    var submission = _clsCtx.submissionMap && _clsCtx.submissionMap[submissionId];
+    if (submission) openSubmissionDetail(submission, submission.studentName);
+}
+
+function openSubmissionDetail(submission, studentName) {
+    var list = $('class-page-content');
+    if (!list) return;
+    var statusClass = submission.status === 'graded' ? 'bg-sage-500/15 border-sage-500/25 text-sage-400' : 'bg-copper-500/15 border-copper-500/25 text-copper-400';
+    var html = '<button onclick="viewSubmissions(_clsCtx.assignmentId,_clsCtx.assignmentTitle)" class="action-btn min-h-[44px] text-sm mb-6"><i class="fas fa-arrow-left mr-1.5"></i>Back to Submissions</button>'
+        + '<div class="flex items-start justify-between gap-4 flex-wrap mb-6"><div><h2 class="font-display font-bold text-2xl text-sf-50">' + esc(studentName) + '</h2>'
+        + '<p class="text-base text-sf-300 mt-1">' + esc(_clsCtx.assignmentTitle) + ' · Overall AI Score: <span class="text-copper-400 font-semibold">' + submissionAverage(submission.lineScores) + '</span></p></div>'
+        + '<span class="px-3 py-1.5 rounded-lg border text-sm font-semibold ' + statusClass + '">' + esc(submission.status || 'submitted') + '</span></div>';
+    var indexes = Object.keys(submission.lineScores || {}).sort(function(a, b) { return Number(a) - Number(b); });
+    if (!indexes.length) html += '<div class="mini-card text-sf-300">No line details available.</div>';
+    html += indexes.map(function(index) {
+        var score = Number(submission.lineScores[index]);
+        var detail = (submission.lineDetails && submission.lineDetails[index]) || {};
+        var scoreClass = score >= 80 ? 'text-sage-400 bg-sage-500/15 border-sage-500/25' : score >= 50 ? 'text-copper-400 bg-copper-500/15 border-copper-500/25' : 'text-coral-400 bg-coral-500/15 border-coral-500/25';
+        var wordMatch = detail.wordMatch || detail.accuracy || detail.matchedWords || '';
+        var corrections = detail.corrections && detail.corrections.length ? detail.corrections.map(function(item) { return '<li>' + esc(item) + '</li>'; }).join('') : '<li>None</li>';
+        return '<div class="mini-card mb-4"><div class="flex items-start justify-between gap-3"><div class="text-sm text-sf-300">Line ' + (Number(index) + 1) + '</div>'
+            + '<span class="px-2.5 py-1 rounded-lg border text-sm font-bold ' + scoreClass + '">' + score + '</span></div>'
+            + '<div class="mt-3"><div class="text-xs uppercase font-semibold text-sf-300 mb-1">Expected</div><p class="text-base text-sf-100">' + esc((submission.lineTexts && submission.lineTexts[index]) || '') + '</p></div>'
+            + '<div class="mt-3"><div class="text-xs uppercase font-semibold text-sf-300 mb-1">Student said</div><p class="text-base text-sf-100">' + esc((submission.lineResponses && submission.lineResponses[index]) || 'No response') + '</p></div>'
+            + (wordMatch !== '' ? '<div class="mt-3 text-sm text-sf-200"><span class="font-semibold">Word match:</span> ' + esc(String(wordMatch)) + '</div>' : '')
+            + '<div class="mt-3 text-sm text-sf-200"><span class="font-semibold">Corrections:</span><ul class="mt-1 space-y-1 text-coral-400">' + corrections + '</ul></div>'
+            + '<div class="mt-3 text-sm text-sage-400"><span class="font-semibold">Encouragement:</span> ' + esc(detail.encouragement || 'None') + '</div>'
+            + ((submission.lineRecordings && submission.lineRecordings[index]) ? '<audio controls preload="metadata" class="w-full mt-4" src="' + esc(submission.lineRecordings[index]) + '"></audio>' : '<p class="text-sm text-sf-300 mt-4">No recording</p>')
+            + '</div>';
+    }).join('');
+    html += submission.status === 'graded'
+        ? '<div class="mini-card mt-6"><h3 class="font-display font-semibold text-lg text-sf-50 mb-2">Teacher Grade: ' + esc(submission.teacherGrade || 'Graded') + '</h3><p class="text-sf-200">' + esc(submission.teacherComment || 'No comment') + '</p></div>'
+        : '<button onclick="gradeSubmissionUI(\'' + submission.id.replace(/'/g, "\\'") + '\')" class="action-btn action-btn--sage min-h-[48px] px-6 text-base mt-4">Grade Submission</button>';
+    list.innerHTML = html;
 }
 
 function openCreateAssignmentModal() {
@@ -847,7 +915,7 @@ function submitGrade(submissionId) {
     gradeSubmission(submissionId, grade, comment)
         .then(function() {
             return db.collection('submissions').doc(submissionId).update({
-                recordingData: firebase.firestore.FieldValue.delete()
+                lineRecordings: firebase.firestore.FieldValue.delete()
             });
         })
         .then(function() {
