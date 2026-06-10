@@ -47,13 +47,14 @@ function getStudentAssignments(studentUid) {
     });
 }
 
-function submitAssignment(assignmentId, studentUid, transcript, aiScore, recordingUrl, submissionId) {
+function submitAssignment(assignmentId, studentUid, transcript, aiScore, recordingData, submissionId) {
     var data = {
         assignmentId:    assignmentId,
         studentUid:      studentUid,
         transcript:      transcript,
         aiScore:         aiScore,
-        recordingUrl:    recordingUrl,
+        recordingUrl:    null,
+        recordingData:   recordingData,
         teacherGrade:    '',
         teacherComment:  '',
         status:          'submitted',
