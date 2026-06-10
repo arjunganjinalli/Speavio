@@ -70,8 +70,17 @@ function submitAssignment(assignmentId, studentUid, lineRecordings, lineScores, 
         .then(function(snapshot) {
             var existing = snapshot.docs[0];
             if (existing) {
-                return existing.ref.set(data).then(function() { return existing.id; });
+                var scores = Object.keys(lineScores || {}).map(function(key) { return Number(lineScores[key]); }).filter(function(score) { return !isNaN(score); });
+                var aiScore = scores.length ? Math.round(scores.reduce(function(total, score) { return total + score; }, 0) / scores.length) : null;
+                data.resubmitHistory = firebase.firestore.FieldValue.arrayUnion({
+                    resubmittedAt: firebase.firestore.Timestamp.now(),
+                    aiScore: aiScore
+                });
+                data.submitCount = firebase.firestore.FieldValue.increment(1);
+                return existing.ref.update(data).then(function() { return existing.id; });
             }
+            data.resubmitHistory = [];
+            data.submitCount = 1;
             return db.collection('submissions').add(data).then(function(docRef) {
                 return docRef.id;
             });

@@ -182,6 +182,16 @@ var _classStudentNames = {};
 var _activeAssignment = null;
 var _assignmentSessionRunning = false;
 
+function defaultClassGradingScale() {
+    return [
+        { letter: 'A', min: 90, max: 100 },
+        { letter: 'B', min: 80, max: 89 },
+        { letter: 'C', min: 70, max: 79 },
+        { letter: 'D', min: 60, max: 69 },
+        { letter: 'F', min: 0, max: 59 }
+    ];
+}
+
 function openClassPage(classObj, role) {
     if (!classObj) return;
     _clsCtx.classId = classObj.id;
@@ -190,6 +200,8 @@ function openClassPage(classObj, role) {
     _clsCtx.role = role;
     _clsCtx.activeTab = 'assignments';
     _clsCtx.scriptMap = {};
+    _clsCtx.gradingScale = classObj.gradingScale && classObj.gradingScale.length ? classObj.gradingScale : defaultClassGradingScale();
+    _clsCtx.weights = classObj.weights || { presentation: 50, practice: 50 };
     $('class-page-title').textContent = _clsCtx.className;
     $('class-page-subject').textContent = classObj.subject || '';
     $('class-page-description').textContent = classObj.description || '';
@@ -197,9 +209,23 @@ function openClassPage(classObj, role) {
     $('class-page-code').textContent = classObj.classCode || '';
     $('class-page-code').classList.toggle('hidden', !classObj.classCode);
     $('class-page-teacher-tabs').classList.toggle('hidden', role !== 'teacher');
+    ensureClassSettingsTab();
     switchScreen('class');
     if (role === 'teacher') showClassPageTab('assignments');
     else showStudentAssignments(classObj.id, _clsCtx.className);
+}
+
+function ensureClassSettingsTab() {
+    var nav = $('class-page-teacher-tabs');
+    if (!nav || $('class-tab-settings')) return;
+    var button = document.createElement('button');
+    button.id = 'class-tab-settings';
+    button.type = 'button';
+    button.className = 'action-btn min-h-[44px] px-5 text-sm';
+    button.setAttribute('role', 'tab');
+    button.textContent = 'Settings';
+    button.onclick = function() { showClassPageTab('settings'); };
+    nav.appendChild(button);
 }
 
 function closeClassPage() {
@@ -212,12 +238,68 @@ function showClassPageTab(tab) {
     _clsCtx.activeTab = tab;
     var assignmentsTab = $('class-tab-assignments');
     var studentsTab = $('class-tab-students');
+    var settingsTab = $('class-tab-settings');
     assignmentsTab.className = 'action-btn min-h-[44px] px-5 text-sm' + (tab === 'assignments' ? ' action-btn--copper' : '');
     studentsTab.className = 'action-btn min-h-[44px] px-5 text-sm' + (tab === 'students' ? ' action-btn--copper' : '');
+    if (settingsTab) settingsTab.className = 'action-btn min-h-[44px] px-5 text-sm' + (tab === 'settings' ? ' action-btn--copper' : '');
     assignmentsTab.setAttribute('aria-selected', tab === 'assignments' ? 'true' : 'false');
     studentsTab.setAttribute('aria-selected', tab === 'students' ? 'true' : 'false');
-    if (tab === 'students') renderClassStudents();
+    if (settingsTab) settingsTab.setAttribute('aria-selected', tab === 'settings' ? 'true' : 'false');
+    if (tab === 'settings') showClassSettings();
+    else if (tab === 'students') renderClassStudents();
     else showClassAssignments(_clsCtx.classId, _clsCtx.className);
+}
+
+function showClassSettings(message, isError) {
+    var list = $('class-page-content');
+    if (!list) return;
+    var scale = _clsCtx.gradingScale || defaultClassGradingScale();
+    var weights = _clsCtx.weights || { presentation: 50, practice: 50 };
+    var scaleRows = scale.map(function(row, index) {
+        return '<div class="grid grid-cols-[50px_1fr_1fr] gap-3 items-center">'
+            + '<span class="font-display font-bold text-lg text-sf-50">' + esc(row.letter) + '</span>'
+            + '<input id="class-grade-min-' + index + '" type="number" min="0" max="100" value="' + Number(row.min) + '" class="input-glow bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 outline-none" aria-label="' + esc(row.letter) + ' minimum">'
+            + '<input id="class-grade-max-' + index + '" type="number" min="0" max="100" value="' + Number(row.max) + '" class="input-glow bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 outline-none" aria-label="' + esc(row.letter) + ' maximum"></div>';
+    }).join('');
+    list.innerHTML = '<div class="mb-6"><h2 class="font-display font-bold text-2xl text-sf-50">Class Settings</h2></div>'
+        + '<div class="mini-card mb-5"><h3 class="font-display font-semibold text-xl text-sf-50 mb-2">Grading Scale</h3>'
+        + '<p class="text-sm text-sf-300 mb-5">' + (_clsCtx.classObj.gradingScale ? 'Edit and save your custom class grading scale.' : 'Using standard US grading scale — edit and save to customize.') + '</p>'
+        + '<div class="grid grid-cols-[50px_1fr_1fr] gap-3 mb-2 text-xs uppercase font-semibold text-sf-300"><span>Grade</span><span>Min</span><span>Max</span></div>'
+        + '<div class="space-y-3">' + scaleRows + '</div>'
+        + '<button onclick="saveClassGradingScale()" class="action-btn action-btn--sage min-h-[44px] px-5 text-sm mt-5">Save Grading Scale</button></div>'
+        + '<div class="mini-card"><h3 class="font-display font-semibold text-xl text-sf-50 mb-2">Assignment Weights</h3>'
+        + '<p class="text-sm text-sf-300 mb-5">These weights determine how each assignment type affects the overall grade.</p>'
+        + '<div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label class="block text-sm text-sf-200 mb-2">Presentation (%)</label><input id="class-weight-presentation" type="number" min="0" max="100" value="' + Number(weights.presentation) + '" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 outline-none"></div>'
+        + '<div><label class="block text-sm text-sf-200 mb-2">Practice (%)</label><input id="class-weight-practice" type="number" min="0" max="100" value="' + Number(weights.practice) + '" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 outline-none"></div></div>'
+        + '<button onclick="saveClassWeights()" class="action-btn action-btn--sage min-h-[44px] px-5 text-sm mt-5">Save Assignment Weights</button>'
+        + '<p class="text-sm mt-3 ' + (isError ? 'text-coral-400' : 'text-sage-400') + '">' + esc(message || '') + '</p></div>';
+}
+
+function saveClassGradingScale() {
+    var letters = ['A', 'B', 'C', 'D', 'F'];
+    var scale = letters.map(function(letter, index) {
+        return { letter: letter, min: Number($('class-grade-min-' + index).value), max: Number($('class-grade-max-' + index).value) };
+    });
+    var invalid = scale.some(function(row) { return isNaN(row.min) || isNaN(row.max) || row.min < 0 || row.max > 100 || row.min > row.max; });
+    if (invalid) { showClassSettings('Each grading range must be valid and between 0 and 100.', true); return; }
+    db.collection('classes').doc(_clsCtx.classId).update({ gradingScale: scale }).then(function() {
+        _clsCtx.gradingScale = scale;
+        _clsCtx.classObj.gradingScale = scale;
+        showClassSettings('Grading scale saved.', false);
+    }).catch(function(err) { showClassSettings(err.message || 'Failed to save grading scale.', true); });
+}
+
+function saveClassWeights() {
+    var weights = { presentation: Number($('class-weight-presentation').value), practice: Number($('class-weight-practice').value) };
+    if (isNaN(weights.presentation) || isNaN(weights.practice) || weights.presentation < 0 || weights.practice < 0 || weights.presentation + weights.practice !== 100) {
+        showClassSettings('Presentation and Practice weights must add to 100.', true);
+        return;
+    }
+    db.collection('classes').doc(_clsCtx.classId).update({ weights: weights }).then(function() {
+        _clsCtx.weights = weights;
+        _clsCtx.classObj.weights = weights;
+        showClassSettings('Assignment weights saved.', false);
+    }).catch(function(err) { showClassSettings(err.message || 'Failed to save assignment weights.', true); });
 }
 
 function showClassAssignments(classId, className) {
@@ -239,12 +321,14 @@ function showClassAssignments(classId, className) {
         } else {
             html += assignments.map(function(a) {
                 var safeId = a.id.replace(/'/g, "\\'");
+                var assignmentWeight = (_clsCtx.weights && _clsCtx.weights[a.type] != null) ? _clsCtx.weights[a.type] : 50;
                 return '<div class="mini-card relative">'
                     + '<button onclick="toggleClassroomMenu(event,\'assignment-menu-' + safeId + '\')" class="absolute top-3 right-3 w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 text-sf-100 text-xl flex items-center justify-center transition-colors" aria-label="Assignment options">&#8942;</button>'
                     + '<div id="assignment-menu-' + safeId + '" class="classroom-overflow-menu hidden absolute top-12 right-3 z-30 min-w-[180px] rounded-xl bg-sf-800 border border-white/10 shadow-xl p-1">'
                     + '<button onclick="openDeleteAssignmentModal(event,\'' + safeId + '\')" class="w-full text-left px-3 py-2.5 rounded-lg text-sm text-coral-400 hover:bg-coral-500/10">Delete Assignment</button>'
                     + '</div>'
                     + '<div class="font-display font-bold text-xl text-sf-50 mb-2 pr-10">' + esc(a.title) + '</div>'
+                    + '<span class="inline-flex px-2.5 py-1 rounded-lg bg-copper-500/15 border border-copper-500/25 text-copper-400 text-xs font-semibold mb-3">' + esc((a.type === 'presentation' ? 'Presentation' : 'Practice') + ' · ' + assignmentWeight + '%') + '</span>'
                     + '<div class="text-base text-sf-300 mb-5"><i class="fas fa-calendar-alt mr-1.5"></i>Due: ' + esc(formatAssignmentDue(a.dueDate)) + '</div>'
                     + '<button onclick="openAssignmentSubmissions(event,\'' + safeId + '\')" class="w-full min-h-[44px] font-display font-semibold rounded-xl px-4 py-3 bg-sage-500/15 border border-sage-500/25 text-sage-400 hover:bg-sage-500/25 transition-all cursor-pointer"><i class="fas fa-eye mr-2"></i>View Submissions</button>'
                     + '</div>';
@@ -719,6 +803,20 @@ function submissionAverage(lineScores) {
     return scores.length ? Math.round(scores.reduce(function(total, score) { return total + score; }, 0) / scores.length) : 0;
 }
 
+function gradeFromClassScale(score) {
+    var scale = _clsCtx.gradingScale && _clsCtx.gradingScale.length ? _clsCtx.gradingScale : defaultClassGradingScale();
+    for (var i = 0; i < scale.length; i++) {
+        if (score >= Number(scale[i].min) && score <= Number(scale[i].max)) return scale[i].letter;
+    }
+    return '';
+}
+
+function formatSubmissionTimestamp(value) {
+    if (!value) return 'Unknown date';
+    var date = typeof value.toDate === 'function' ? value.toDate() : new Date(value);
+    return isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+}
+
 function openSubmissionDetailById(submissionId) {
     var submission = _clsCtx.submissionMap && _clsCtx.submissionMap[submissionId];
     if (submission) openSubmissionDetail(submission, submission.studentName);
@@ -728,10 +826,19 @@ function openSubmissionDetail(submission, studentName) {
     var list = $('class-page-content');
     if (!list) return;
     var statusClass = submission.status === 'graded' ? 'bg-sage-500/15 border-sage-500/25 text-sage-400' : 'bg-copper-500/15 border-copper-500/25 text-copper-400';
+    var submitCount = Number(submission.submitCount) || 1;
+    var countClass = submitCount > 1 ? 'bg-copper-500/15 border-copper-500/25 text-copper-400' : 'bg-sage-500/15 border-sage-500/25 text-sage-400';
     var html = '<button onclick="viewSubmissions(_clsCtx.assignmentId,_clsCtx.assignmentTitle)" class="action-btn min-h-[44px] text-sm mb-6"><i class="fas fa-arrow-left mr-1.5"></i>Back to Submissions</button>'
         + '<div class="flex items-start justify-between gap-4 flex-wrap mb-6"><div><h2 class="font-display font-bold text-2xl text-sf-50">' + esc(studentName) + '</h2>'
         + '<p class="text-base text-sf-300 mt-1">' + esc(_clsCtx.assignmentTitle) + ' · Overall AI Score: <span class="text-copper-400 font-semibold">' + submissionAverage(submission.lineScores) + '</span></p></div>'
-        + '<span class="px-3 py-1.5 rounded-lg border text-sm font-semibold ' + statusClass + '">' + esc(submission.status || 'submitted') + '</span></div>';
+        + '<div class="flex gap-2 flex-wrap"><span class="px-3 py-1.5 rounded-lg border text-sm font-semibold ' + countClass + '">Submitted ' + submitCount + ' time(s)</span>'
+        + '<span class="px-3 py-1.5 rounded-lg border text-sm font-semibold ' + statusClass + '">' + esc(submission.status || 'submitted') + '</span></div></div>';
+    if (submission.resubmitHistory && submission.resubmitHistory.length) {
+        html += '<details class="mini-card mb-6"><summary class="font-display font-semibold text-lg text-sf-50 cursor-pointer">Resubmit History</summary><div class="space-y-2 mt-4">'
+            + submission.resubmitHistory.map(function(entry) {
+                return '<div class="flex items-center justify-between gap-3 text-sm text-sf-200"><span>' + esc(formatSubmissionTimestamp(entry.resubmittedAt)) + '</span><span class="text-copper-400 font-semibold">AI Score: ' + (entry.aiScore == null ? '—' : Number(entry.aiScore)) + '</span></div>';
+            }).join('') + '</div></details>';
+    }
     if (submission.studentScript) {
         html += '<details class="mini-card mb-6"><summary class="font-display font-semibold text-lg text-sf-50 cursor-pointer">Student Script</summary>'
             + '<pre class="whitespace-pre-wrap text-sm leading-relaxed text-sf-100 mt-4 bg-white/3 border border-white/8 rounded-xl p-4">' + esc(submission.studentScript) + '</pre></details>';
@@ -961,7 +1068,7 @@ function gradeSubmissionUI(submissionId, submission) {
     submission = submission || {};
     var scores = Object.values(submission.lineScores || {}).filter(function(s) { return s != null; }).map(Number).filter(function(s) { return !isNaN(s); });
     var avg = scores.length ? Math.round(scores.reduce(function(a, b) { return a + b; }, 0) / scores.length) : null;
-    var suggestedGrade = avg == null ? '' : avg >= 90 ? 'A' : avg >= 80 ? 'B' : avg >= 70 ? 'C' : avg >= 60 ? 'D' : 'F';
+    var suggestedGrade = avg == null ? '' : gradeFromClassScale(avg);
     var excellent = scores.filter(function(score) { return score >= 80; }).length;
     var good = scores.filter(function(score) { return score >= 60 && score < 80; }).length;
     var needsWork = scores.filter(function(score) { return score < 60; }).length;
@@ -973,7 +1080,7 @@ function gradeSubmissionUI(submissionId, submission) {
     var bannerBg = avg >= 80 ? 'rgba(99,197,139,.12)' : avg >= 60 ? 'rgba(214,168,95,.12)' : 'rgba(232,117,106,.12)';
     var suggestionHtml = avg == null ? '' : '<div style="padding:14px;border-radius:14px;background:' + bannerBg + ';border:1px solid ' + bannerColor + '55;color:' + bannerColor + ';">'
         + '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">'
-        + '<div style="font-size:15px;font-weight:700;"><i class="fas fa-sparkles" style="margin-right:7px;"></i>AI Suggested Grade: ' + suggestedGrade + ' <span style="font-size:12px;font-weight:500;">(avg score ' + avg + '/100)</span></div>'
+        + '<div style="font-size:15px;font-weight:700;"><i class="fas fa-sparkles" style="margin-right:7px;"></i>AI Suggested Grade: ' + suggestedGrade + ' (' + avg + '%) <span style="font-size:12px;font-weight:500;">— based on your class grading scale.</span></div>'
         + '<button onclick="useSuggestedGrade(\'' + suggestedGrade + '\')" style="padding:8px 12px;border-radius:10px;background:' + bannerColor + ';border:none;color:#111;font-size:12px;font-weight:700;cursor:pointer;">Use This Grade</button>'
         + '</div>'
         + '<div style="font-size:12px;line-height:1.6;margin-top:8px;color:#D4D1CB;">' + scores.length + ' lines scored — ' + excellent + ' excellent, ' + good + ' good, ' + needsWork + ' needs work</div>'
