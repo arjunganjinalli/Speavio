@@ -105,6 +105,52 @@ function renderClassCards(list, classes, role) {
     grid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-4';
     classes.forEach(function(c, index) {
         var studentCount = (c.studentUids && c.studentUids.length) || 0;
+        if (role === 'teacher') {
+            var card = document.createElement('div');
+            card.className = 'relative min-h-[180px] rounded-2xl overflow-visible bg-white/5 border border-white/10 cursor-pointer hover:border-white/25 hover:-translate-y-1 hover:shadow-xl transition-all text-left w-full';
+            card.tabIndex = 0;
+            card.setAttribute('role', 'button');
+            card.innerHTML = '<div class="h-24 px-5 py-4 flex items-end rounded-t-2xl overflow-hidden" style="background:' + gradients[index % gradients.length] + '">'
+                + '<h3 class="font-display font-bold text-2xl text-white leading-tight drop-shadow-md">' + esc(c.className || 'Untitled Class') + '</h3>'
+                + '</div>'
+                + '<div class="p-5">'
+                + '<p class="text-base text-sf-100 mb-4">' + esc(c.subject || 'No subject') + '</p>'
+                + '<div class="flex items-center justify-between gap-3 flex-wrap">'
+                + '<span class="px-2.5 py-1 rounded-lg bg-copper-500/15 border border-copper-500/25 text-copper-400 text-sm font-mono font-bold">' + esc(c.classCode || '') + '</span>'
+                + '<span class="text-sm text-sf-300"><i class="fas fa-user-group mr-1.5"></i>' + studentCount + ' student' + (studentCount === 1 ? '' : 's') + '</span>'
+                + '</div></div>';
+            var menuButton = document.createElement('button');
+            menuButton.type = 'button';
+            menuButton.className = 'absolute top-3 right-3 z-20 w-9 h-9 rounded-lg bg-black/25 hover:bg-black/40 text-white text-xl flex items-center justify-center transition-colors';
+            menuButton.setAttribute('aria-label', 'Class options');
+            menuButton.innerHTML = '&#8942;';
+            var menu = document.createElement('div');
+            menu.id = 'class-menu-' + index;
+            menu.className = 'classroom-overflow-menu hidden absolute top-12 right-3 z-30 min-w-[160px] rounded-xl bg-sf-800 border border-white/10 shadow-xl p-1';
+            menu.innerHTML = '<button type="button" class="class-menu-open w-full text-left px-3 py-2.5 rounded-lg text-sm text-sf-100 hover:bg-white/5">Open</button>'
+                + '<button type="button" class="class-menu-delete w-full text-left px-3 py-2.5 rounded-lg text-sm text-coral-400 hover:bg-coral-500/10">Delete Class</button>';
+            card.appendChild(menuButton);
+            card.appendChild(menu);
+            card.addEventListener('click', function() { openClassPage(c, role); });
+            card.addEventListener('keydown', function(event) {
+                if (event.target !== card) return;
+                if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openClassPage(c, role); }
+            });
+            menu.addEventListener('click', function(event) { event.stopPropagation(); });
+            menuButton.addEventListener('click', function(event) { toggleClassroomMenu(event, menu.id); });
+            menu.querySelector('.class-menu-open').addEventListener('click', function(event) {
+                event.stopPropagation();
+                closeClassroomMenus();
+                openClassPage(c, role);
+            });
+            menu.querySelector('.class-menu-delete').addEventListener('click', function(event) {
+                event.stopPropagation();
+                closeClassroomMenus();
+                openDeleteClassModal(c);
+            });
+            grid.appendChild(card);
+            return;
+        }
         var btn = document.createElement('button');
         btn.className = 'min-h-[180px] rounded-2xl overflow-hidden bg-white/5 border border-white/10 cursor-pointer hover:border-white/25 hover:-translate-y-1 hover:shadow-xl transition-all text-left w-full';
         btn.type = 'button';
@@ -181,6 +227,8 @@ function showClassAssignments(classId, className) {
     if (!list) return;
     list.innerHTML = '<div class="flex items-center gap-3 py-4"><div class="spinner"></div><span class="text-sf-300 text-base">Loading assignments...</span></div>';
     getClassAssignments(classId).then(function(assignments) {
+        _clsCtx.assignmentMap = {};
+        assignments.forEach(function(assignment) { _clsCtx.assignmentMap[assignment.id] = assignment; });
         var html = '<div class="flex items-center justify-between mb-6 flex-wrap gap-3">'
             + '<div><h2 class="font-display font-bold text-2xl text-sf-50">Assignments</h2><p class="text-base text-sf-300 mt-1">Create work and review student submissions.</p></div>'
             + '<button onclick="openCreateAssignmentModal()" class="action-btn action-btn--copper min-h-[44px] px-5 text-sm"><i class="fas fa-plus mr-1.5"></i>New Assignment</button>'
@@ -191,14 +239,14 @@ function showClassAssignments(classId, className) {
         } else {
             html += assignments.map(function(a) {
                 var safeId = a.id.replace(/'/g, "\\'");
-                var safeTitle = esc(a.title).replace(/'/g, "\\'");
-                return '<div class="mini-card">'
-                    + '<div class="font-display font-bold text-xl text-sf-50 mb-2">' + esc(a.title) + '</div>'
-                    + '<div class="text-base text-sf-300 mb-5"><i class="fas fa-calendar-alt mr-1.5"></i>Due: ' + esc(formatAssignmentDue(a.dueDate)) + '</div>'
-                    + '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">'
-                    + '<button onclick="viewSubmissions(\'' + safeId + '\',\'' + safeTitle + '\')" class="w-full min-h-[44px] font-display font-semibold rounded-xl px-4 py-3 bg-sage-500/15 border border-sage-500/25 text-sage-400 hover:bg-sage-500/25 transition-all cursor-pointer"><i class="fas fa-eye mr-2"></i>View Submissions</button>'
-                    + '<button onclick="deleteClassAssignment(\'' + safeId + '\')" class="w-full min-h-[44px] font-display font-semibold rounded-xl px-4 py-3 bg-coral-500/15 border border-coral-500/25 text-coral-400 hover:bg-coral-500/25 transition-all cursor-pointer"><i class="fas fa-trash mr-2"></i>Delete</button>'
+                return '<div class="mini-card relative">'
+                    + '<button onclick="toggleClassroomMenu(event,\'assignment-menu-' + safeId + '\')" class="absolute top-3 right-3 w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 text-sf-100 text-xl flex items-center justify-center transition-colors" aria-label="Assignment options">&#8942;</button>'
+                    + '<div id="assignment-menu-' + safeId + '" class="classroom-overflow-menu hidden absolute top-12 right-3 z-30 min-w-[180px] rounded-xl bg-sf-800 border border-white/10 shadow-xl p-1">'
+                    + '<button onclick="openAssignmentSubmissions(event,\'' + safeId + '\')" class="w-full text-left px-3 py-2.5 rounded-lg text-sm text-sf-100 hover:bg-white/5">View Submissions</button>'
+                    + '<button onclick="openDeleteAssignmentModal(event,\'' + safeId + '\')" class="w-full text-left px-3 py-2.5 rounded-lg text-sm text-coral-400 hover:bg-coral-500/10">Delete Assignment</button>'
                     + '</div>'
+                    + '<div class="font-display font-bold text-xl text-sf-50 mb-2 pr-10">' + esc(a.title) + '</div>'
+                    + '<div class="text-base text-sf-300 mb-5"><i class="fas fa-calendar-alt mr-1.5"></i>Due: ' + esc(formatAssignmentDue(a.dueDate)) + '</div>'
                     + '</div>';
             }).join('');
         }
@@ -209,28 +257,11 @@ function showClassAssignments(classId, className) {
     });
 }
 
-function deleteClassAssignment(assignmentId) {
-    if (!confirm('Delete this assignment? This cannot be undone.')) return;
-    var list = $('class-page-content');
-    if (list) list.innerHTML = '<div class="flex items-center gap-3 py-4"><div class="spinner"></div><span class="text-sf-300 text-base">Deleting assignment...</span></div>';
-    db.collection('submissions').where('assignmentId', '==', assignmentId).get().then(function(snapshot) {
-        var docs = snapshot.docs;
-        var batches = [];
-        for (var i = 0; i < docs.length; i += 500) {
-            var batch = db.batch();
-            docs.slice(i, i + 500).forEach(function(doc) { batch.delete(doc.ref); });
-            batches.push(batch.commit());
-        }
-        return Promise.all(batches);
-    }).then(function() {
-        return db.collection('assignments').doc(assignmentId).delete();
-    }).then(function() {
-        toast('Assignment deleted.', 'success');
-        showClassAssignments(_clsCtx.classId, _clsCtx.className);
-    }).catch(function(err) {
-        toast(err.message || 'Failed to delete assignment.', 'error');
-        showClassAssignments(_clsCtx.classId, _clsCtx.className);
-    });
+function openAssignmentSubmissions(event, assignmentId) {
+    event.stopPropagation();
+    closeClassroomMenus();
+    var assignment = _clsCtx.assignmentMap[assignmentId] || {};
+    viewSubmissions(assignmentId, assignment.title || 'Assignment');
 }
 
 function showStudentAssignments(classId, className) {
@@ -625,6 +656,106 @@ function openCreateAssignmentModal() {
 function closeAssignmentModal() {
     var el = document.getElementById('create-assignment-overlay');
     if (el) el.parentNode.removeChild(el);
+}
+
+var _deleteClassroomTarget = null;
+
+function openDeleteAssignmentModal(event, assignmentId) {
+    if (event) event.stopPropagation();
+    closeClassroomMenus();
+    var assignment = _clsCtx.assignmentMap[assignmentId];
+    if (!assignment) return;
+    openClassroomDeleteModal('assignment', assignmentId, assignment.title || 'Assignment');
+}
+
+function openDeleteClassModal(classObj) {
+    if (!classObj) return;
+    openClassroomDeleteModal('class', classObj.id, classObj.className || 'Class');
+}
+
+function openClassroomDeleteModal(type, id, name) {
+    closeClassroomDeleteModal();
+    _deleteClassroomTarget = { type: type, id: id, name: name };
+    var isClass = type === 'class';
+    var overlay = document.createElement('div');
+    overlay.id = 'classroom-delete-overlay';
+    overlay.className = 'help-overlay';
+    overlay.innerHTML = '<div class="help-modal" style="max-width:460px;position:relative;">'
+        + '<button class="close-help" onclick="closeClassroomDeleteModal()" aria-label="Close"><i class="fas fa-xmark"></i></button>'
+        + '<h2>Delete ' + (isClass ? 'Class' : 'Assignment') + '</h2>'
+        + '<p style="color:#E8756A;font-size:14px;line-height:1.6;margin-top:12px;">'
+        + (isClass ? 'This cannot be undone. All assignments and student data for this class will be permanently deleted.' : 'This cannot be undone. All submissions for this assignment will also be permanently deleted.')
+        + '</p>'
+        + '<input id="classroom-delete-confirm-input" type="text" placeholder="Type the ' + (isClass ? 'class name' : 'assignment title') + ' to confirm" oninput="updateClassroomDeleteButton()" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none" style="width:100%;box-sizing:border-box;margin-top:16px;">'
+        + '<p id="classroom-delete-error" style="font-size:12px;color:#E8756A;display:none;margin-top:10px;"></p>'
+        + '<div style="display:flex;gap:10px;margin-top:16px;">'
+        + '<button onclick="closeClassroomDeleteModal()" style="flex:1;padding:10px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#A8A6A1;font-size:13px;font-weight:600;cursor:pointer;">Cancel</button>'
+        + '<button id="classroom-delete-confirm-btn" disabled onclick="confirmClassroomDelete()" style="flex:1;padding:10px;border-radius:12px;background:#D85C55;color:white;font-size:13px;font-weight:700;cursor:pointer;border:none;opacity:.45;">Delete</button>'
+        + '</div></div>';
+    document.body.appendChild(overlay);
+    requestAnimationFrame(function() { overlay.classList.add('open'); });
+    setTimeout(function() { var input = $('classroom-delete-confirm-input'); if (input) input.focus(); }, 80);
+}
+
+function updateClassroomDeleteButton() {
+    var input = $('classroom-delete-confirm-input');
+    var button = $('classroom-delete-confirm-btn');
+    if (!button || !_deleteClassroomTarget) return;
+    button.disabled = !input || input.value !== _deleteClassroomTarget.name;
+    button.style.opacity = button.disabled ? '.45' : '1';
+}
+
+function closeClassroomDeleteModal() {
+    var overlay = $('classroom-delete-overlay');
+    if (overlay) overlay.parentNode.removeChild(overlay);
+    _deleteClassroomTarget = null;
+}
+
+function deleteFirestoreDocs(docs) {
+    var commits = [];
+    for (var i = 0; i < docs.length; i += 500) {
+        var batch = db.batch();
+        docs.slice(i, i + 500).forEach(function(doc) { batch.delete(doc.ref); });
+        commits.push(batch.commit());
+    }
+    return Promise.all(commits);
+}
+
+function confirmClassroomDelete() {
+    var target = _deleteClassroomTarget;
+    var button = $('classroom-delete-confirm-btn');
+    if (!target || !button || button.disabled) return;
+    button.disabled = true;
+    button.textContent = 'Deleting...';
+    var deletion;
+    if (target.type === 'assignment') {
+        deletion = db.collection('submissions').where('assignmentId', '==', target.id).get()
+            .then(function(snapshot) { return deleteFirestoreDocs(snapshot.docs); })
+            .then(function() { return db.collection('assignments').doc(target.id).delete(); });
+    } else {
+        deletion = db.collection('assignments').where('classId', '==', target.id).get().then(function(snapshot) {
+            var assignmentDocs = snapshot.docs;
+            return Promise.all(assignmentDocs.map(function(doc) {
+                return db.collection('submissions').where('assignmentId', '==', doc.id).get();
+            })).then(function(submissionSnapshots) {
+                var submissionDocs = submissionSnapshots.reduce(function(all, snapshot) { return all.concat(snapshot.docs); }, []);
+                return deleteFirestoreDocs(submissionDocs).then(function() { return deleteFirestoreDocs(assignmentDocs); });
+            });
+        }).then(function() {
+            return db.collection('classes').doc(target.id).delete();
+        });
+    }
+    deletion.then(function() {
+        var deletedType = target.type;
+        closeClassroomDeleteModal();
+        toast(deletedType === 'class' ? 'Class deleted.' : 'Assignment deleted.', 'success');
+        if (deletedType === 'class') renderClassesTabContent();
+        else showClassAssignments(_clsCtx.classId, _clsCtx.className);
+    }).catch(function(err) {
+        var error = $('classroom-delete-error');
+        if (error) { error.textContent = err.message || 'Delete failed.'; error.style.display = 'block'; }
+        if (button) { button.disabled = false; button.textContent = 'Delete'; updateClassroomDeleteButton(); }
+    });
 }
 
 function submitCreateAssignment() {

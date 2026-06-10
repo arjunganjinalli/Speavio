@@ -96,6 +96,17 @@ function toggleCollapse(id){
     if(ar)ar.style.transform=el.classList.contains('open')?'rotate(180deg)':'';
     if(id==='audio-devices-section'&&el.classList.contains('open'))loadAudioDevices();
 }
+function closeClassroomMenus(){
+    document.querySelectorAll('.classroom-overflow-menu').forEach(function(menu){menu.classList.add('hidden')});
+}
+function toggleClassroomMenu(event,id){
+    event.stopPropagation();
+    var menu=$(id);
+    var wasHidden=menu.classList.contains('hidden');
+    closeClassroomMenus();
+    if(wasHidden)menu.classList.remove('hidden');
+}
+document.addEventListener('click',closeClassroomMenus);
 function setTTSProvider(p){
     S.ttsProvider=p;
     $('tts-br-btn').className='flex-1 px-3 py-2.5 rounded-lg text-xs font-semibold border transition-all '+(p==='browser'?'bg-copper-500/15 border-copper-500/30 text-copper-400':'bg-white/3 border-white/8 text-sf-300 hover:text-sf-100');
