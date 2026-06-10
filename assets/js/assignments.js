@@ -59,14 +59,20 @@ function submitAssignment(assignmentId, studentUid, transcript, aiScore, recordi
         status:          'submitted',
         submittedAt:     firebase.firestore.FieldValue.serverTimestamp()
     };
-    if (submissionId) {
-        return db.collection('submissions').doc(submissionId).set(data).then(function() {
-            return submissionId;
+    return db.collection('submissions')
+        .where('assignmentId', '==', assignmentId)
+        .where('studentUid', '==', studentUid)
+        .get()
+        .then(function(snapshot) {
+            var existing = submissionId ? snapshot.docs.filter(function(doc) { return doc.id === submissionId; })[0] : null;
+            existing = existing || snapshot.docs[0];
+            if (existing) {
+                return existing.ref.set(data).then(function() { return existing.id; });
+            }
+            return db.collection('submissions').add(data).then(function(docRef) {
+                return docRef.id;
+            });
         });
-    }
-    return db.collection('submissions').add(data).then(function(docRef) {
-        return docRef.id;
-    });
 }
 
 function getStudentAssignmentSubmissions(assignmentIds, studentUid) {

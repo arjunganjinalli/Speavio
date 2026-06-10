@@ -440,7 +440,8 @@ function renderAssignmentCompletion() {
         + '<div class="text-6xl font-display font-bold text-sage-400 mb-2">' + avg + '</div>'
         + '<p class="text-base text-sf-200 mb-6">Average score</p>'
         + '<button onclick="redoActiveAssignment()" class="w-full min-h-[52px] mb-3 rounded-xl bg-white/5 border border-white/10 text-sf-100 font-display font-bold text-base hover:bg-white/10 transition-colors"><i class="fas fa-rotate-right mr-2"></i>Redo Assignment</button>'
-        + '<button onclick="submitActiveAssignment()" class="w-full min-h-[52px] rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 font-display font-bold text-base"><i class="fas fa-paper-plane mr-2"></i>Submit Assignment</button>'
+        + '<p id="assignment-submit-progress" class="hidden text-sm text-sf-200 mb-3"></p>'
+        + '<button id="assignment-submit-btn" onclick="submitActiveAssignment()" class="w-full min-h-[52px] rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 font-display font-bold text-base disabled:opacity-50 disabled:cursor-not-allowed"><i class="fas fa-paper-plane mr-2"></i>Submit Assignment</button>'
         + '</div>';
 }
 
@@ -451,16 +452,66 @@ function redoActiveAssignment() {
 
 function submitActiveAssignment() {
     if (!_activeAssignment || !S.authUser) return;
+    var submitBtn = $('assignment-submit-btn');
+    var progress = $('assignment-submit-progress');
+    if (submitBtn) submitBtn.disabled = true;
     var scores = Object.keys(S.lineScores).map(function(key) { return S.lineScores[key]; }).filter(function(score) { return score != null; });
     var avg = scores.length ? Math.round(scores.reduce(function(total, score) { return total + score; }, 0) / scores.length) : 0;
     var transcript = JSON.stringify(S.userResponses || {});
-    submitAssignment(_activeAssignment.id, S.authUser.uid, transcript, avg, null, _activeAssignment.submissionId).then(function() {
-        toast('Assignment submitted.', 'success');
+    var clipKeys = Object.keys(S.audioClips || {}).sort(function(a, b) { return Number(a) - Number(b); });
+    var recording = clipKeys.length ? S.audioClips[clipKeys[clipKeys.length - 1]] : null;
+    var uploadFailed = false;
+    findExistingSubmission(_activeAssignment.id, S.authUser.uid).then(function(existing) {
+        _activeAssignment.submissionId = existing ? existing.id : _activeAssignment.submissionId;
+        if (!recording) return null;
+        if (progress) { progress.classList.remove('hidden'); progress.textContent = 'Uploading recording...'; }
+        var removeOld = existing && existing.recordingUrl
+            ? storage.refFromURL(existing.recordingUrl).delete().catch(function(err) { console.warn('Could not delete previous recording:', err); })
+            : Promise.resolve();
+        return removeOld.then(function() {
+            return uploadAssignmentRecording(_activeAssignment.id, S.authUser.uid, recording, progress);
+        }).catch(function(err) {
+            uploadFailed = true;
+            console.error('Assignment recording upload failed:', err);
+            return null;
+        });
+    }).then(function(recordingUrl) {
+        if (progress) progress.textContent = 'Saving submission...';
+        return submitAssignment(_activeAssignment.id, S.authUser.uid, transcript, avg, recordingUrl, _activeAssignment.submissionId);
+    }).then(function() {
+        if (uploadFailed) toast('Recording upload failed but submission saved', 'info');
+        else toast('Assignment submitted.', 'success');
+        if (progress) progress.classList.add('hidden');
         _activeAssignment = null;
         switchScreen('class');
         showStudentAssignments(_clsCtx.classId, _clsCtx.className);
     }).catch(function(err) {
         toast(err.message || 'Failed to submit assignment.', 'error');
+        if (progress) { progress.classList.remove('hidden'); progress.textContent = 'Submission failed. Please try again.'; }
+        if (submitBtn) submitBtn.disabled = false;
+    });
+}
+
+function findExistingSubmission(assignmentId, studentUid) {
+    return db.collection('submissions')
+        .where('assignmentId', '==', assignmentId)
+        .where('studentUid', '==', studentUid)
+        .get()
+        .then(function(snapshot) {
+            if (snapshot.empty) return null;
+            return Object.assign({ id: snapshot.docs[0].id }, snapshot.docs[0].data());
+        });
+}
+
+function uploadAssignmentRecording(assignmentId, studentUid, blob, progress) {
+    return new Promise(function(resolve, reject) {
+        var task = storage.ref('recordings/' + assignmentId + '/' + studentUid).put(blob);
+        task.on('state_changed', function(snapshot) {
+            var percent = snapshot.totalBytes ? Math.round(snapshot.bytesTransferred / snapshot.totalBytes * 100) : 0;
+            if (progress) progress.textContent = 'Uploading recording... ' + percent + '%';
+        }, reject, function() {
+            task.snapshot.ref.getDownloadURL().then(resolve).catch(reject);
+        });
     });
 }
 
@@ -609,7 +660,10 @@ function viewSubmissions(assignmentId, title) {
                     + (s.teacherComment ? '<div class="text-sm text-sf-200 mt-1">' + esc(s.teacherComment) + '</div>' : '')
                     + '</div>'
                     + '<button onclick="gradeSubmissionUI(\'' + safeSubId + '\')" class="action-btn action-btn--sage min-h-[44px] px-5 text-sm flex-shrink-0">Grade</button>'
-                    + '</div></div>';
+                    + '</div>'
+                    + (s.recordingUrl ? '<audio controls preload="metadata" class="w-full mt-4" src="' + esc(s.recordingUrl) + '"></audio>'
+                        : '<p class="text-sm text-sf-300 mt-4">' + (s.status === 'graded' ? 'Recording removed after grading' : 'No recording') + '</p>')
+                    + '</div>';
             }).join('');
         }
         list.innerHTML = html;
@@ -827,10 +881,21 @@ function submitGrade(submissionId) {
     if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
     gradeSubmission(submissionId, grade, comment)
         .then(function() {
+            var ref = db.collection('submissions').doc(submissionId);
+            return ref.get().then(function(doc) {
+                var recordingUrl = doc.exists ? doc.data().recordingUrl : null;
+                if (!recordingUrl) return null;
+                return storage.refFromURL(recordingUrl).delete().catch(function(err) {
+                    console.warn('Could not delete graded submission recording:', err);
+                }).then(function() {
+                    return ref.update({ recordingUrl: null });
+                });
+            });
+        })
+        .then(function() {
             closeGradeModal();
             toast('Submission graded.', 'success');
-            if (_clsCtx.gradeStudentUid) viewStudentGrades(_clsCtx.gradeStudentUid, _clsCtx.gradeStudentName);
-            else viewSubmissions(_clsCtx.assignmentId, _clsCtx.assignmentTitle);
+            viewSubmissions(_clsCtx.assignmentId, _clsCtx.assignmentTitle);
         })
         .catch(function(err) {
             if (errEl) { errEl.textContent = err.message || 'Failed to save grade.'; errEl.style.display = 'block'; }
