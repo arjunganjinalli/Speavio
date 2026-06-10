@@ -2,15 +2,16 @@
     ASSIGNMENTS
 ═══════════════════════════════════════════════════════════════ */
 
-function createAssignment(classId, teacherUid, title, instructions, script, dueDate, type) {
+function createAssignment(classId, teacherUid, title, instructions, script, dueDate, type, scriptType) {
     return db.collection('assignments').add({
         classId:      classId,
         teacherUid:   teacherUid,
         title:        title,
         instructions: instructions,
-        script:       script,
+        script:       scriptType === 'student' ? '' : script,
         dueDate:      dueDate,
         type:         type,
+        scriptType:   scriptType,
         createdAt:    firebase.firestore.FieldValue.serverTimestamp()
     }).then(function(docRef) {
         return docRef.id;
@@ -47,7 +48,7 @@ function getStudentAssignments(studentUid) {
     });
 }
 
-function submitAssignment(assignmentId, studentUid, lineRecordings, lineScores, lineDetails, lineResponses, lineTexts) {
+function submitAssignment(assignmentId, studentUid, lineRecordings, lineScores, lineDetails, lineResponses, lineTexts, studentScript) {
     var data = {
         assignmentId:    assignmentId,
         studentUid:      studentUid,
@@ -61,6 +62,7 @@ function submitAssignment(assignmentId, studentUid, lineRecordings, lineScores, 
         status:          'submitted',
         submittedAt:     firebase.firestore.FieldValue.serverTimestamp()
     };
+    if (studentScript) data.studentScript = studentScript;
     return db.collection('submissions')
         .where('assignmentId', '==', assignmentId)
         .where('studentUid', '==', studentUid)

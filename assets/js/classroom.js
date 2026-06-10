@@ -296,8 +296,9 @@ function showStudentAssignments(classId, className) {
                 var submission = submissionMap[a.id];
                 var safeSubmissionId = submission ? submission.id.replace(/'/g, "\\'") : '';
                 var buttonLabel = submission ? 'Resubmit' : 'Start';
-                var practiceButton = '<button onclick="startAssignment(\'' + safeId + '\',\'practice\',\'' + safeSubmissionId + '\')" class="w-full min-h-[48px] font-display font-semibold text-base rounded-xl px-4 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 hover:from-amber-400 hover:to-yellow-400 transition-all cursor-pointer border-0"><i class="fas fa-microphone-lines mr-2"></i>' + buttonLabel + (submission ? '' : ' Practice') + '</button>';
-                var presentationButton = '<button onclick="startAssignment(\'' + safeId + '\',\'presentation\',\'' + safeSubmissionId + '\')" class="w-full min-h-[48px] font-display font-semibold text-base rounded-xl px-4 py-3 bg-sage-500/15 border border-sage-500/25 text-sage-400 hover:bg-sage-500/25 transition-all cursor-pointer"><i class="fas fa-masks-theater mr-2"></i>' + buttonLabel + (submission ? '' : ' Presentation') + '</button>';
+                var actionLabel = a.scriptType === 'student' ? 'Open & Add Script' : buttonLabel;
+                var practiceButton = '<button onclick="startAssignment(\'' + safeId + '\',\'practice\',\'' + safeSubmissionId + '\')" class="w-full min-h-[48px] font-display font-semibold text-base rounded-xl px-4 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 hover:from-amber-400 hover:to-yellow-400 transition-all cursor-pointer border-0"><i class="fas fa-microphone-lines mr-2"></i>' + actionLabel + (a.scriptType !== 'student' && !submission ? ' Practice' : '') + '</button>';
+                var presentationButton = '<button onclick="startAssignment(\'' + safeId + '\',\'presentation\',\'' + safeSubmissionId + '\')" class="w-full min-h-[48px] font-display font-semibold text-base rounded-xl px-4 py-3 bg-sage-500/15 border border-sage-500/25 text-sage-400 hover:bg-sage-500/25 transition-all cursor-pointer"><i class="fas fa-masks-theater mr-2"></i>' + actionLabel + (a.scriptType !== 'student' && !submission ? ' Presentation' : '') + '</button>';
                 var assignmentButtons = a.type === 'practice' ? practiceButton
                     : a.type === 'presentation' ? presentationButton
                     : practiceButton + presentationButton;
@@ -332,6 +333,7 @@ function startAssignment(assignmentId, mode, submissionId) {
         title: assignment.title || 'Assignment',
         script: script,
         type: assignment.type || mode,
+        scriptType: assignment.scriptType || 'teacher',
         roles: roles,
         submissionId: submissionId || ''
     };
@@ -345,14 +347,58 @@ function startAssignment(assignmentId, mode, submissionId) {
     $('assignment-preview').classList.remove('hidden');
     $('assignment-session-mount').classList.add('hidden');
     $('assignment-result').classList.add('hidden');
-    renderAssignmentRolePicker();
+    renderAssignmentScriptStep();
     switchScreen('assignment');
+}
+
+function renderAssignmentScriptStep() {
+    var readonly = $('assignment-script-readonly');
+    var existing = $('assignment-student-script-step');
+    if (existing) existing.parentNode.removeChild(existing);
+    if (!_activeAssignment || _activeAssignment.scriptType !== 'student') {
+        if (readonly) readonly.classList.remove('hidden');
+        renderAssignmentRolePicker();
+        return;
+    }
+    if (readonly) readonly.classList.add('hidden');
+    var step = document.createElement('div');
+    step.id = 'assignment-student-script-step';
+    step.className = 'space-y-3';
+    step.innerHTML = '<textarea id="assignment-student-script-input" rows="9" placeholder="Paste your script here..." class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-base text-sf-50 placeholder-sf-300 outline-none resize-y"></textarea>'
+        + '<button onclick="parseStudentAssignmentScript()" class="w-full min-h-[48px] rounded-xl bg-copper-500/15 border border-copper-500/25 text-copper-400 font-display font-semibold"><i class="fas fa-wand-magic-sparkles mr-2"></i>Parse Script</button>'
+        + '<p id="assignment-student-script-status" class="text-sm text-sf-300">Paste your script, then parse it to detect roles.</p>';
+    readonly.parentNode.insertBefore(step, readonly.nextSibling);
+    renderAssignmentRolePicker();
+}
+
+function parseStudentAssignmentScript() {
+    var input = $('assignment-student-script-input');
+    var status = $('assignment-student-script-status');
+    var script = input ? input.value.trim() : '';
+    var lines = parseScript(script);
+    if (!lines.length) {
+        if (status) status.textContent = 'No dialogue roles found. Use [Role]: dialogue formatting.';
+        _activeAssignment.script = '';
+        _activeAssignment.roles = [];
+        S.userRoles = [];
+        renderAssignmentRolePicker();
+        return;
+    }
+    var roles = [];
+    lines.forEach(function(line) { if (roles.indexOf(line.role) === -1) roles.push(line.role); });
+    _activeAssignment.script = script;
+    _activeAssignment.roles = roles;
+    S.userRoles = S.userRoles.filter(function(role) { return roles.indexOf(role) !== -1; });
+    if (status) status.textContent = lines.length + ' lines detected. Choose at least one role below.';
+    renderAssignmentRolePicker();
 }
 
 function renderAssignmentRolePicker() {
     var mount = $('assignment-role-pills');
     var startBtn = $('assignment-start-btn');
     if (!mount || !startBtn || !_activeAssignment) return;
+    var waitingForStudentScript = _activeAssignment.scriptType === 'student' && !_activeAssignment.script;
+    if (mount.parentNode) mount.parentNode.classList.toggle('hidden', waitingForStudentScript);
     mount.innerHTML = '';
     _activeAssignment.roles.forEach(function(role) {
         var selected = S.userRoles.indexOf(role) !== -1;
@@ -368,7 +414,8 @@ function renderAssignmentRolePicker() {
         });
         mount.appendChild(button);
     });
-    startBtn.disabled = !S.userRoles.length;
+    startBtn.disabled = !S.userRoles.length || waitingForStudentScript;
+    startBtn.classList.toggle('hidden', _activeAssignment.scriptType === 'student' && (!S.userRoles.length || waitingForStudentScript));
     var help = $('assignment-role-help');
     if (help) help.textContent = _activeAssignment.roles.length ? 'Choose at least one role to begin.' : 'No roles were found in this script.';
 }
@@ -473,7 +520,8 @@ function submitActiveAssignment() {
             Object.assign({}, S.lineScores || {}),
             Object.assign({}, S.lineDetails || {}),
             Object.assign({}, S.userResponses || {}),
-            lineTexts
+            lineTexts,
+            _activeAssignment.scriptType === 'student' ? _activeAssignment.script : ''
         );
     }).then(function() {
         toast('Assignment submitted.', 'success');
@@ -682,6 +730,10 @@ function openSubmissionDetail(submission, studentName) {
         + '<div class="flex items-start justify-between gap-4 flex-wrap mb-6"><div><h2 class="font-display font-bold text-2xl text-sf-50">' + esc(studentName) + '</h2>'
         + '<p class="text-base text-sf-300 mt-1">' + esc(_clsCtx.assignmentTitle) + ' · Overall AI Score: <span class="text-copper-400 font-semibold">' + submissionAverage(submission.lineScores) + '</span></p></div>'
         + '<span class="px-3 py-1.5 rounded-lg border text-sm font-semibold ' + statusClass + '">' + esc(submission.status || 'submitted') + '</span></div>';
+    if (submission.studentScript) {
+        html += '<details class="mini-card mb-6"><summary class="font-display font-semibold text-lg text-sf-50 cursor-pointer">Student Script</summary>'
+            + '<pre class="whitespace-pre-wrap text-sm leading-relaxed text-sf-100 mt-4 bg-white/3 border border-white/8 rounded-xl p-4">' + esc(submission.studentScript) + '</pre></details>';
+    }
     var indexes = Object.keys(submission.lineScores || {}).sort(function(a, b) { return Number(a) - Number(b); });
     if (!indexes.length) html += '<div class="mini-card text-sf-300">No line details available.</div>';
     html += indexes.map(function(index) {
@@ -723,10 +775,16 @@ function openCreateAssignmentModal() {
         + '<label style="display:flex;align-items:center;gap:8px;padding:12px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);cursor:pointer;"><input type="radio" name="new-assign-type" value="practice" required checked> Practice</label>'
         + '<label style="display:flex;align-items:center;gap:8px;padding:12px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);cursor:pointer;"><input type="radio" name="new-assign-type" value="presentation" required> Presentation</label>'
         + '</div></fieldset>'
+        + '<fieldset><legend style="display:block;font-size:13px;color:#A8A6A1;margin-bottom:8px;">Script Source *</legend>'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
+        + '<label style="display:flex;align-items:center;gap:8px;padding:12px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);cursor:pointer;"><input type="radio" name="new-assign-script-type" value="teacher" onchange="toggleNewAssignmentScriptType()" checked> I will provide the script</label>'
+        + '<label style="display:flex;align-items:center;gap:8px;padding:12px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);cursor:pointer;"><input type="radio" name="new-assign-script-type" value="student" onchange="toggleNewAssignmentScriptType()"> Student provides their own script</label>'
+        + '</div></fieldset>'
         + '<div><label style="display:block;font-size:13px;color:#A8A6A1;margin-bottom:6px;">Instructions</label>'
         + '<textarea id="new-assign-instructions" rows="2" placeholder="Notes for students..." class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none" style="width:100%;box-sizing:border-box;resize:vertical;"></textarea></div>'
-        + '<div><label style="display:block;font-size:13px;color:#A8A6A1;margin-bottom:6px;">Script *</label>'
+        + '<div id="new-assign-script-wrap"><label style="display:block;font-size:13px;color:#A8A6A1;margin-bottom:6px;">Script *</label>'
         + '<textarea id="new-assign-script" rows="5" placeholder="Paste the dialogue script here..." class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none" style="width:100%;box-sizing:border-box;resize:vertical;"></textarea></div>'
+        + '<p id="new-assign-student-script-note" style="display:none;font-size:13px;color:#A8A6A1;padding:12px;border-radius:12px;background:rgba(255,255,255,.04);">Students will paste their own script when they open the assignment.</p>'
         + '<div><label style="display:block;font-size:13px;color:#A8A6A1;margin-bottom:6px;">Due Date and Time *</label>'
         + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><input id="new-assign-due-date" type="date" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 outline-none">'
         + '<input id="new-assign-due-time" type="time" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 outline-none"></div></div>'
@@ -738,6 +796,15 @@ function openCreateAssignmentModal() {
     document.body.appendChild(overlay);
     requestAnimationFrame(function() { overlay.classList.add('open'); });
     setTimeout(function() { var el = document.getElementById('new-assign-title'); if (el) el.focus(); }, 80);
+}
+
+function toggleNewAssignmentScriptType() {
+    var selected = document.querySelector('input[name="new-assign-script-type"]:checked');
+    var studentProvides = selected && selected.value === 'student';
+    var wrap = $('new-assign-script-wrap');
+    var note = $('new-assign-student-script-note');
+    if (wrap) wrap.style.display = studentProvides ? 'none' : 'block';
+    if (note) note.style.display = studentProvides ? 'block' : 'none';
 }
 
 function closeAssignmentModal() {
@@ -854,14 +921,17 @@ function submitCreateAssignment() {
     var due = dueDate && dueTime ? dueDate + 'T' + dueTime : '';
     var typeInput = document.querySelector('input[name="new-assign-type"]:checked');
     var type = typeInput ? typeInput.value : '';
+    var scriptTypeInput = document.querySelector('input[name="new-assign-script-type"]:checked');
+    var scriptType = scriptTypeInput ? scriptTypeInput.value : 'teacher';
+    if (scriptType === 'student') script = '';
     var errEl = document.getElementById('new-assign-error');
-    if (!title || !script || !due || !type) {
-        if (errEl) { errEl.textContent = 'Title, assignment type, script, and due date are required.'; errEl.style.display = 'block'; }
+    if (!title || (scriptType === 'teacher' && !script) || !due || !type) {
+        if (errEl) { errEl.textContent = 'Title, assignment type, due date, and teacher-provided scripts are required.'; errEl.style.display = 'block'; }
         return;
     }
     var saveBtn = document.getElementById('new-assign-save-btn');
     if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
-    createAssignment(_clsCtx.classId, S.authUser.uid, title, instructions, script, due, type)
+    createAssignment(_clsCtx.classId, S.authUser.uid, title, instructions, script, due, type, scriptType)
         .then(function() {
             closeAssignmentModal();
             toast('Assignment created.', 'success');
