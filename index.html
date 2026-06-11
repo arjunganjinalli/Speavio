@@ -123,7 +123,7 @@
     <!-- SETUP -->
     <div id="setup-screen" class="screen min-h-screen">
         <div class="w-full">
-            <div class="setup-main-card glass rounded-none p-8 sm:p-10 space-y-8">
+            <div class="setup-main-card glass rounded-2xl p-8 sm:p-10 space-y-8">
                 <section id="panel-home" class="setup-panel active" role="tabpanel">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div class="mini-card">
@@ -483,7 +483,7 @@
             </div>
         </header>
         <main class="flex-1 w-full px-4 py-6 sm:py-8">
-            <div id="class-page-content" class="w-full max-w-none"></div>
+            <div id="class-page-content" class="w-full max-w-[1200px] mx-auto"></div>
         </main>
     </div>
 
@@ -500,7 +500,7 @@
             </div>
         </header>
         <main class="flex-1 w-full flex flex-col min-h-0">
-            <div id="assignment-preview" class="w-full max-w-none px-4 py-8">
+            <div id="assignment-preview" class="w-full max-w-[900px] mx-auto">
                 <div class="glass rounded-2xl p-8 sm:p-10">
                     <h2 class="font-display font-bold text-2xl text-sf-50 mb-3">Script</h2>
                     <pre id="assignment-script-readonly" class="whitespace-pre-wrap text-lg leading-relaxed text-sf-100 bg-white/3 border border-white/8 rounded-xl p-6 max-h-none overflow-visible"></pre>
@@ -669,8 +669,8 @@
                 </div>
             </div>
         </header>
-        <main class="flex-1 overflow-y-auto px-4 py-6">
-            <div class="max-w-4xl mx-auto space-y-6">
+        <main class="flex-1 overflow-y-auto">
+            <div class="report-content max-w-[960px] mx-auto space-y-6">
                 <div id="report-insights" class="space-y-3"></div>
                 <div><h3 class="font-display font-semibold text-lg text-sf-50 mb-4">Line-by-Line Breakdown</h3><div id="report-lines" class="space-y-2"></div></div>
                 <div class="flex flex-wrap gap-3 pt-4 border-t border-white/5 no-print">
