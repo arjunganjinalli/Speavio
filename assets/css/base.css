@@ -14,7 +14,7 @@
         .dot-grid{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:radial-gradient(var(--sf-dot) 1px,transparent 1px);background-size:32px 32px}
         .screen{display:none;opacity:0;transition:opacity .4s ease;position:relative;z-index:1;padding-top:72px}
         .screen.active{display:flex;opacity:1}
-        #setup-screen{align-items:flex-start;padding-top:88px}
+        #setup-screen{align-items:flex-start;padding:72px 16px 0}
         .glass{background:rgba(var(--sf-glass),.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(var(--sf-glass-border),.18)}
         .gradient-text{background:linear-gradient(135deg,#E8B88A 0%,#C8956C 40%,#5BB882 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
         .mode-card{cursor:pointer;transition:all .3s ease;position:relative;overflow:hidden}
@@ -419,3 +419,61 @@
             .landing-feature-card{min-height:130px}
             .landing-shell{padding-top:32px}
         }
+
+        /* Full-size workspace layouts */
+        #setup-screen>div{width:100%;max-width:none}
+        #setup-screen .setup-main-card{width:100%;min-height:calc(100vh - 72px);border-radius:0}
+        #setup-screen .setup-panel h2{font-size:1.5rem;line-height:2rem}
+        #setup-screen .setup-panel h3{font-size:1.25rem;line-height:1.75rem}
+        #setup-screen .setup-panel .text-sm{font-size:1rem;line-height:1.5rem}
+        #setup-screen .setup-panel button{min-height:48px;font-size:14px}
+        #setup-screen .mini-card{padding:24px;border-radius:16px}
+        #setup-screen .setup-panel>.mini-card{margin-top:1.5rem;margin-bottom:1.5rem}
+        #setup-screen .setup-panel .grid.gap-4{gap:1.5rem}
+        #setup-screen .lb-row{padding:14px 16px;gap:14px}
+        #setup-screen .lb-name,#setup-screen .lb-score{font-size:14px}
+        #setup-screen .lb-meta{font-size:12px}
+
+        /* Settings sizing */
+        #panel-settings .mini-card{padding:0}
+        #panel-settings .mini-card>button{padding:24px}
+        #panel-settings .collapse-content>div{padding:24px}
+        #panel-settings label{font-size:1rem!important;line-height:1.5rem}
+        #panel-settings .input-glow{padding-top:1rem!important;padding-bottom:1rem!important;font-size:1rem}
+
+        /* Class workspace sizing, including dynamically rendered cards */
+        #class-screen main{padding-left:16px;padding-right:16px}
+        #class-page-content{width:100%;max-width:none;font-size:1.0625rem;line-height:1.65}
+        #class-screen header .text-sm{font-size:1rem;line-height:1.5rem}
+        #class-screen header .text-base{font-size:1.125rem;line-height:1.75rem}
+        #class-page-title{font-size:2rem;line-height:2.5rem}
+        #class-page-content .mini-card{padding:24px;border-radius:16px}
+        #class-page-content .text-xs{font-size:.875rem;line-height:1.25rem}
+        #class-page-content .text-sm{font-size:1rem;line-height:1.5rem}
+        #class-page-content .text-base{font-size:1.125rem;line-height:1.75rem}
+        #class-page-content .text-xl{font-size:1.5rem;line-height:2rem}
+        #class-page-content .text-2xl{font-size:1.875rem;line-height:2.25rem}
+        #class-page-content button{min-height:48px;font-size:14px}
+        #class-page-content .p-4,#class-page-content .p-5{padding:1.5rem}
+        #class-page-content .gap-4{gap:1.5rem}
+        #class-page-content .space-y-4>:not([hidden])~:not([hidden]){margin-top:1.5rem}
+
+        /* Assignment workspace sizing */
+        #assignment-preview{width:100%;max-width:none}
+        #assignment-script-readonly{max-height:none;overflow:visible}
+        #assignment-role-pills .role-pill{padding:12px 24px;font-size:15px}
+        #assignment-screen header .text-sm{font-size:1rem;line-height:1.5rem}
+        #assignment-page-title{font-size:1.875rem;line-height:2.25rem}
+        #assignment-screen .mini-card{padding:24px;border-radius:16px}
+        #assignment-screen .text-sm{font-size:1rem;line-height:1.5rem}
+        #assignment-screen .text-base{font-size:1.125rem;line-height:1.75rem}
+        #assignment-screen button{min-height:48px;font-size:14px}
+        #assignment-screen .p-4,#assignment-screen .p-5{padding:1.5rem}
+        #assignment-screen .gap-4{gap:1.5rem}
+
+        /* Session workspace sizing */
+        #session-screen .bubble{padding:20px}
+        #session-screen .bubble .text-sm{font-size:1rem;line-height:1.6}
+        #session-screen #interaction-area{min-height:160px}
+        #assignment-screen .bubble{padding:20px}
+        #assignment-screen .bubble .text-sm{font-size:1rem;line-height:1.6}

@@ -121,11 +121,11 @@
     </section>
 
     <!-- SETUP -->
-    <div id="setup-screen" class="screen min-h-screen items-center justify-center p-4">
-        <div class="w-full max-w-6xl">
-            <div class="glass rounded-2xl p-5 sm:p-7 space-y-6">
+    <div id="setup-screen" class="screen min-h-screen">
+        <div class="w-full">
+            <div class="setup-main-card glass rounded-none p-8 sm:p-10 space-y-8">
                 <section id="panel-home" class="setup-panel active" role="tabpanel">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div class="mini-card">
                             <h3 class="text-sf-50 font-display font-semibold mb-1" data-i18n="homeQuickTitle">Get Around Quickly</h3>
                             <p class="text-sm text-sf-300" data-i18n="homeQuickBody">Use the header tabs like GitHub navigation. Start in Practice or Presentation, then tune AI keys in Settings.</p>
@@ -152,15 +152,15 @@
                         <h3 class="text-sf-50 font-display font-semibold mb-1">Progress Snapshot</h3>
                         <div class="grid grid-cols-3 gap-3 mt-3">
                             <div class="bg-white/3 rounded-lg p-2 text-center">
-                                <div id="home-streak" class="text-lg font-display font-bold text-sage-400">0</div>
+                                <div id="home-streak" class="text-3xl font-display font-bold text-sage-400">0</div>
                                 <div class="text-[10px] text-sf-300">Day Streak</div>
                             </div>
                             <div class="bg-white/3 rounded-lg p-2 text-center">
-                                <div id="home-last-score" class="text-lg font-display font-bold text-copper-400">0</div>
+                                <div id="home-last-score" class="text-3xl font-display font-bold text-copper-400">0</div>
                                 <div class="text-[10px] text-sf-300">Last Score</div>
                             </div>
                             <div class="bg-white/3 rounded-lg p-2 text-center">
-                                <div id="home-history-count" class="text-lg font-display font-bold text-sf-100">0</div>
+                                <div id="home-history-count" class="text-3xl font-display font-bold text-sf-100">0</div>
                                 <div class="text-[10px] text-sf-300">Sessions</div>
                             </div>
                         </div>
@@ -170,7 +170,7 @@
                             <h3 class="text-sf-50 font-display font-semibold">Leaderboard</h3>
                             <span class="text-[10px] text-sf-300">Per-script average</span>
                         </div>
-                        <div id="home-leaderboard" class="space-y-2 text-xs">
+                        <div id="home-leaderboard" class="space-y-3 text-sm">
                             <div class="text-sf-300">Complete a session to populate leaderboard rankings.</div>
                         </div>
                     </div>
@@ -179,7 +179,7 @@
                 <section id="panel-mode" class="setup-panel" role="tabpanel">
                     <div class="flex items-center justify-between gap-3 mb-4">
                         <div>
-                            <h2 id="mode-title" class="text-xl font-display font-semibold text-sf-50">Practice Setup</h2>
+                            <h2 id="mode-title" class="text-2xl font-display font-semibold text-sf-50">Practice Setup</h2>
                             <p id="mode-desc" class="text-sm text-sf-300 mt-0.5">Practice with line-by-line feedback and smooth repetition.</p>
                         </div>
                         <span id="mode-mini-badge" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-copper-500/15 text-copper-400">Practice</span>
@@ -229,7 +229,7 @@
                                     <button id="copy-script-btn" class="action-btn"><i class="fas fa-copy"></i><span>Copy Script Text</span></button>
                                 </div>
                             </div>
-                            <textarea id="script-input" rows="10" placeholder="Paste dialogue script...&#10;Format: [Role]: dialogue line&#10;&#10;Or paste any text and click Auto-Detect." class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all resize-none leading-relaxed font-body" aria-label="Script"></textarea>
+                            <textarea id="script-input" rows="14" placeholder="Paste dialogue script...&#10;Format: [Role]: dialogue line&#10;&#10;Or paste any text and click Auto-Detect." class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all resize-none leading-relaxed font-body" aria-label="Script"></textarea>
                             <div class="mt-2 flex flex-col gap-1.5">
                                 <div id="parse-status" class="text-xs text-sf-300 min-h-[1.25rem] leading-snug"></div>
                                 <div id="setup-difficulty-badge" class="inline-flex items-center gap-1.5 self-start px-2.5 py-1 rounded-md bg-copper-500/10 border border-copper-500/20 text-[11px] text-copper-300 font-semibold">
@@ -258,8 +258,8 @@
 
                 <section id="panel-settings" class="setup-panel" role="tabpanel">
                     <div class="mini-card mb-4 p-0 overflow-hidden">
-                        <button onclick="toggleCollapse('profile-section')" class="w-full min-h-[72px] px-5 py-4 flex items-center justify-between gap-4 text-left hover:bg-white/5 transition-colors">
-                            <span class="flex items-center gap-4">
+                        <button onclick="toggleCollapse('profile-section')" class="w-full min-h-[72px] px-5 py-4 flex items-center justify-between gap-6 text-left hover:bg-white/5 transition-colors">
+                            <span class="flex items-center gap-6">
                                 <span class="w-12 h-12 rounded-xl bg-sage-500/15 border border-sage-500/25 flex items-center justify-center flex-shrink-0"><i class="fas fa-user-circle text-sage-400 text-2xl"></i></span>
                                 <span class="font-display font-bold text-base text-sf-50">Profile</span>
                             </span>
@@ -293,8 +293,8 @@
                         </div>
                     </div>
                     <div class="mini-card mb-4 p-0 overflow-hidden">
-                        <button onclick="toggleCollapse('audio-devices-section')" class="w-full min-h-[72px] px-5 py-4 flex items-center justify-between gap-4 text-left hover:bg-white/5 transition-colors">
-                            <span class="flex items-center gap-4">
+                        <button onclick="toggleCollapse('audio-devices-section')" class="w-full min-h-[72px] px-5 py-4 flex items-center justify-between gap-6 text-left hover:bg-white/5 transition-colors">
+                            <span class="flex items-center gap-6">
                                 <span class="w-12 h-12 rounded-xl bg-copper-500/15 border border-copper-500/25 flex items-center justify-center flex-shrink-0"><i class="fas fa-headphones text-copper-400 text-xl"></i></span>
                                 <span class="font-display font-bold text-base text-sf-50">Audio Devices</span>
                             </span>
@@ -319,7 +319,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-sf-200 mb-2"><i class="fas fa-language text-sage-400 mr-1.5"></i><span data-i18n="systemLanguage">System Language</span></label>
                             <select id="system-language-select" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 outline-none transition-all appearance-none cursor-pointer" aria-label="System Language">
@@ -344,7 +344,7 @@
                         </button>
                         <div id="ai-api-section" class="collapse-content">
                             <div class="pt-3 space-y-4">
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                     <div>
                                         <label class="block text-sm font-medium text-sf-200 mb-2"><i class="fas fa-key text-copper-500 mr-1.5"></i>API Key (Optional)</label>
                                         <div class="relative">
@@ -483,7 +483,7 @@
             </div>
         </header>
         <main class="flex-1 w-full px-4 py-6 sm:py-8">
-            <div id="class-page-content" class="w-full max-w-5xl mx-auto"></div>
+            <div id="class-page-content" class="w-full max-w-none"></div>
         </main>
     </div>
 
@@ -500,14 +500,14 @@
             </div>
         </header>
         <main class="flex-1 w-full flex flex-col min-h-0">
-            <div id="assignment-preview" class="max-w-5xl mx-auto px-4 py-8">
-                <div class="glass rounded-2xl p-5 sm:p-7">
-                    <h2 class="font-display font-bold text-xl text-sf-50 mb-3">Script</h2>
-                    <pre id="assignment-script-readonly" class="whitespace-pre-wrap text-base leading-relaxed text-sf-100 bg-white/3 border border-white/8 rounded-xl p-4 max-h-[55vh] overflow-y-auto"></pre>
+            <div id="assignment-preview" class="w-full max-w-none px-4 py-8">
+                <div class="glass rounded-2xl p-8 sm:p-10">
+                    <h2 class="font-display font-bold text-2xl text-sf-50 mb-3">Script</h2>
+                    <pre id="assignment-script-readonly" class="whitespace-pre-wrap text-lg leading-relaxed text-sf-100 bg-white/3 border border-white/8 rounded-xl p-6 max-h-none overflow-visible"></pre>
                     <div class="mt-5">
-                        <h3 class="font-display font-semibold text-lg text-sf-50 mb-2">Choose your role(s)</h3>
+                        <h3 class="font-display font-semibold text-xl text-sf-50 mb-2">Choose your role(s)</h3>
                         <div id="assignment-role-pills" class="flex flex-wrap gap-2"></div>
-                        <p id="assignment-role-help" class="text-sm text-sf-300 mt-2">Choose at least one role to begin.</p>
+                        <p id="assignment-role-help" class="text-base text-sf-300 mt-2">Choose at least one role to begin.</p>
                     </div>
                     <button id="assignment-start-btn" disabled onclick="launchAssignmentSession()" class="w-full min-h-[52px] mt-5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-sf-900 font-display font-bold text-base disabled:opacity-40 disabled:cursor-not-allowed"><i class="fas fa-play mr-2"></i>Start Assignment</button>
                     <button disabled class="w-full min-h-[48px] mt-3 rounded-xl bg-white/5 border border-white/10 text-sf-300 font-display font-semibold disabled:opacity-50"><i class="fas fa-paper-plane mr-2"></i>Submit Assignment</button>
@@ -644,7 +644,7 @@
         </header>
         <div id="session-progress-track" class="progress-track flex-shrink-0"><div id="progress-fill" class="progress-fill" style="width:0%"></div></div>
         <div id="dialogue-context" class="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-3" role="log" aria-label="Dialogue"></div>
-        <div id="interaction-area" class="flex-shrink-0 glass border-t border-white/5 p-4 min-h-[120px]"></div>
+        <div id="interaction-area" class="flex-shrink-0 glass border-t border-white/5 p-5 min-h-[160px]"></div>
     </div>
 
     <!-- REPORT -->
