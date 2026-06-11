@@ -277,7 +277,13 @@ document.addEventListener('DOMContentLoaded',function(){
     if($('npc-slow-replay'))$('npc-slow-replay').onchange=function(e){S.npcSlowReplay=!!e.target.checked};
 
     document.querySelectorAll('.setup-tab-btn').forEach(function(btn){
-        btn.onclick=function(){showSetupTab(btn.dataset.tab)};
+        btn.onclick=function(){
+            if(btn.id==='tab-home'&&!S.isAuthenticated){
+                switchScreen('login');
+                return;
+            }
+            showSetupTab(btn.dataset.tab);
+        };
     });
 
     $('api-key').value=S.apiKey;
