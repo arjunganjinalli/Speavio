@@ -64,14 +64,16 @@ function updateStartBtn(){
    SESSION START
 ═══════════════════════════════════════════════════════════════ */
 function startSession(){
-    if(!S.isAuthenticated){
-        toast('Please sign in first.','error');
-        switchScreen('login');
-        return;
-    }
     var ok=false;
     S.lines.forEach(function(l){if(isUserRole(l.role))ok=true});
     if(!ok){toast('Selected role(s) have no lines!','error');return}
+    if(!S.isAuthenticated){
+        if(hasUsedFreeTrial()){
+            showTrialWall();
+            return;
+        }
+        consumeFreeTrial();
+    }
 
     var key=$('el-key')?$('el-key').value.trim():S.elevenlabsKey;
     S.elevenlabsKey=key;

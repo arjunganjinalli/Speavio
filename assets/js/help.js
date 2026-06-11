@@ -13,7 +13,7 @@ function openHelp(){
             +'<ul>'
             +'<li>API key is optional and configured in <strong>Settings</strong></li>'
             +'<li>Choose the <strong>language</strong> of your script</li>'
-            +'<li>Use the top navigation: <strong>Home, Practice, Presentation, Settings</strong></li>'
+            +'<li>Use the top navigation: <strong>Home, Classes, Practice, Presentation, Settings</strong></li>'
             +'<li>Paste your script in the text box or click <strong>Example</strong></li>'
             +'<li>Use <strong>Auto-Detect</strong> to extract dialogue from messy text</li>'
             +'<li>Select <strong>which role</strong> you want to play</li>'

@@ -139,6 +139,7 @@ var S={
     recognition:null,
     mediaRecorder:null,audioChunks:[],audioStream:null,
     ttsAudio:null,ttsProvider:'browser',elevenlabsKey:'',elevenlabsVoiceId:'21m00Tcm4TlvDq8ikWAM',clonedVoiceId:'',
+    preferredMicId:'',preferredSpeakerId:'',
     lineScores:{},lineDetails:{},userResponses:{},audioClips:{},attemptCount:{},practiceScoreHistory:{},
     audioContext:null,analyser:null,silenceInterval:null,silenceFrames:0,recordStartTime:0,
     /* Silence detection: 2 seconds of RMS below threshold = auto-stop */

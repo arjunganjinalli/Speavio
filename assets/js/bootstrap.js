@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded',function(){
     var authPendingTimer=null;
     var authDebugEnabled=/^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname);
     var onboardingSteps=[
-        {title:'Welcome to Speavio',body:'Use the top tabs to switch between Practice, Presentation, and Settings.'},
+        {title:'Welcome to Speavio',body:'Use the top tabs to switch between Home, Classes, Practice, Presentation, and Settings.'},
         {title:'Start Fast',body:'Paste a script, pick your role, and start. Choose Practice for guided coaching or Presentation for full delivery mode.'},
         {title:'Practice Controls',body:'In session, press Space to start/stop recording and Enter to submit your line.'},
         {title:'Reports and Progress',body:'After each session, review line scores, bookmark hard lines, share scorecards, and export PDF/JSON.'}
@@ -108,10 +108,9 @@ document.addEventListener('DOMContentLoaded',function(){
         var name=(user&&(user.displayName||user.email))?String(user.displayName||user.email):'Signed in';
         var photo=user&&user.photoURL?String(user.photoURL):'';
 
-        if($('setup-user-name'))$('setup-user-name').textContent=name;
-        if($('session-user-name'))$('session-user-name').textContent=name;
+        if($('navbar-user-name'))$('navbar-user-name').textContent=name;
 
-        [['setup-user-photo',$('setup-user-photo')],['session-user-photo',$('session-user-photo')]].forEach(function(pair){
+        [['navbar-user-photo',$('navbar-user-photo')]].forEach(function(pair){
             var img=pair[1];
             if(!img)return;
             if(photo){img.src=photo;img.classList.remove('hidden')}
@@ -129,15 +128,16 @@ document.addEventListener('DOMContentLoaded',function(){
         closeOnboarding(false);
         if($('assist-panel')){$('assist-panel').classList.remove('open');$('assist-panel').classList.add('hidden')}
         if($('assist-fab'))$('assist-fab').classList.add('hidden');
+        if($('navbar-signin-btn'))$('navbar-signin-btn').classList.remove('hidden');
+        if($('navbar-auth-chip'))$('navbar-auth-chip').classList.add('hidden');
         switchScreen('login');
     }
 
     function applyRoleTabVisibility(){
-        var isTeacher=S.userProfile&&S.userProfile.role==='teacher';
         var practiceTab=$('tab-practice');
         var presentationTab=$('tab-presentation');
-        if(practiceTab)practiceTab.classList.toggle('hidden',isTeacher);
-        if(presentationTab)presentationTab.classList.toggle('hidden',isTeacher);
+        if(practiceTab)practiceTab.classList.remove('hidden');
+        if(presentationTab)presentationTab.classList.remove('hidden');
     }
 
     function runAuthenticatedStartup(){
@@ -180,6 +180,10 @@ document.addEventListener('DOMContentLoaded',function(){
             photoURL:user.photoURL||''
         };
         renderAuthIdentity(S.authUser);
+        closeAppModal('auth-modal');
+        closeAppModal('trial-wall-modal');
+        if($('navbar-signin-btn'))$('navbar-signin-btn').classList.add('hidden');
+        if($('navbar-auth-chip'))$('navbar-auth-chip').classList.remove('hidden');
         setAuthStatus('');
         setAuthDebug('Auth state: signed in '+(S.authUser.uid?('('+S.authUser.uid.slice(0,8)+'...)'):'(no uid)'));
         if($('assist-panel'))$('assist-panel').classList.remove('hidden');
@@ -328,8 +332,33 @@ document.addEventListener('DOMContentLoaded',function(){
     if($('onboarding-prev-btn'))$('onboarding-prev-btn').addEventListener('click',goOnboardingPrev);
     if($('onboarding-next-btn'))$('onboarding-next-btn').addEventListener('click',goOnboardingNext);
     if($('onboarding-overlay'))$('onboarding-overlay').onclick=function(e){if(e.target===this)closeOnboarding(true)};
-    if($('setup-signout-btn'))$('setup-signout-btn').onclick=signOutUser;
-    if($('session-signout-btn'))$('session-signout-btn').onclick=signOutUser;
+    if($('navbar-signout-btn'))$('navbar-signout-btn').onclick=signOutUser;
+    if($('navbar-signin-btn'))$('navbar-signin-btn').onclick=function(){openSignInModal('signin')};
+    if($('navbar-brand'))$('navbar-brand').onclick=function(){
+        if(S.isAuthenticated){
+            showSetupTab('home');
+            switchScreen('setup');
+        }else{
+            switchScreen('login');
+            requestAnimationFrame(function(){
+                var landing=$('landing-content');
+                if(landing)landing.scrollIntoView({behavior:'smooth',block:'start'});
+            });
+        }
+    };
+    document.querySelectorAll('[data-open-auth]').forEach(function(btn){
+        btn.onclick=function(){openSignInModal(btn.dataset.openAuth||'signin')};
+    });
+    document.querySelectorAll('[data-guest-tab]').forEach(function(btn){
+        btn.onclick=function(){enterGuestMode(btn.dataset.guestTab)};
+    });
+    if($('auth-modal-close'))$('auth-modal-close').onclick=function(){closeAppModal('auth-modal')};
+    if($('trial-wall-close'))$('trial-wall-close').onclick=function(){closeAppModal('trial-wall-modal')};
+    if($('trial-create-btn'))$('trial-create-btn').onclick=function(){openSignInModal('create')};
+    if($('trial-signin-btn'))$('trial-signin-btn').onclick=function(){openSignInModal('signin')};
+    ['auth-modal','trial-wall-modal'].forEach(function(id){
+        if($(id))$(id).onclick=function(e){if(e.target===this)closeAppModal(id)};
+    });
 
     $('start-btn').onclick=startSession;
     $('help-btn').onclick=openHelp;

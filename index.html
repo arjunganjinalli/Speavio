@@ -21,14 +21,62 @@
     <div class="dot-grid"></div>
     <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-3" aria-live="polite"></div>
 
-    <!-- LOGIN -->
-    <div id="login-screen" class="screen active min-h-screen items-center justify-center p-4">
-        <div class="auth-card w-full max-w-md glass rounded-2xl p-6 sm:p-8 text-center">
-            <div class="inline-flex items-center gap-3 mb-4">
-                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-copper-500 to-sage-500 flex items-center justify-center shadow-lg shadow-copper-500/20"><i class="fas fa-comments text-sf-900 text-lg"></i></div>
-                <h1 class="text-3xl sm:text-4xl font-bold gradient-text tracking-tight">Speavio</h1>
+    <nav id="app-navbar" class="app-navbar no-print" aria-label="Main navigation">
+        <button id="navbar-brand" class="navbar-brand" aria-label="Speavio home">
+            <span class="navbar-logo"><i class="fas fa-comments"></i></span>
+            <span>Speavio</span>
+        </button>
+        <div class="navbar-actions">
+            <button id="navbar-signin-btn" class="navbar-signin-btn">Sign In</button>
+            <div id="navbar-auth-chip" class="navbar-auth-chip hidden">
+                <img id="navbar-user-photo" src="" alt="User photo" class="navbar-user-photo hidden">
+                <span id="navbar-user-name">Signed in</span>
+                <button id="navbar-signout-btn" class="navbar-signout-btn">Sign Out</button>
             </div>
-            <p class="text-sf-200 text-sm sm:text-base mb-5">Sign in to continue your dialogue coaching sessions.</p>
+        </div>
+    </nav>
+
+    <!-- LANDING / SIGNED OUT -->
+    <div id="login-screen" class="screen active min-h-screen items-center justify-center p-4">
+        <main id="landing-content" class="landing-shell">
+            <section class="landing-hero">
+                <h1 class="landing-title gradient-text">Speavio</h1>
+                <p class="landing-tagline">AI-powered speech and dialogue practice</p>
+                <p class="landing-copy">Rehearse scripts, strengthen delivery, and get clear feedback as you speak. Practice independently or connect learning through your classroom.</p>
+            </section>
+            <section class="landing-features" aria-label="Speavio features">
+                <button class="landing-feature-card" data-guest-tab="practice">
+                    <i class="fas fa-microphone-lines"></i>
+                    <strong>Practice Mode</strong>
+                    <span>Build confidence one line at a time.</span>
+                </button>
+                <button class="landing-feature-card" data-guest-tab="presentation">
+                    <i class="fas fa-masks-theater"></i>
+                    <strong>Presentation Mode</strong>
+                    <span>Rehearse a full delivery from memory.</span>
+                </button>
+                <button class="landing-feature-card" data-open-auth="signin">
+                    <i class="fas fa-chalkboard"></i>
+                    <strong>Classroom</strong>
+                    <span>Share assignments and track progress.</span>
+                </button>
+            </section>
+            <div class="landing-cta">
+                <button data-open-auth="create" class="landing-primary-btn">Get Started Free</button>
+                <button data-open-auth="signin" class="landing-signin-link">Sign In</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- SIGN IN MODAL -->
+    <section id="auth-modal" class="app-modal-overlay no-print" aria-hidden="true" aria-labelledby="auth-modal-title">
+        <div class="app-modal auth-card">
+            <button id="auth-modal-close" class="modal-close-btn" aria-label="Close sign in"><i class="fas fa-xmark"></i></button>
+            <div class="text-center mb-5">
+                <div class="navbar-logo mx-auto mb-3"><i class="fas fa-comments"></i></div>
+                <h2 id="auth-modal-title" class="text-2xl font-display font-bold text-sf-50">Sign In to Speavio</h2>
+                <p id="auth-modal-subtitle" class="text-sf-200 text-sm mt-1">Continue your speech practice.</p>
+            </div>
             <div class="space-y-3 text-left mb-4">
                 <input id="email-auth-input" type="text" placeholder="Username or email" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all" aria-label="Username or email" autocomplete="username">
                 <input id="password-auth-input" type="password" placeholder="Password" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all" aria-label="Password" autocomplete="current-password">
@@ -49,37 +97,32 @@
             <p id="auth-status" class="text-xs text-sf-300 mt-4 min-h-[1rem]" aria-live="polite"></p>
             <p id="auth-debug" class="text-[11px] text-sf-300 mt-2 min-h-[1rem] hidden" aria-live="polite"></p>
         </div>
-    </div>
+    </section>
+
+    <!-- TRIAL WALL MODAL -->
+    <section id="trial-wall-modal" class="app-modal-overlay no-print" aria-hidden="true" aria-labelledby="trial-wall-title">
+        <div class="app-modal text-center">
+            <button id="trial-wall-close" class="modal-close-btn" aria-label="Close free trial message"><i class="fas fa-xmark"></i></button>
+            <div class="trial-warning-icon"><i class="fas fa-triangle-exclamation"></i></div>
+            <h2 id="trial-wall-title" class="text-2xl font-display font-bold text-sf-50 mt-4">Free Trial Used</h2>
+            <p class="text-sf-100 text-sm leading-relaxed mt-2">Create a free account to get unlimited practice and presentations. It only takes a minute.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
+                <button id="trial-create-btn" class="modal-primary-btn">Create Account</button>
+                <button id="trial-signin-btn" class="modal-secondary-btn">Sign In</button>
+            </div>
+        </div>
+    </section>
 
     <!-- SETUP -->
     <div id="setup-screen" class="screen min-h-screen items-center justify-center p-4">
         <div class="w-full max-w-6xl">
-            <header class="text-center mb-8">
-                <div class="inline-flex items-center gap-3 mb-4">
-                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-copper-500 to-sage-500 flex items-center justify-center shadow-lg shadow-copper-500/20"><i class="fas fa-comments text-sf-900 text-lg"></i></div>
-                    <h1 class="text-4xl sm:text-5xl font-bold gradient-text tracking-tight">Speavio</h1>
-                </div>
-                <p class="text-sf-200 text-lg font-light">AI-Powered Dialogue Practice Coach</p>
-                <div class="mt-4 flex items-center justify-center gap-2 auth-user-wrap">
-                    <div class="auth-user-chip inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-sf-100 text-xs">
-                        <img id="setup-user-photo" src="" alt="User photo" class="w-6 h-6 rounded-full object-cover hidden">
-                        <span id="setup-user-name" class="font-semibold">Signed in</span>
-                    </div>
-                    <button id="setup-signout-btn" class="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-sf-200 text-xs font-semibold hover:bg-white/10 transition-all">Sign Out</button>
-                </div>
-                <div class="mt-4 flex flex-wrap justify-center gap-2">
-                    <button id="theme-quick-btn" class="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sf-100 text-xs font-semibold hover:bg-white/10 transition-all"><i class="fas fa-circle-half-stroke mr-1"></i>Theme</button>
-                    <button id="replay-onboarding-btn" class="px-3 py-2 rounded-lg bg-copper-500/12 border border-copper-500/20 text-copper-300 text-xs font-semibold hover:bg-copper-500/20 transition-all"><i class="fas fa-compass mr-1"></i>Show Walkthrough</button>
-                </div>
-            </header>
-
             <div class="glass rounded-2xl p-5 sm:p-7 space-y-6">
                 <div class="setup-nav" role="tablist" aria-label="Main navigation">
                     <button id="tab-home" class="setup-tab-btn active" data-tab="home" role="tab" aria-selected="true"><i class="fa-solid fa-house mr-1.5"></i><span data-i18n="navHome">Home</span></button>
+                    <button id="tab-classes" class="setup-tab-btn hidden" data-tab="classes" role="tab" aria-selected="false"><i class="fa-solid fa-chalkboard mr-1.5"></i>Classes</button>
                     <button id="tab-practice" class="setup-tab-btn" data-tab="practice" role="tab" aria-selected="false"><i class="fa-solid fa-microphone-lines mr-1.5"></i><span data-i18n="navPractice">Practice</span></button>
                     <button id="tab-presentation" class="setup-tab-btn" data-tab="presentation" role="tab" aria-selected="false"><i class="fa-solid fa-masks-theater mr-1.5"></i><span data-i18n="navPresentation">Presentation</span></button>
                     <button id="tab-settings" class="setup-tab-btn" data-tab="settings" role="tab" aria-selected="false"><i class="fa-solid fa-gear mr-1.5"></i><span data-i18n="navSettings">Settings</span></button>
-                    <button id="tab-classes" class="setup-tab-btn hidden" data-tab="classes" role="tab" aria-selected="false"><i class="fa-solid fa-chalkboard mr-1.5"></i>Classes</button>
                 </div>
 
                 <section id="panel-home" class="setup-panel active" role="tabpanel">
@@ -597,11 +640,6 @@
             <div class="flex items-center gap-4 flex-shrink-0">
                 <div id="line-dots" class="hidden sm:flex items-center gap-1.5"></div>
                 <span id="progress-text" class="text-sm font-medium text-sf-200 tabular-nums">1 / 1</span>
-                <div class="session-auth inline-flex items-center gap-2 px-2 py-1 rounded-lg bg-white/5 border border-white/10">
-                    <img id="session-user-photo" src="" alt="User photo" class="w-6 h-6 rounded-full object-cover hidden">
-                    <span id="session-user-name" class="text-xs text-sf-100 font-semibold max-w-[110px] truncate">User</span>
-                    <button id="session-signout-btn" class="text-[11px] px-2 py-1 rounded-md bg-white/6 border border-white/10 text-sf-200 hover:bg-white/12 transition-all">Sign Out</button>
-                </div>
                 <button id="help-btn" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors flex-shrink-0" aria-label="Help" title="How does this work?"><i class="fas fa-question text-sm text-sf-200"></i></button>
             </div>
         </header>

@@ -12,7 +12,7 @@
         .blob-3{width:300px;height:300px;background:#C8956C;top:50%;left:35%;animation:bf 18s ease-in-out infinite;animation-delay:-14s;opacity:.05}
         @keyframes bf{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(35px,-25px) scale(1.06)}66%{transform:translate(-25px,20px) scale(.94)}}
         .dot-grid{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:radial-gradient(var(--sf-dot) 1px,transparent 1px);background-size:32px 32px}
-        .screen{display:none;opacity:0;transition:opacity .4s ease;position:relative;z-index:1}
+        .screen{display:none;opacity:0;transition:opacity .4s ease;position:relative;z-index:1;padding-top:64px}
         .screen.active{display:flex;opacity:1}
         .glass{background:rgba(var(--sf-glass),.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(var(--sf-glass-border),.18)}
         .gradient-text{background:linear-gradient(135deg,#E8B88A 0%,#C8956C 40%,#5BB882 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
@@ -119,7 +119,7 @@
         .hint-reveal-btn:hover{background:rgba(200,149,108,.18);border-color:#C8956C}
 
         /* Help modal */
-        .help-overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:16px}
+        .help-overlay{position:fixed;inset:0;z-index:250;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:16px}
         .help-overlay.open{display:flex}
         .help-modal{background:#161619;border:1px solid rgba(200,149,108,.12);border-radius:20px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;padding:28px 28px 24px;box-shadow:0 24px 64px rgba(0,0,0,.5)}
         .help-modal h2{font-size:20px;font-weight:700;color:#E8E6E1;margin-bottom:16px}
@@ -169,14 +169,6 @@
         .auth-user-wrap{max-width:100%}
         .auth-user-chip{max-width:min(78vw,360px)}
         .auth-user-chip span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .session-auth{max-width:240px}
-
-        @media(max-width:640px){
-            .session-auth{padding:2px 4px;gap:6px;max-width:170px}
-            .session-auth #session-user-name{max-width:64px}
-            .session-auth button{padding:2px 6px}
-        }
-
         .onboarding-overlay{position:fixed;inset:0;z-index:130;background:rgba(3,3,5,.72);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;padding:16px}
         .onboarding-overlay.open{display:flex}
         .onboarding-modal{width:min(520px,100%);background:rgba(18,18,21,.98);border:1px solid rgba(200,149,108,.2);border-radius:16px;padding:22px;box-shadow:0 28px 60px rgba(0,0,0,.45)}
@@ -345,3 +337,67 @@
         #onboarding-screen .input-glow{background:var(--sf-surface-1);color:var(--sf-fg);border-color:var(--sf-border-soft)}
         #ob-back-btn{background:var(--sf-surface-1);border:1px solid var(--sf-border-soft);color:var(--sf-fg)}
         #ob-back-btn:hover{background:var(--sf-surface-2);border-color:var(--sf-border-strong)}
+
+        /* Fixed app navbar and signed-out landing */
+        .app-navbar{position:fixed;top:0;left:0;right:0;z-index:200;height:64px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;background:rgba(13,13,15,.94);border-bottom:1px solid rgba(255,255,255,.2);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+        .navbar-brand{display:inline-flex;align-items:center;gap:10px;border:1px solid transparent;background:transparent;color:#E8E6E1;font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;cursor:pointer;padding:6px;border-radius:12px}
+        .navbar-logo{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,#C8956C,#5BB882);color:#0D0D0F;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 22px rgba(200,149,108,.2);flex-shrink:0}
+        .navbar-actions,.navbar-auth-chip{display:flex;align-items:center;gap:10px;min-width:0}
+        .navbar-signin-btn,.navbar-signout-btn{padding:8px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.12);color:#E8E6E1;font-size:12px;font-weight:700;cursor:pointer}
+        .navbar-auth-chip{max-width:min(62vw,360px);padding:5px 6px 5px 9px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:rgba(255,255,255,.1);color:#E8E6E1;font-size:12px;font-weight:700}
+        .navbar-auth-chip>span{max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .navbar-user-photo{width:28px;height:28px;border-radius:50%;object-fit:cover}
+        .landing-shell{width:min(1080px,100%);margin:auto;padding:48px 16px 64px;text-align:center}
+        .landing-hero{max-width:720px;margin:0 auto}
+        .landing-title{font-size:clamp(4rem,12vw,8rem);line-height:.95;font-weight:700;letter-spacing:-.07em;animation:landing-fade .8s ease both}
+        .landing-tagline{margin-top:22px;color:#E8E6E1;font-family:'Space Grotesk',sans-serif;font-size:clamp(1.2rem,3vw,1.7rem);font-weight:600}
+        .landing-copy{max-width:620px;margin:12px auto 0;color:#A8A6A1;font-size:15px;line-height:1.7}
+        .landing-features{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:42px auto 0}
+        .landing-feature-card{min-height:170px;padding:24px 20px;border-radius:18px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#E8E6E1;text-align:left;display:flex;flex-direction:column;align-items:flex-start;gap:10px;cursor:pointer;animation:landing-rise .65s ease both}
+        .landing-feature-card:nth-child(2){animation-delay:.1s}.landing-feature-card:nth-child(3){animation-delay:.2s}
+        .landing-feature-card:hover{transform:translateY(-4px);background:rgba(255,255,255,.14);border-color:rgba(200,149,108,.45)}
+        .landing-feature-card i{font-size:22px;color:#E8B88A}.landing-feature-card strong{font-family:'Space Grotesk',sans-serif;font-size:17px}.landing-feature-card span{color:#A8A6A1;font-size:13px;line-height:1.5}
+        .landing-cta{margin-top:32px;display:flex;flex-direction:column;align-items:center;gap:12px}
+        .landing-primary-btn,.modal-primary-btn{min-height:46px;padding:11px 24px;border-radius:12px;border:1px solid rgba(240,207,168,.5);background:linear-gradient(135deg,#C8956C,#A87A55);color:#0D0D0F;font-weight:800;cursor:pointer}
+        .landing-signin-link{border:0;background:transparent;color:#E8E6E1;text-decoration:underline;text-underline-offset:4px;font-weight:700;cursor:pointer}
+        @keyframes landing-fade{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes landing-rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+        /* Shared auth and trial modals */
+        .app-modal-overlay{position:fixed;inset:0;z-index:260;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.68);backdrop-filter:blur(8px)}
+        .app-modal-overlay.open{display:flex}
+        .app-modal{position:relative;width:min(460px,100%);padding:28px;border-radius:20px;background:rgba(18,18,21,.98);border:1px solid rgba(255,255,255,.22);box-shadow:0 28px 72px rgba(0,0,0,.55)}
+        .modal-close-btn{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.12);color:#E8E6E1;cursor:pointer}
+        .modal-primary-btn,.modal-secondary-btn{width:100%}
+        .modal-secondary-btn{min-height:46px;padding:11px 24px;border-radius:12px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.12);color:#E8E6E1;font-weight:800;cursor:pointer}
+        .trial-warning-icon{width:62px;height:62px;margin:0 auto;border-radius:18px;display:flex;align-items:center;justify-content:center;background:rgba(232,149,144,.16);border:1px solid rgba(232,149,144,.35);color:#E89590;font-size:25px}
+
+        /* CONTRAST ENFORCEMENT */
+        html:not([data-theme='light']) button:not(:disabled){--min-border:rgba(255,255,255,0.2);color:#E8E6E1}
+        html:not([data-theme='light']) button:not(:disabled):not(.navbar-brand):not(.landing-signin-link){border-width:1px;border-style:solid;border-color:var(--min-border)}
+        html:not([data-theme='light']) .mini-card{background:rgba(255,255,255,0.09)!important;border-color:rgba(255,255,255,0.18)!important}
+        html:not([data-theme='light']) .action-btn{background:rgba(255,255,255,0.1)!important;border-color:rgba(255,255,255,0.22)!important;color:#E8E6E1!important}
+        html:not([data-theme='light']) .bg-white\/2,html:not([data-theme='light']) .bg-white\/3,html:not([data-theme='light']) .bg-white\/5{background:rgba(255,255,255,.1)!important}
+        html:not([data-theme='light']) .border-white\/5,html:not([data-theme='light']) .border-white\/6,html:not([data-theme='light']) .border-white\/8{border-color:rgba(255,255,255,.2)!important}
+        html:not([data-theme='light']) .text-sf-300{color:#A8A6A1!important}
+        html:not([data-theme='light']) input,html:not([data-theme='light']) select,html:not([data-theme='light']) textarea{background:rgba(255,255,255,.08)!important;border-color:rgba(255,255,255,.25)!important;color:#E8E6E1!important}
+        html:not([data-theme='light']) .help-modal{background:rgba(18,18,21,.98);border-color:rgba(255,255,255,.22)}
+        [role='dialog']{z-index:250!important}
+        html:not([data-theme='light']) [role='dialog']>.glass{background:rgba(18,18,21,.98);border-color:rgba(255,255,255,.22)}
+        html:not([data-theme='light']) .classroom-overflow-menu button[aria-label],html:not([data-theme='light']) button[aria-label*="options"]{background:rgba(255,255,255,.12)!important;border:1px solid rgba(255,255,255,.2)!important}
+        html:not([data-theme='light']) button[aria-label^="Back"],html:not([data-theme='light']) #back-btn{background:rgba(255,255,255,.1)!important;border:1px solid rgba(255,255,255,.25)!important;color:#E8E6E1!important}
+        html:not([data-theme='light']) .hint-pill:not(.active),html:not([data-theme='light']) .role-pill:not(.selected){border-color:rgba(200,149,108,.3)!important}
+        html:not([data-theme='light']) audio{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:10px}
+
+        html[data-theme='light'] body,html[data-theme='light'] button,html[data-theme='light'] .text-sf-300{color:#2E2C2A!important}
+        html[data-theme='light'] .text-sf-200{color:#2E2C2A!important}
+        html[data-theme='light'] button:not(:disabled){background-color:rgba(0,0,0,.06);border-color:rgba(0,0,0,.15)!important}
+        html[data-theme='light'] .glass,html[data-theme='light'] .mini-card{border-color:rgba(0,0,0,.15)!important}
+        html[data-theme='light'] .border-white\/5,html[data-theme='light'] .border-white\/6,html[data-theme='light'] .border-white\/8,html[data-theme='light'] .border-white\/10,html[data-theme='light'] .border-white\/12{border-color:rgba(0,0,0,.15)!important}
+        html[data-theme='light'] .app-navbar{background:rgba(247,245,239,.96);border-color:rgba(0,0,0,.15)}
+        html[data-theme='light'] .navbar-brand,html[data-theme='light'] .navbar-signin-btn,html[data-theme='light'] .navbar-signout-btn,html[data-theme='light'] .navbar-auth-chip{color:#2E2C2A}
+        html[data-theme='light'] .app-modal{background:rgba(255,255,255,.98);border-color:rgba(0,0,0,.15)}
+        html[data-theme='light'] .landing-tagline,html[data-theme='light'] .landing-feature-card{color:#2E2C2A}
+        html[data-theme='light'] .landing-copy,html[data-theme='light'] .landing-feature-card span{color:#4A4845}
+        html[data-theme='light'] .landing-feature-card{background:rgba(0,0,0,.06);border-color:rgba(0,0,0,.15)}
+        @media(max-width:760px){.landing-features{grid-template-columns:1fr}.landing-feature-card{min-height:130px}.landing-shell{padding-top:32px}.navbar-auth-chip>span{max-width:78px}}

@@ -215,7 +215,7 @@ function shareScorecardImage(){
             });
         })
         .then(function(blob){
-            var filename='voqua-scorecard-'+Date.now()+'.png';
+            var filename='speavio-scorecard-'+Date.now()+'.png';
             var file=new File([blob],filename,{type:'image/png'});
             if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
                 return navigator.share({title:'My Speavio Scorecard',text:'My latest Speavio report',files:[file]})
@@ -385,7 +385,7 @@ function exportPDF(){
     var worst=scores.length?Math.min.apply(null,scores):0;
     var elapsed=Math.round((Date.now()-S.sessionStart)/1000);
     var modeLabel=S.mode==='presentation'?'Presentation':'Practice';
-    var fileName='voqua-report-'+Date.now()+'.pdf';
+    var fileName='speavio-report-'+Date.now()+'.pdf';
     var totalUserLines=S.lines.filter(function(l){return S.userRoles.indexOf(l.role)!==-1}).length;
     var linesCorrect=scores.filter(function(s){return s>=80}).length;
     var linesGood=scores.filter(function(s){return s>=50&&s<80}).length;
@@ -467,6 +467,10 @@ function exportPDF(){
 }
 
 function restartSession(){
+    if(!S.isAuthenticated&&hasUsedFreeTrial()){
+        showTrialWall();
+        return;
+    }
     releaseMicStream();
     S.currentLine=0;S.userInput='';S.isProcessing=false;S.sessionStart=Date.now();
     S.lineScores={};S.lineDetails={};S.userResponses={};S.audioClips={};S.attemptCount={};S.hintShown={};S.presState=PS.HIDDEN;

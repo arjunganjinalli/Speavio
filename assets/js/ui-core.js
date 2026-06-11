@@ -139,7 +139,83 @@ function isPracticeLikeMode(){
     return S.mode==='practice';
 }
 
+function getTrialFingerprint(){
+    var raw=[navigator.userAgent,screen.width,screen.height,navigator.language].join('|');
+    var hash=2166136261;
+    for(var i=0;i<raw.length;i++){
+        hash^=raw.charCodeAt(i);
+        hash+=(hash<<1)+(hash<<4)+(hash<<7)+(hash<<8)+(hash<<24);
+    }
+    return (hash>>>0).toString(36);
+}
+
+function getTrialFingerprintKey(){
+    return 'speavio_trial_fp_'+getTrialFingerprint();
+}
+
+function hasTrialCookie(key){
+    return document.cookie.split(';').some(function(part){return part.trim()===key+'=true'});
+}
+
+function hasUsedFreeTrial(){
+    if(S.isAuthenticated)return false;
+    var fpKey=getTrialFingerprintKey();
+    try{
+        return localStorage.getItem('speavio_trial_used')==='true'
+            ||localStorage.getItem(fpKey)==='true'
+            ||hasTrialCookie(fpKey);
+    }catch(e){
+        return hasTrialCookie(fpKey);
+    }
+}
+
+function consumeFreeTrial(){
+    if(S.isAuthenticated)return;
+    var fpKey=getTrialFingerprintKey();
+    try{
+        localStorage.setItem('speavio_trial_used','true');
+        localStorage.setItem(fpKey,'true');
+    }catch(e){}
+    document.cookie=fpKey+'=true; max-age=315360000; path=/; SameSite=Lax';
+}
+
+function openAppModal(id){
+    var modal=$(id);
+    if(!modal)return;
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden','false');
+}
+
+function closeAppModal(id){
+    var modal=$(id);
+    if(!modal)return;
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden','true');
+}
+
+function openSignInModal(mode){
+    var create=mode==='create';
+    if($('auth-modal-title'))$('auth-modal-title').textContent=create?'Create Your Speavio Account':'Sign In to Speavio';
+    if($('auth-modal-subtitle'))$('auth-modal-subtitle').textContent=create?'Create a free account for unlimited practice and presentations.':'Continue your speech practice.';
+    closeAppModal('trial-wall-modal');
+    openAppModal('auth-modal');
+    setTimeout(function(){if($('email-auth-input'))$('email-auth-input').focus()},50);
+}
+
+function showTrialWall(){
+    openAppModal('trial-wall-modal');
+}
+
+function enterGuestMode(tab){
+    initClassesTab();
+    if(showSetupTab(tab||'home'))switchScreen('setup');
+}
+
 function showSetupTab(tab){
+    if(!S.isAuthenticated&&(tab==='practice'||tab==='presentation')&&hasUsedFreeTrial()){
+        showTrialWall();
+        return false;
+    }
     S.activeSetupTab=tab;
     document.querySelectorAll('.setup-tab-btn').forEach(function(btn){
         var active=btn.dataset.tab===tab;
@@ -168,6 +244,7 @@ function showSetupTab(tab){
     if(tab==='practice'||tab==='presentation')renderScriptLibraryOptions();
     if(tab==='settings'&&typeof loadProfileIntoSettings==='function')loadProfileIntoSettings();
     if(tab==='classes')renderClassesTabContent();
+    return true;
 }
 
 function loadAudioDevices(){
