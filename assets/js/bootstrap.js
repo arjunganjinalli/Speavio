@@ -207,8 +207,10 @@ document.addEventListener('DOMContentLoaded',function(){
                     runAuthenticatedStartup();
                     appInitialized=true;
                 }else{
-                    switchScreen('setup');
-                    showSetupTab('home');
+                    S.userProfile=doc.data();
+                    appInitialized=false;
+                    runAuthenticatedStartup();
+                    appInitialized=true;
                 }
             }else{
                 if(doc.exists)S.userProfile=doc.data();
