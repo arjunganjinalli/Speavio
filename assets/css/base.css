@@ -12,8 +12,9 @@
         .blob-3{width:300px;height:300px;background:#C8956C;top:50%;left:35%;animation:bf 18s ease-in-out infinite;animation-delay:-14s;opacity:.05}
         @keyframes bf{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(35px,-25px) scale(1.06)}66%{transform:translate(-25px,20px) scale(.94)}}
         .dot-grid{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:radial-gradient(var(--sf-dot) 1px,transparent 1px);background-size:32px 32px}
-        .screen{display:none;opacity:0;transition:opacity .4s ease;position:relative;z-index:1;padding-top:64px}
+        .screen{display:none;opacity:0;transition:opacity .4s ease;position:relative;z-index:1;padding-top:72px}
         .screen.active{display:flex;opacity:1}
+        #setup-screen{align-items:flex-start;padding-top:88px}
         .glass{background:rgba(var(--sf-glass),.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(var(--sf-glass-border),.18)}
         .gradient-text{background:linear-gradient(135deg,#E8B88A 0%,#C8956C 40%,#5BB882 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
         .mode-card{cursor:pointer;transition:all .3s ease;position:relative;overflow:hidden}
@@ -140,10 +141,11 @@
         .wd-pct{font-size:11px;font-weight:700;margin-left:6px}
 
         /* Setup tabs */
-        .setup-nav{display:flex;gap:8px;padding:8px;border-radius:14px;background:var(--sf-surface-1);border:1px solid var(--sf-border-soft)}
-        .setup-tab-btn{flex:1;padding:10px 12px;border-radius:10px;border:1px solid transparent;background:transparent;color:#C0BDB8;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s ease;font-family:'Space Grotesk',sans-serif}
-        .setup-tab-btn:hover{color:var(--sf-fg);background:var(--sf-surface-2)}
-        .setup-tab-btn.active{color:#E8B88A;background:rgba(200,149,108,.15);border-color:rgba(200,149,108,.35);box-shadow:inset 0 -2px 0 color-mix(in srgb,var(--sf-chart-primary) 72%,transparent)}
+        .setup-nav{display:flex;align-items:center;gap:4px;min-width:0}
+        .setup-tab-btn{padding:8px 16px;border-radius:10px;border:0;background:transparent;color:#C8C6C1;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s ease;font-family:'Space Grotesk',sans-serif;white-space:nowrap}
+        .setup-tab-btn i{margin-right:6px}
+        .setup-tab-btn:hover{color:#E8E6E1;background:rgba(255,255,255,.08)}
+        .setup-tab-btn.active{color:#E8B88A;background:rgba(200,149,108,.15);border:1px solid rgba(200,149,108,.35)}
         .setup-panel{display:none}
         .setup-panel.active{display:block}
         .mini-card{background:var(--sf-surface-1);border:1px solid var(--sf-border-soft);border-radius:12px;padding:16px}
@@ -241,7 +243,7 @@
         html[data-theme='light'] #start-btn:disabled{opacity:.45!important}
 
         /* Setup navigation */
-        html[data-theme='light'] .setup-nav{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.1)}
+        html[data-theme='light'] .setup-nav{background:transparent;border:0}
         html[data-theme='light'] .setup-tab-btn{color:#4D4A45}
         html[data-theme='light'] .setup-tab-btn:hover{background:rgba(0,0,0,.05);color:#1C1B1A}
         html[data-theme='light'] .setup-tab-btn.active{color:#7C4F31;background:rgba(200,149,108,.18);border-color:rgba(200,149,108,.35)}
@@ -339,12 +341,15 @@
         #ob-back-btn:hover{background:var(--sf-surface-2);border-color:var(--sf-border-strong)}
 
         /* Fixed app navbar and signed-out landing */
-        .app-navbar{position:fixed;top:0;left:0;right:0;z-index:200;height:64px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;background:rgba(13,13,15,.94);border-bottom:1px solid rgba(255,255,255,.2);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
-        .navbar-brand{display:inline-flex;align-items:center;gap:10px;border:1px solid transparent;background:transparent;color:#E8E6E1;font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;cursor:pointer;padding:6px;border-radius:12px}
+        .app-navbar{position:fixed;top:0;left:0;right:0;z-index:200;height:72px;padding:0 18px;display:flex;align-items:center;gap:16px;background:rgba(13,13,15,.94);border-bottom:1px solid rgba(255,255,255,.2);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+        .navbar-brand{display:inline-flex;align-items:center;gap:10px;border:1px solid transparent;background:transparent;color:#E8E6E1;font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:800;cursor:pointer;padding:6px;border-radius:12px;flex-shrink:0}
         .navbar-logo{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,#C8956C,#5BB882);color:#0D0D0F;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 22px rgba(200,149,108,.2);flex-shrink:0}
+        .navbar-tabs{flex:1;justify-content:center;overflow-x:auto;scrollbar-width:none}
+        .navbar-tabs::-webkit-scrollbar{display:none}
         .navbar-actions,.navbar-auth-chip{display:flex;align-items:center;gap:10px;min-width:0}
-        .navbar-signin-btn,.navbar-signout-btn{padding:8px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.12);color:#E8E6E1;font-size:12px;font-weight:700;cursor:pointer}
-        .navbar-auth-chip{max-width:min(62vw,360px);padding:5px 6px 5px 9px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:rgba(255,255,255,.1);color:#E8E6E1;font-size:12px;font-weight:700}
+        .navbar-actions{margin-left:auto;flex-shrink:0}
+        .navbar-signin-btn,.navbar-signout-btn{padding:10px 20px;border-radius:12px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.12);color:#E8E6E1;font-size:14px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+        .navbar-auth-chip{max-width:min(62vw,400px);padding:5px 6px 5px 9px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:rgba(255,255,255,.1);color:#E8E6E1;font-size:14px;font-weight:700}
         .navbar-auth-chip>span{max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .navbar-user-photo{width:28px;height:28px;border-radius:50%;object-fit:cover}
         .landing-shell{width:min(1080px,100%);margin:auto;padding:48px 16px 64px;text-align:center}
@@ -373,8 +378,8 @@
         .trial-warning-icon{width:62px;height:62px;margin:0 auto;border-radius:18px;display:flex;align-items:center;justify-content:center;background:rgba(232,149,144,.16);border:1px solid rgba(232,149,144,.35);color:#E89590;font-size:25px}
 
         /* CONTRAST ENFORCEMENT */
-        html:not([data-theme='light']) button:not(:disabled){--min-border:rgba(255,255,255,0.2);color:#E8E6E1}
-        html:not([data-theme='light']) button:not(:disabled):not(.navbar-brand):not(.landing-signin-link){border-width:1px;border-style:solid;border-color:var(--min-border)}
+        html:not([data-theme='light']) button:not(:disabled):not(.setup-tab-btn){--min-border:rgba(255,255,255,0.2);color:#E8E6E1}
+        html:not([data-theme='light']) button:not(:disabled):not(.navbar-brand):not(.landing-signin-link):not(.setup-tab-btn){border-width:1px;border-style:solid;border-color:var(--min-border)}
         html:not([data-theme='light']) .mini-card{background:rgba(255,255,255,0.09)!important;border-color:rgba(255,255,255,0.18)!important}
         html:not([data-theme='light']) .action-btn{background:rgba(255,255,255,0.1)!important;border-color:rgba(255,255,255,0.22)!important;color:#E8E6E1!important}
         html:not([data-theme='light']) .bg-white\/2,html:not([data-theme='light']) .bg-white\/3,html:not([data-theme='light']) .bg-white\/5{background:rgba(255,255,255,.1)!important}
@@ -389,9 +394,9 @@
         html:not([data-theme='light']) .hint-pill:not(.active),html:not([data-theme='light']) .role-pill:not(.selected){border-color:rgba(200,149,108,.3)!important}
         html:not([data-theme='light']) audio{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:10px}
 
-        html[data-theme='light'] body,html[data-theme='light'] button,html[data-theme='light'] .text-sf-300{color:#2E2C2A!important}
+        html[data-theme='light'] body,html[data-theme='light'] button:not(.setup-tab-btn),html[data-theme='light'] .text-sf-300{color:#2E2C2A!important}
         html[data-theme='light'] .text-sf-200{color:#2E2C2A!important}
-        html[data-theme='light'] button:not(:disabled){background-color:rgba(0,0,0,.06);border-color:rgba(0,0,0,.15)!important}
+        html[data-theme='light'] button:not(:disabled):not(.setup-tab-btn){background-color:rgba(0,0,0,.06);border-color:rgba(0,0,0,.15)!important}
         html[data-theme='light'] .glass,html[data-theme='light'] .mini-card{border-color:rgba(0,0,0,.15)!important}
         html[data-theme='light'] .border-white\/5,html[data-theme='light'] .border-white\/6,html[data-theme='light'] .border-white\/8,html[data-theme='light'] .border-white\/10,html[data-theme='light'] .border-white\/12{border-color:rgba(0,0,0,.15)!important}
         html[data-theme='light'] .app-navbar{background:rgba(247,245,239,.96);border-color:rgba(0,0,0,.15)}
@@ -400,4 +405,17 @@
         html[data-theme='light'] .landing-tagline,html[data-theme='light'] .landing-feature-card{color:#2E2C2A}
         html[data-theme='light'] .landing-copy,html[data-theme='light'] .landing-feature-card span{color:#4A4845}
         html[data-theme='light'] .landing-feature-card{background:rgba(0,0,0,.06);border-color:rgba(0,0,0,.15)}
-        @media(max-width:760px){.landing-features{grid-template-columns:1fr}.landing-feature-card{min-height:130px}.landing-shell{padding-top:32px}.navbar-auth-chip>span{max-width:78px}}
+        @media(max-width:768px){
+            .app-navbar{gap:8px;padding:0 10px}
+            .navbar-brand{font-size:20px;gap:7px}
+            .navbar-tabs{justify-content:flex-start}
+            .setup-tab-btn{padding:8px 10px;flex:0 0 auto;font-size:14px}
+            .setup-tab-btn i{margin-right:0!important}
+            .setup-tab-btn span{display:none}
+            .navbar-signin-btn,.navbar-signout-btn{width:40px;height:40px;padding:0;justify-content:center}
+            .navbar-signin-btn span,.navbar-signout-btn span,.navbar-auth-chip>span{display:none}
+            .navbar-auth-chip{padding:4px;gap:4px}
+            .landing-features{grid-template-columns:1fr}
+            .landing-feature-card{min-height:130px}
+            .landing-shell{padding-top:32px}
+        }

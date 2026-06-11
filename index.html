@@ -26,12 +26,19 @@
             <span class="navbar-logo"><i class="fas fa-comments"></i></span>
             <span>Speavio</span>
         </button>
+        <div class="setup-nav navbar-tabs" role="tablist" aria-label="Main navigation">
+            <button id="tab-home" class="setup-tab-btn active" data-tab="home" role="tab" aria-selected="true"><i class="fa-solid fa-house"></i><span data-i18n="navHome">Home</span></button>
+            <button id="tab-classes" class="setup-tab-btn hidden" data-tab="classes" role="tab" aria-selected="false"><i class="fa-solid fa-chalkboard"></i><span>Classes</span></button>
+            <button id="tab-practice" class="setup-tab-btn" data-tab="practice" role="tab" aria-selected="false"><i class="fa-solid fa-microphone-lines"></i><span data-i18n="navPractice">Practice</span></button>
+            <button id="tab-presentation" class="setup-tab-btn" data-tab="presentation" role="tab" aria-selected="false"><i class="fa-solid fa-masks-theater"></i><span data-i18n="navPresentation">Presentation</span></button>
+            <button id="tab-settings" class="setup-tab-btn" data-tab="settings" role="tab" aria-selected="false"><i class="fa-solid fa-gear"></i><span data-i18n="navSettings">Settings</span></button>
+        </div>
         <div class="navbar-actions">
-            <button id="navbar-signin-btn" class="navbar-signin-btn">Sign In</button>
+            <button id="navbar-signin-btn" class="navbar-signin-btn" aria-label="Sign In"><i class="fas fa-right-to-bracket"></i><span>Sign In</span></button>
             <div id="navbar-auth-chip" class="navbar-auth-chip hidden">
                 <img id="navbar-user-photo" src="" alt="User photo" class="navbar-user-photo hidden">
                 <span id="navbar-user-name">Signed in</span>
-                <button id="navbar-signout-btn" class="navbar-signout-btn">Sign Out</button>
+                <button id="navbar-signout-btn" class="navbar-signout-btn" aria-label="Sign Out"><i class="fas fa-right-from-bracket"></i><span>Sign Out</span></button>
             </div>
         </div>
     </nav>
@@ -117,14 +124,6 @@
     <div id="setup-screen" class="screen min-h-screen items-center justify-center p-4">
         <div class="w-full max-w-6xl">
             <div class="glass rounded-2xl p-5 sm:p-7 space-y-6">
-                <div class="setup-nav" role="tablist" aria-label="Main navigation">
-                    <button id="tab-home" class="setup-tab-btn active" data-tab="home" role="tab" aria-selected="true"><i class="fa-solid fa-house mr-1.5"></i><span data-i18n="navHome">Home</span></button>
-                    <button id="tab-classes" class="setup-tab-btn hidden" data-tab="classes" role="tab" aria-selected="false"><i class="fa-solid fa-chalkboard mr-1.5"></i>Classes</button>
-                    <button id="tab-practice" class="setup-tab-btn" data-tab="practice" role="tab" aria-selected="false"><i class="fa-solid fa-microphone-lines mr-1.5"></i><span data-i18n="navPractice">Practice</span></button>
-                    <button id="tab-presentation" class="setup-tab-btn" data-tab="presentation" role="tab" aria-selected="false"><i class="fa-solid fa-masks-theater mr-1.5"></i><span data-i18n="navPresentation">Presentation</span></button>
-                    <button id="tab-settings" class="setup-tab-btn" data-tab="settings" role="tab" aria-selected="false"><i class="fa-solid fa-gear mr-1.5"></i><span data-i18n="navSettings">Settings</span></button>
-                </div>
-
                 <section id="panel-home" class="setup-panel active" role="tabpanel">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="mini-card">
