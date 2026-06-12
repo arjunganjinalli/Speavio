@@ -207,8 +207,22 @@ function showTrialWall(){
 }
 
 function enterGuestMode(tab){
+    navigateAppTab(tab||'home');
+}
+
+function navigateAppTab(tab){
+    tab=tab||'home';
+    if(!S.isAuthenticated&&tab==='home'){
+        showSetupTab('home');
+        switchScreen('login');
+        return true;
+    }
     initClassesTab();
-    if(showSetupTab(tab||'home'))switchScreen('setup');
+    if(showSetupTab(tab)){
+        switchScreen('setup');
+        return true;
+    }
+    return false;
 }
 
 function showSetupTab(tab){
@@ -364,16 +378,23 @@ function writeStoreJSON(key,val){
 function initClassesTab(){
     var btn=$('tab-classes');
     if(!btn)return;
-    var show=!!(S.userProfile&&S.userProfile.role);
+    var show=!S.isAuthenticated||!!(S.userProfile&&S.userProfile.role);
     btn.classList.toggle('hidden',!show);
 }
 
 function renderClassesTabContent() {
-    if (!S.userProfile || !S.authUser) return;
-    var role = S.userProfile.role;
+    var signedOutView = $('classes-signedout-view');
     var teacherView = $('classes-teacher-view');
     var studentView = $('classes-student-view');
-    if (!teacherView || !studentView) return;
+    if (!teacherView || !studentView || !signedOutView) return;
+    signedOutView.classList.toggle('hidden', !!S.isAuthenticated);
+    if (!S.isAuthenticated) {
+        teacherView.classList.add('hidden');
+        studentView.classList.add('hidden');
+        return;
+    }
+    if (!S.userProfile || !S.authUser) return;
+    var role = S.userProfile.role;
     teacherView.classList.toggle('hidden', role !== 'teacher');
     studentView.classList.toggle('hidden', role !== 'student');
     if (role === 'teacher') {

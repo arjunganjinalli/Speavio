@@ -130,6 +130,7 @@ document.addEventListener('DOMContentLoaded',function(){
         if($('assist-fab'))$('assist-fab').classList.add('hidden');
         if($('navbar-signin-btn'))$('navbar-signin-btn').classList.remove('hidden');
         if($('navbar-auth-chip'))$('navbar-auth-chip').classList.add('hidden');
+        initClassesTab();
         switchScreen('login');
     }
 
@@ -278,11 +279,7 @@ document.addEventListener('DOMContentLoaded',function(){
 
     document.querySelectorAll('.setup-tab-btn').forEach(function(btn){
         btn.onclick=function(){
-            if(btn.id==='tab-home'&&!S.isAuthenticated){
-                switchScreen('login');
-                return;
-            }
-            showSetupTab(btn.dataset.tab);
+            navigateAppTab(btn.dataset.tab);
         };
     });
 
@@ -359,6 +356,9 @@ document.addEventListener('DOMContentLoaded',function(){
     });
     document.querySelectorAll('[data-guest-tab]').forEach(function(btn){
         btn.onclick=function(){enterGuestMode(btn.dataset.guestTab)};
+    });
+    document.querySelectorAll('[data-app-tab]').forEach(function(btn){
+        btn.onclick=function(){navigateAppTab(btn.dataset.appTab)};
     });
     if($('auth-modal-close'))$('auth-modal-close').onclick=function(){closeAppModal('auth-modal')};
     if($('trial-wall-close'))$('trial-wall-close').onclick=function(){closeAppModal('trial-wall-modal')};

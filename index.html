@@ -28,7 +28,7 @@
         </button>
         <div class="setup-nav navbar-tabs" role="tablist" aria-label="Main navigation">
             <button id="tab-home" class="setup-tab-btn active" data-tab="home" role="tab" aria-selected="true"><i class="fa-solid fa-house"></i><span data-i18n="navHome">Home</span></button>
-            <button id="tab-classes" class="setup-tab-btn hidden" data-tab="classes" role="tab" aria-selected="false"><i class="fa-solid fa-chalkboard"></i><span>Classes</span></button>
+            <button id="tab-classes" class="setup-tab-btn" data-tab="classes" role="tab" aria-selected="false"><i class="fa-solid fa-chalkboard"></i><span>Classes</span></button>
             <button id="tab-practice" class="setup-tab-btn" data-tab="practice" role="tab" aria-selected="false"><i class="fa-solid fa-microphone-lines"></i><span data-i18n="navPractice">Practice</span></button>
             <button id="tab-presentation" class="setup-tab-btn" data-tab="presentation" role="tab" aria-selected="false"><i class="fa-solid fa-masks-theater"></i><span data-i18n="navPresentation">Presentation</span></button>
             <button id="tab-settings" class="setup-tab-btn" data-tab="settings" role="tab" aria-selected="false"><i class="fa-solid fa-gear"></i><span data-i18n="navSettings">Settings</span></button>
@@ -62,7 +62,7 @@
                     <strong>Presentation Mode</strong>
                     <span>Rehearse a full delivery from memory.</span>
                 </button>
-                <button class="landing-feature-card" data-open-auth="signin">
+                <button class="landing-feature-card" data-app-tab="classes">
                     <i class="fas fa-chalkboard"></i>
                     <strong>Classroom</strong>
                     <span>Share assignments and track progress.</span>
@@ -431,6 +431,15 @@
                     </div>
                 </section>
                 <section id="panel-classes" class="setup-panel" role="tabpanel">
+                    <!-- Signed-out view -->
+                    <div id="classes-signedout-view" class="hidden">
+                        <div class="mini-card text-center">
+                            <div class="w-14 h-14 mx-auto rounded-2xl bg-copper-500/15 border border-copper-500/25 text-copper-400 flex items-center justify-center text-xl"><i class="fas fa-chalkboard"></i></div>
+                            <h2 class="text-2xl font-display font-semibold text-sf-50 mt-5">Speavio Classroom</h2>
+                            <p class="text-base text-sf-200 mt-2 max-w-xl mx-auto">Sign in to join classes, receive assignments, submit practice, and track grades.</p>
+                            <button data-open-auth="signin" class="action-btn action-btn--copper min-h-[48px] px-6 text-base mt-6">Sign In to Classroom</button>
+                        </div>
+                    </div>
                     <!-- Teacher view -->
                     <div id="classes-teacher-view" class="hidden">
                         <div class="flex items-center justify-between mb-4">
