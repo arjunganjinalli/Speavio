@@ -106,10 +106,7 @@ function startSession(){
     }else{
         renderSession();
         if(isPracticeLikeMode()){
-            var firstLine=S.lines[0];
-            if(firstLine&&!isUserRole(firstLine.role)){
-                speak(firstLine.text,null,false);
-            }
+            /* Practice mode never auto-speaks any lines */
         }else{
             /* Presentation mode — auto-flow starts after a brief pause */
             setTimeout(presentationAutoFlow,600);
@@ -396,7 +393,6 @@ function renderPracticeIA(area,line,isU){
             +'</div>'
             +'<button onclick="advanceLine()" class="px-6 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/8 text-sf-100 font-semibold text-sm transition-all">Continue <i class="fas fa-arrow-right ml-2"></i></button>'
             +'</div>';
-        if(!S.isSpeaking)speak(line.text,null,false);
     }
 }
 
@@ -768,17 +764,14 @@ function advanceLine(){
     S.userInput='';
     S.isProcessing=false;
     S.presState=PS.HIDDEN;
-    renderSession();
 
-    /* Practice mode: auto-speak NPC lines */
-    if(isPracticeLikeMode()){
-        var nextLine=S.lines[S.currentLine];
-        if(nextLine&&!isUserRole(nextLine.role)){
-            speak(nextLine.text,null,false);
-        }
+    if(S.mode==='practice'){
+        S.practicePickerActive=true;
+        renderPracticeLinePicker();
+        return;
     }
 
-    /* Presentation mode: continue the auto-flow */
+    renderSession();
     if(S.mode==='presentation'){
         setTimeout(presentationAutoFlow,400);
     }
