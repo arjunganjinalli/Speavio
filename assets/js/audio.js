@@ -170,6 +170,10 @@ function startSilenceDetection(stream){
         S.currentRMS=0;
         S._speechDetected=false;
         S._speechFrames=0;
+        S._noiseFloor=0;
+        S._calibrated=false;
+        S._calibrationSamples=[];
+
         var timeBuf=new Uint8Array(S.analyser.fftSize);
 
         S.silenceInterval=setInterval(function(){
@@ -184,27 +188,49 @@ function startSilenceDetection(stream){
             var rms=Math.sqrt(sumSq/timeBuf.length);
             S.currentRMS=rms;
 
-            /* Require 8 consecutive frames (400ms) above 0.04 to confirm real speech */
-            if(rms>=0.04){
+            /* Update vol bar always */
+            var vb=document.getElementById('vol-fill');
+            if(vb){var pct=Math.min(100,rms*600);vb.style.width=pct+'%'}
+
+            /* ── CALIBRATION: first 600ms, measure background noise floor ── */
+            if(!S._calibrated){
+                S._calibrationSamples.push(rms);
+                if(S._calibrationSamples.length>=12){
+                    var sum=0;
+                    for(var ci=0;ci<S._calibrationSamples.length;ci++)sum+=S._calibrationSamples[ci];
+                    S._noiseFloor=sum/S._calibrationSamples.length;
+                    /* Clamp noise floor to reasonable range */
+                    S._noiseFloor=Math.max(0.003,Math.min(S._noiseFloor,0.05));
+                    /* Speech threshold: 3.5x noise floor, clamped */
+                    S.SPEECH_THRESH=Math.max(0.008,Math.min(S._noiseFloor*3.5,0.08));
+                    /* Silence threshold: 1.8x noise floor, clamped */
+                    S.SILENCE_THRESH=Math.max(0.005,Math.min(S._noiseFloor*1.8,0.045));
+                    S._calibrated=true;
+                    /* Reset timer so MIN_REC_MS starts after calibration */
+                    S.recordStartTime=Date.now();
+                }
+                return;
+            }
+
+            /* ── SPEECH DETECTION using calibrated threshold ── */
+            if(rms>=S.SPEECH_THRESH){
                 S._speechFrames++;
-                if(S._speechFrames>=8&&!S._speechDetected){
+                if(S._speechFrames>=6&&!S._speechDetected){
                     S._speechDetected=true;
                     S.speechDetected=true;
                     if(typeof renderIA==='function')renderIA();
                 }
-            }else{S._speechFrames=0;}
+            }else{
+                S._speechFrames=0;
+            }
 
-            /* Update vol bar */
-            var vb=document.getElementById('vol-fill');
-            if(vb){var pct=Math.min(100,rms*600);vb.style.width=pct+'%'}
-
-            /* Don't check silence in first MIN_REC_MS */
+            /* Don't check silence in first MIN_REC_MS after calibration */
             if(Date.now()-S.recordStartTime<S.MIN_REC_MS){S.silenceFrames=0;return}
 
-            /* Only count silence frames after actual speech has been detected */
+            /* Only count silence after actual speech detected */
             if(!S._speechDetected){S.silenceFrames=0;return}
 
-            if(rms<S.SILENCE_THRESH){S.silenceFrames++}else{S.silenceFrames=0}
+            if(rms<S.SILENCE_THRESH){S.silenceFrames++;}else{S.silenceFrames=0;}
 
             /* Update countdown */
             var sc=document.getElementById('sil-count');
@@ -214,13 +240,14 @@ function startSilenceDetection(stream){
             }
 
             if(S.silenceFrames>=S.SILENCE_FRAMES){
-                /* 2 seconds of silence — stop automatically */
                 stopAllRec();
             }
         },50);
-    }catch(e){console.warn('Silence detection unavailable:',e);
-        /* If silence detection fails, set a 30-second safety timeout to prevent infinite recording */
-        S._recSafetyTimeout=setTimeout(function(){if(S.isRecording){toast('Auto-stopped: no silence detection available.','info');stopAllRec()}},30000);
+    }catch(e){
+        console.warn('Silence detection unavailable:',e);
+        S._recSafetyTimeout=setTimeout(function(){
+            if(S.isRecording){toast('Auto-stopped: no silence detection available.','info');stopAllRec()}
+        },30000);
     }
 }
 function stopSilenceDetection(){

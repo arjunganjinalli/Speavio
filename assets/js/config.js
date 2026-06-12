@@ -45,7 +45,7 @@ var STORAGE_KEYS={
 var UI_TEXT={
     en:{
         navHome:'Home',navPractice:'Practice',navPresentation:'Presentation',navSettings:'Settings',
-        homeQuickTitle:'Get Around Quickly',homeQuickBody:'Use the header tabs like GitHub navigation. Start in Practice or Presentation, then tune AI keys in Settings.',
+        homeQuickTitle:'Get Around Quickly',homeQuickBody:'Build confidence one line at a time in Practice, or rehearse your full script in Presentation.',
         homeGoPractice:'Go to Practice',homeGoPresentation:'Go to Presentation',homeOpenSettings:'Open Settings',
         homeModeTitle:'Basic vs Advanced',homeModeBody:'Basic mode works without API keys. Add any OpenAI-compatible API key in Settings to unlock advanced AI features.',
         homeHelpTitle:'Need Help?',homeHelpBody:'Use the assistant bubble in the bottom-right to ask where features are, what each mode does, and how to configure advanced setup.',
@@ -147,6 +147,10 @@ var S={
     SILENCE_FRAMES:40,      /* 40 frames × 50ms = 2 seconds */
     MIN_REC_MS:600,         /* minimum 600ms recording before silence check kicks in */
     currentRMS:0,
+    SPEECH_THRESH:0.04,
+    _noiseFloor:0,
+    _calibrated:false,
+    _calibrationSamples:[],
     hintLevel:'first',hintShown:{},
     presState:PS.HIDDEN,
     npcSlowReplay:false,
