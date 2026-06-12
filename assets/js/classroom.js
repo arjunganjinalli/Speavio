@@ -4,6 +4,7 @@
 
 var _studentClasses = [];
 var _teacherClasses = [];
+var _teacherHomeRenderId = 0;
 
 function generateClassCode() {
     var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -55,6 +56,85 @@ function getStudentClasses(studentUid) {
         .then(function(snapshot) {
             return snapshot.docs.map(function(doc) { return Object.assign({ id: doc.id }, doc.data()); });
         });
+}
+
+function openTeacherDashboardClass(classId) {
+    var classObj = _teacherClasses.filter(function(c) { return c.id === classId; })[0];
+    if (classObj) openClassPage(classObj, 'teacher');
+}
+
+function teacherDashboardDueDate(value) {
+    if (!value) return null;
+    var date = new Date(value);
+    return isNaN(date.getTime()) ? null : date;
+}
+
+function renderTeacherHomeDashboard() {
+    if (!S.authUser || !S.userProfile || S.userProfile.role !== 'teacher') return;
+    var renderId = ++_teacherHomeRenderId;
+    var gradingList = $('teacher-home-grading-list');
+    var dueList = $('teacher-home-due-list');
+    if (gradingList) gradingList.innerHTML = '<div class="flex items-center gap-3 py-4"><div class="spinner"></div><span class="text-sf-300">Loading submissions...</span></div>';
+    if (dueList) dueList.innerHTML = '<div class="flex items-center gap-3 py-4"><div class="spinner"></div><span class="text-sf-300">Loading assignments...</span></div>';
+    getTeacherClasses(S.authUser.uid).then(function(classes) {
+        _teacherClasses = classes;
+        return Promise.all(classes.map(function(classObj) {
+            return getClassAssignments(classObj.id).then(function(assignments) {
+                assignments.forEach(function(assignment) {
+                    assignment.className = classObj.className || 'Class';
+                    assignment.classObj = classObj;
+                });
+                return assignments;
+            });
+        })).then(function(results) {
+            return { classes: classes, assignments: results.reduce(function(all, assignments) { return all.concat(assignments); }, []) };
+        });
+    }).then(function(result) {
+        return Promise.all(result.assignments.map(function(assignment) {
+            return getAssignmentSubmissions(assignment.id).then(function(submissions) {
+                assignment.ungradedSubmissions = submissions.filter(function(submission) { return submission.status !== 'graded'; });
+                return assignment;
+            });
+        })).then(function(assignments) {
+            result.assignments = assignments;
+            return result;
+        });
+    }).then(function(result) {
+        if (renderId !== _teacherHomeRenderId || !S.userProfile || S.userProfile.role !== 'teacher') return;
+        var gradingAssignments = result.assignments.filter(function(assignment) { return assignment.ungradedSubmissions.length; })
+            .sort(function(a, b) { return b.ungradedSubmissions.length - a.ungradedSubmissions.length; });
+        var datedAssignments = result.assignments.filter(function(assignment) { return teacherDashboardDueDate(assignment.dueDate); })
+            .sort(function(a, b) { return teacherDashboardDueDate(a.dueDate) - teacherDashboardDueDate(b.dueDate); });
+        var ungradedCount = gradingAssignments.reduce(function(total, assignment) { return total + assignment.ungradedSubmissions.length; }, 0);
+        var now = Date.now();
+        var upcomingCount = datedAssignments.filter(function(assignment) { return teacherDashboardDueDate(assignment.dueDate).getTime() >= now; }).length;
+        if ($('teacher-home-class-count')) $('teacher-home-class-count').textContent = String(result.classes.length);
+        if ($('teacher-home-grading-count')) $('teacher-home-grading-count').textContent = String(ungradedCount);
+        if ($('teacher-home-due-count')) $('teacher-home-due-count').textContent = String(upcomingCount);
+        if (gradingList) {
+            gradingList.innerHTML = gradingAssignments.length ? gradingAssignments.map(function(assignment) {
+                return '<button onclick="openTeacherDashboardClass(\'' + assignment.classObj.id.replace(/'/g, "\\'") + '\')" class="w-full text-left rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 p-4 transition-colors">'
+                    + '<div class="flex items-center justify-between gap-4 flex-wrap"><div><div class="font-display font-semibold text-sf-50">' + esc(assignment.title || 'Assignment') + '</div>'
+                    + '<div class="text-sm text-sf-300 mt-1">' + esc(assignment.className) + '</div></div>'
+                    + '<span class="px-3 py-1.5 rounded-lg bg-copper-500/15 border border-copper-500/25 text-copper-400 text-sm font-bold">' + assignment.ungradedSubmissions.length + ' to grade</span></div></button>';
+            }).join('') : '<div class="rounded-xl border border-sage-500/25 bg-sage-500/10 p-4 text-sage-400"><i class="fas fa-circle-check mr-2"></i>All submitted assignments are graded.</div>';
+        }
+        if (dueList) {
+            dueList.innerHTML = datedAssignments.length ? datedAssignments.map(function(assignment) {
+                var due = teacherDashboardDueDate(assignment.dueDate);
+                var overdue = due.getTime() < now;
+                return '<button onclick="openTeacherDashboardClass(\'' + assignment.classObj.id.replace(/'/g, "\\'") + '\')" class="w-full text-left rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 p-4 transition-colors">'
+                    + '<div class="flex items-center justify-between gap-4 flex-wrap"><div><div class="font-display font-semibold text-sf-50">' + esc(assignment.title || 'Assignment') + '</div>'
+                    + '<div class="text-sm text-sf-300 mt-1">' + esc(assignment.className) + '</div></div>'
+                    + '<span class="px-3 py-1.5 rounded-lg border text-sm font-semibold ' + (overdue ? 'bg-coral-500/15 border-coral-500/25 text-coral-400' : 'bg-sage-500/15 border-sage-500/25 text-sage-400') + '">' + (overdue ? 'Overdue · ' : 'Due · ') + esc(formatAssignmentDue(assignment.dueDate)) + '</span></div></button>';
+            }).join('') : '<div class="rounded-xl border border-white/10 bg-white/5 p-4 text-sf-300">No assignments with due dates yet.</div>';
+        }
+    }).catch(function(err) {
+        if (renderId !== _teacherHomeRenderId) return;
+        if (gradingList) gradingList.innerHTML = '<p class="text-coral-400">Could not load submissions needing grading.</p>';
+        if (dueList) dueList.innerHTML = '<p class="text-coral-400">Could not load assignment due dates.</p>';
+        console.error(err);
+    });
 }
 
 function initClassesTab() {

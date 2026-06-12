@@ -125,6 +125,7 @@
         <div class="w-full">
             <div class="setup-main-card glass rounded-2xl p-8 sm:p-10 space-y-8">
                 <section id="panel-home" class="setup-panel active" role="tabpanel">
+                    <div id="home-standard-dashboard">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div class="mini-card">
                             <h3 class="text-sf-50 font-display font-semibold mb-1" data-i18n="homeQuickTitle">Get Around Quickly</h3>
@@ -172,6 +173,37 @@
                         </div>
                         <div id="home-leaderboard" class="space-y-3 text-sm">
                             <div class="text-sf-300">Complete a session to populate leaderboard rankings.</div>
+                        </div>
+                    </div>
+                    </div>
+                    <div id="home-teacher-dashboard" class="hidden">
+                        <div class="flex items-start justify-between gap-4 flex-wrap mb-6">
+                            <div>
+                                <h2 class="text-2xl font-display font-bold text-sf-50">Teacher Dashboard</h2>
+                                <p class="text-base text-sf-300 mt-1">Assignments, due dates, and submissions that need your attention.</p>
+                            </div>
+                            <button onclick="showSetupTab('classes')" class="action-btn action-btn--copper min-h-[48px] px-6 text-base"><i class="fas fa-chalkboard mr-2"></i>Open Classes</button>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-6">
+                            <div class="mini-card"><p class="text-sm text-sf-300">Classes</p><div id="teacher-home-class-count" class="text-3xl font-display font-bold text-sf-50 mt-2">0</div></div>
+                            <div class="mini-card"><p class="text-sm text-sf-300">Need Grading</p><div id="teacher-home-grading-count" class="text-3xl font-display font-bold text-copper-400 mt-2">0</div></div>
+                            <div class="mini-card"><p class="text-sm text-sf-300">Upcoming Assignments</p><div id="teacher-home-due-count" class="text-3xl font-display font-bold text-sage-400 mt-2">0</div></div>
+                        </div>
+                        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                            <section class="mini-card">
+                                <div class="flex items-center justify-between gap-3 mb-4">
+                                    <div><h3 class="text-xl text-sf-50 font-display font-semibold">Assignments Needing Grading</h3><p class="text-sm text-sf-300 mt-1">Submitted work awaiting a grade.</p></div>
+                                    <i class="fas fa-clipboard-check text-copper-400 text-xl"></i>
+                                </div>
+                                <div id="teacher-home-grading-list" class="space-y-3"><div class="text-sf-300">Loading submissions...</div></div>
+                            </section>
+                            <section class="mini-card">
+                                <div class="flex items-center justify-between gap-3 mb-4">
+                                    <div><h3 class="text-xl text-sf-50 font-display font-semibold">Assignment Due Dates</h3><p class="text-sm text-sf-300 mt-1">Upcoming and recently overdue work.</p></div>
+                                    <i class="fas fa-calendar-days text-sage-400 text-xl"></i>
+                                </div>
+                                <div id="teacher-home-due-list" class="space-y-3"><div class="text-sf-300">Loading assignments...</div></div>
+                            </section>
                         </div>
                     </div>
                 </section>

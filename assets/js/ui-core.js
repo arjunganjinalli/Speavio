@@ -645,6 +645,15 @@ function calcDailyStreak(sessions){
 }
 
 function refreshHomeProgressSnapshot(){
+    var isTeacher=!!(S.isAuthenticated&&S.userProfile&&S.userProfile.role==='teacher');
+    var standardDashboard=$('home-standard-dashboard');
+    var teacherDashboard=$('home-teacher-dashboard');
+    if(standardDashboard)standardDashboard.classList.toggle('hidden',isTeacher);
+    if(teacherDashboard)teacherDashboard.classList.toggle('hidden',!isTeacher);
+    if(isTeacher){
+        if(typeof renderTeacherHomeDashboard==='function')renderTeacherHomeDashboard();
+        return;
+    }
     var sessions=getSavedSessions();
     var streakEl=$('home-streak'),lastEl=$('home-last-score'),countEl=$('home-history-count');
     if(!streakEl||!lastEl||!countEl)return;
