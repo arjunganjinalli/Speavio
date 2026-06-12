@@ -290,7 +290,7 @@ function autoDetectScript(){
     var text=$('script-input').value.trim();
     if(!text){toast('Paste text first.','info');return}
     $('auto-detect-btn').disabled=true;
-    if(!S.apiKey){
+    if(!S.aiConnected){
         if(!_autoDetectTipShown){
             var tip=$('auto-detect-tip');
             if(tip){tip.classList.remove('hidden');$('auto-detect-btn').disabled=false;return;}
@@ -302,7 +302,7 @@ function autoDetectScript(){
 
     $('parse-status').innerHTML='<span class="text-copper-400"><i class="fas fa-spinner fa-spin mr-1"></i>Analyzing with AI...</span>';
     /* Use high max_tokens — long scripts can have 30+ dialogue lines */
-    callGLM([
+    callAI([
         {role:'system',content:'You are a script parser. Extract ALL spoken dialogue from the given text into this EXACT format:\n\n[CharacterName]: dialogue text\n\nCritical rules:\n- Use the actual character names from the script (e.g. "Mom (Jen)", "Older Brother 2 (Arjun)")\n- If the name has a parenthetical actor name like "Name (Actor)", keep the FULL thing including parentheses\n- Include ALL dialogue lines in order — do not skip any\n- Remove ALL stage directions, narration, scene descriptions, action notes, prop lists, and costume descriptions\n- Remove any English translations in parentheses at the end of non-English lines ONLY if the line is primarily in another language\n- Keep the dialogue in its ORIGINAL language (do not translate)\n- Do NOT add line numbers, bullet points, or any extra formatting\n- Do NOT include any intro text, explanations, or summary — ONLY the formatted dialogue lines\n- Each line MUST start with [ and end with the dialogue text. No blank lines between entries.\n- If a line has both a foreign language and English translation like "Spanish text (English translation)", keep ONLY the foreign language part'},
         {role:'user',content:text}
     ],4096).then(function(r){

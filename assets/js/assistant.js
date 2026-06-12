@@ -13,7 +13,7 @@ function getLocalAssistantReply(q){
     if(/home|main|start/.test(t))return 'Go to Home to get quick orientation. It explains Basic vs Advanced mode and gives one-click shortcuts.';
     if(/practice/.test(t))return 'Open the Practice tab, paste your script, choose your role, and click Start Practice.';
     if(/presentation|hint/.test(t))return 'Open Presentation, choose hint level (Full, Word, Off), then start. Lines are hidden first for recall training.';
-    if(/settings|api|key|model|endpoint/.test(t))return 'Open Settings to add your optional API key, model, and endpoint. Without a key, the app still runs in Basic mode.';
+    if(/settings|api|key|model|endpoint|provider/.test(t))return 'Open Settings, choose an AI provider, paste its API key, and run Test Connection. Without a connected provider, the app stays in Basic mode.';
     if(/chatbot|assistant|help/.test(t))return 'I can guide navigation, explain features, and answer setup questions. Add an API key in Settings for free-form AI answers.';
     if(/score|evaluate|accuracy/.test(t))return 'AI scoring is an advanced feature with API key. In Basic mode, Speavio uses local word-match feedback.';
     return 'Try asking about Home, Practice, Presentation, Settings, API setup, or scoring. I can help you find anything quickly.';
@@ -38,14 +38,14 @@ function sendAssistantMessage(){
     inp.value='';
     pushAssistantMessage('user',q);
 
-    if(!S.apiKey){
+    if(!S.aiConnected){
         pushAssistantMessage('bot',getLocalAssistantReply(q));
         return;
     }
 
     pushAssistantMessage('bot','Thinking...');
     var botNode=$('assist-msgs').lastElementChild;
-    callGLM([
+    callAI([
         {role:'system',content:'You are Speavio Assistant. Help users navigate Home, Practice, Presentation, and Settings. Keep answers concise and practical.'},
         {role:'user',content:q}
     ],280).then(function(resp){

@@ -305,15 +305,62 @@ function setPreferredAudioDevice(kind,deviceId){
 }
 
 function refreshAdvancedState(){
-    var hasKey=!!S.apiKey;
+    var connected=!!(S.aiConnected&&S.apiKey);
+    var provider=S.aiProvider?AI_PROVIDERS[S.aiProvider]:null;
+    var providerName=provider?provider.name:'';
     var badge=$('advanced-badge');
     if(badge){
-        badge.innerHTML=hasKey
-            ?'<i class="fas fa-circle text-[8px] text-sage-400"></i><span>'+esc(t('advancedMode'))+'</span>'
-            :'<i class="fas fa-circle text-[8px] text-coral-400"></i><span>'+esc(t('basicMode'))+'</span>';
+        badge.innerHTML=connected
+            ?'<span class="ai-active-dot"></span><span>AI Active — '+esc(providerName)+'</span>'
+            :'<i class="fas fa-circle text-[8px] text-coral-400"></i><span>No AI — Basic mode</span>';
+        badge.className='mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs '
+            +(connected?'bg-sage-500/15 border-sage-500/30 text-sage-400 ai-active-badge':'bg-white/5 border-white/10 text-sf-200');
+    }
+    var navbar=$('app-navbar');
+    if(navbar)navbar.classList.toggle('ai-active',connected);
+    var navbarStatus=$('navbar-ai-status');
+    if(navbarStatus){
+        navbarStatus.classList.toggle('hidden',!connected);
+        navbarStatus.classList.toggle('flex',connected);
+        var navbarStatusText=navbarStatus.querySelector('span:last-child');
+        if(navbarStatusText)navbarStatusText.textContent=connected?('AI Active — '+providerName):'AI Active';
     }
     var modeLbl=$('assist-mode-label');
-    if(modeLbl)modeLbl.textContent=hasKey?t('assistantAdvanced'):t('assistantBasic');
+    if(modeLbl)modeLbl.textContent=connected?(providerName+' AI active'):'Basic guide mode';
+}
+
+function selectAIProvider(providerKey){
+    var provider=AI_PROVIDERS[providerKey];
+    if(!provider)return;
+    _activeProvider=providerKey;
+    S.aiProvider=providerKey;
+    S.aiConnected=false;
+    S.apiEndpoint=provider.endpoint||'';
+    S.apiModel=provider.model||'';
+
+    document.querySelectorAll('.provider-btn').forEach(function(btn){
+        var isActive=btn.dataset.provider===providerKey;
+        btn.className='provider-btn relative flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all cursor-pointer '
+            +(isActive?'border-copper-500 bg-copper-500/15 text-copper-400':'border-white/10 bg-white/3 text-sf-300 hover:border-white/20 hover:text-sf-100');
+    });
+    var keyLink=$('api-key-link');
+    if(keyLink){
+        if(provider.keyUrl){
+            keyLink.href=provider.keyUrl;
+            keyLink.querySelector('span').textContent='Get your '+provider.name+' API key →';
+            keyLink.classList.remove('hidden');
+        }else{
+            keyLink.classList.add('hidden');
+        }
+    }
+    var advancedFields=$('api-advanced-fields');
+    if(advancedFields)advancedFields.classList.toggle('hidden',providerKey!=='other');
+    if($('api-step-2'))$('api-step-2').classList.remove('hidden');
+    if($('api-step-3'))$('api-step-3').classList.remove('hidden');
+    if($('api-endpoint'))$('api-endpoint').value=S.apiEndpoint;
+    if($('model-input'))$('model-input').value=S.apiModel;
+    if($('api-test-status'))$('api-test-status').textContent='';
+    refreshAdvancedState();
 }
 
 var ACCOUNT_SCOPED_STORAGE_KEYS=(function(){

@@ -39,49 +39,38 @@ function fetchELVoices(){
 ═══════════════════════════════════════════════════════════════ */
 
 function testAPIConnection(){
-    var key=S.apiKey||$('api-key').value.trim();
+    var key=S.apiKey||($('api-key')?$('api-key').value.trim():'');
     if(!key){toast('Enter your API key first.','info');return}
     S.apiKey=key;
-    var btn=$('test-api-btn');
-    var origHTML=btn.innerHTML;
-    btn.innerHTML='<i class="fas fa-spinner fa-spin text-xs text-copper-400"></i>';
-    btn.disabled=true;
+    var provider=S.aiProvider?AI_PROVIDERS[S.aiProvider]:null;
+    var endpoint=(provider&&provider.endpoint)||S.apiEndpoint||'';
+    var model=(provider&&provider.model)||S.apiModel||'';
+    if(!provider||!endpoint||!model){toast('Select and configure a provider first.','info');return}
 
-    var c=new AbortController(),t=setTimeout(function(){c.abort()},30000);
-    /* Standard OpenAI-compatible test call */
-    fetch(S.apiProxy||API_PROXY,{
-        method:'POST',
-        headers:{
-            'Content-Type':'application/json',
-            'Authorization':'Bearer '+key,
-            'X-Target-Url':S.apiEndpoint
-        },
-        body:JSON.stringify({
-            model:S.apiModel||_workingModel||MODEL,
-            messages:[{role:'user',content:'Say hello in one word.'}],
-            max_tokens:20
-        }),
-        signal:c.signal
-    }).then(function(r){
-        clearTimeout(t);
-        if(!r.ok)return r.text().then(function(b){
-            if(b.trim().charAt(0)==='<')throw new Error('API proxy route not found. Check App Proxy URL in Settings.');
-            var errObj=extractJSON(b);
-            if(errObj)throw new Error(errObj.error||errObj.message||('Error '+r.status));
-            throw new Error('Error '+r.status+': '+b.slice(0,100));
-        });
-        return r.text();
-    }).then(function(resp){
-        btn.innerHTML=origHTML;btn.disabled=false;
-        toast('API connection works! Response: "'+resp.trim().slice(0,40)+'"','success');
+    var btn=$('test-api-btn');
+    var statusEl=$('api-test-status');
+    if(btn){btn.disabled=true;btn.innerHTML='<div class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block"></div><span class="ml-2">Testing scoring...</span>'}
+    if(statusEl){statusEl.textContent='Testing a real scoring response...';statusEl.className='text-xs text-sf-300 min-h-[1rem]'}
+
+    callAI([
+        {role:'system',content:'You are a speech coach AI. Respond only in valid JSON.'},
+        {role:'user',content:'Score this response. Expected: "Hello world". Student said: "Hello world". Return JSON: {"score":95,"accuracy":"Perfect match."}'}
+    ],100).then(function(resp){
+        var parsed=extractJSON(resp);
+        if(!parsed||parsed.score==null||isNaN(Number(parsed.score)))throw new Error('Provider responded, but AI scoring JSON was invalid.');
+        S.aiConnected=true;
+        if(statusEl){statusEl.textContent='Connected — AI scoring is active';statusEl.className='text-xs text-sage-400 min-h-[1rem]'}
+        refreshAdvancedState();
+        toast('AI connected! Scoring is now active.','success');
     }).catch(function(err){
-        clearTimeout(t);
-        btn.innerHTML=origHTML;btn.disabled=false;
-        var msg=err.message||'Unknown error';
-        if(msg.indexOf('Invalid')!==-1||msg.indexOf('401')!==-1)toast('Invalid API key — double check and try again.','error');
-        else if(msg.indexOf('fetch')!==-1)toast('Cannot reach your proxy server. Check App Proxy URL in Settings.','error');
-        else toast('Connection failed: '+msg,'error');
+        S.aiConnected=false;
+        var msg=err.message||'Connection failed';
+        if(statusEl){statusEl.textContent='Connection failed: '+msg;statusEl.className='text-xs text-coral-400 min-h-[1rem]'}
+        refreshAdvancedState();
+        toast('Connection failed: '+msg,'error');
         console.error('API test error:',err);
+    }).then(function(){
+        if(btn){btn.disabled=false;btn.innerHTML='<i class="fas fa-plug mr-2"></i>Test Connection'}
     });
 }
 
@@ -114,64 +103,46 @@ function extractJSON(raw){
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   callGLM — Standard OpenAI-compatible API call
-   - Uses Authorization: Bearer header (universal format)
-   - Auto-retries with MODEL_FALLBACK on "Unknown Model" error
-   - Caches the working model for the session
+   callAI — Standard OpenAI-compatible API call
 ═══════════════════════════════════════════════════════════════ */
-function callGLM(msgs,maxTok){
+function callAI(msgs,maxTok){
     var tk=maxTok||800;
-    var endpoint=S.apiEndpoint||'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-    var explicitModel=(S.apiModel||'').trim();
-    function tryModel(modelList){
-        var model=modelList.shift();
-        if(!model)return Promise.reject(new Error('No working model found for your API key.'));
-        var c=new AbortController(),t=setTimeout(function(){c.abort()},60000);
-        return fetch(S.apiProxy||API_PROXY,{
-            method:'POST',
-            headers:{
-                'Content-Type':'application/json',
-                'Authorization':'Bearer '+S.apiKey,
-                'X-Target-Url':endpoint
-            },
-            body:JSON.stringify({
-                model:model,
-                messages:msgs,
-                temperature:0.3,
-                max_tokens:tk
-            }),
-            signal:c.signal
-        }).then(function(r){
-            clearTimeout(t);
-            if(!r.ok)return r.text().then(function(b){
-                if(b.trim().charAt(0)==='<')throw new Error('API proxy route not found. Verify App Proxy URL in Settings.');
-                var errObj=extractJSON(b);
-                if(errObj)throw new Error(errObj.error||errObj.message||('API error '+r.status));
-                throw new Error('API error ('+r.status+'): '+b.slice(0,200));
-            });
-            return r.text();
-        }).then(function(raw){
-            if(!raw)throw new Error('Empty response from API.');
-            /* Remember the working model */
-            _workingModel=model;
-            return raw;
-        }).catch(function(err){
-            clearTimeout(t);
-            /* If "Unknown Model", try the next one in the list */
-            if(!explicitModel&&err.message&&err.message.indexOf('Unknown Model')!==-1&&modelList.length){
-                console.warn('Model "'+model+'" not available, trying next...');
-                return tryModel(modelList);
-            }
-            throw err;
+    var provider=S.aiProvider?AI_PROVIDERS[S.aiProvider]:null;
+    var endpoint=(provider&&provider.endpoint)||S.apiEndpoint||'';
+    var model=(provider&&provider.model)||S.apiModel||'';
+    if(!S.apiKey)return Promise.reject(new Error('No API key set.'));
+    if(!endpoint||!model)return Promise.reject(new Error('No provider selected or configured.'));
+
+    var c=new AbortController(),t=setTimeout(function(){c.abort()},60000);
+    return fetch(S.apiProxy||API_PROXY,{
+        method:'POST',
+        headers:{
+            'Content-Type':'application/json',
+            'Authorization':'Bearer '+S.apiKey,
+            'X-Target-Url':endpoint
+        },
+        body:JSON.stringify({model:model,messages:msgs,temperature:0.3,max_tokens:tk}),
+        signal:c.signal
+    }).then(function(r){
+        clearTimeout(t);
+        if(!r.ok)return r.text().then(function(b){
+            if(b.trim().charAt(0)==='<')throw new Error('API proxy route not found. Verify App Proxy URL in Settings.');
+            var errObj=extractJSON(b);
+            if(errObj)throw new Error(errObj.error||errObj.message||('API error '+r.status));
+            throw new Error('API error ('+r.status+'): '+b.slice(0,200));
         });
-    }
-    /* If we already found a working model, use it directly */
-    var models=explicitModel?[explicitModel]:(_workingModel?[_workingModel]:MODEL_FALLBACK.slice());
-    return tryModel(models);
+        return r.text();
+    }).then(function(raw){
+        if(!raw)throw new Error('Empty response from API.');
+        return raw;
+    }).catch(function(err){
+        clearTimeout(t);
+        throw err;
+    });
 }
 
 function evalResponse(ctx,expected,response,isPres){
-    if(!S.apiKey)return Promise.resolve(getBasicEvaluation(expected,response,isPres));
+    if(!S.aiConnected)return Promise.resolve(getBasicEvaluation(expected,response,isPres));
     var ln=LANG[S.language].name;
     var cs=ctx.map(function(l){return l.role+': '+l.text}).join('\n');
     var scoringRules='\n\nIMPORTANT scoring rules:\n- Strip ALL punctuation (commas, periods, colons, semicolons, dashes, quotes, parentheses) before comparing words\n- People do NOT speak punctuation — ignore it entirely when scoring\n- Score based on WORD-LEVEL accuracy: correct_words / total_words × 100\n- If 9 of 10 words are correct, score ~90. Do NOT give 0 for one wrong word\n- Accept minor variations: a/an/the, contractions (don\'t/do not), slight word order differences\n- Be GENEROUS — the score should reward what they got RIGHT, not punish mistakes\n- Also include short delivery coaching for pace/volume in "delivery_notes" (e.g. "Speak slightly slower", "Project your voice more")';
@@ -182,7 +153,7 @@ function evalResponse(ctx,expected,response,isPres){
         ?'Context:\n'+cs+'\n\nExpected for "'+S.userRoles.join(' / ')+'": "'+expected+'"\nStudent said: "'+response+'"\n\nReturn JSON:\n{"score":<0-100>,"correct_words":"<yes or no>","pronunciation":"<1 sentence>","accuracy":"<1 sentence>","fluency":"<1 sentence>","corrections":["..."],"encouragement":"<positive>","suggestions":["..."],"delivery_notes":["..."]}'
         :'Context:\n'+cs+'\n\nExpected for "'+S.userRoles.join(' / ')+'": "'+expected+'"\nStudent said: "'+response+'"\n\nReturn JSON:\n{"score":<0-100>,"correct_words":"<yes or no>","accuracy":"<1 sentence>","grammar":"<1 sentence>","fluency":"<1 sentence>","corrections":["..."],"encouragement":"<positive>","suggestions":["..."],"delivery_notes":["..."]}';
 
-    return callGLM([{role:'system',content:sysPrompt},{role:'user',content:userPrompt}]).then(function(raw){
+    return callAI([{role:'system',content:sysPrompt},{role:'user',content:userPrompt}]).then(function(raw){
         var p=extractJSON(raw);
         if(p){
             /* Use local word diff as a sanity check — if AI is too harsh,

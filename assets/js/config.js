@@ -1,37 +1,37 @@
-/* ═══════════════════════════════════════════════════════════════
-   CONFIG — Change these to match your provider
-═══════════════════════════════════════════════════════════════ */
-/*
-   ┌──────────────────────────────────────────────────────────┐
-   │  MODEL — Change ONE word to switch AI providers:        │
-   │                                                          │
-   │  GLM (z.ai):   glm-4-air, glm-4-air-x, glm-4-plus,     │
-   │                 glm-4-flash, glm-4-long, glm-3-turbo     │
-   │  OpenAI:       gpt-4o, gpt-4o-mini, gpt-3.5-turbo      │
-   │  Anthropic:    claude-3-sonnet (via compatible proxy)   │
-   │  Groq:         llama-3.3-70b-versatile, mixtral-8x7b   │
-   │  DeepSeek:     deepseek-chat, deepseek-reasoner         │
-   └──────────────────────────────────────────────────────────┘
-*/
-var MODEL = 'glm-4-air';
+/* AI Provider configs — auto-set when user picks a provider */
+var AI_PROVIDERS = {
+    groq: {
+        name: 'Groq',
+        endpoint: 'https://api.groq.com/openai/v1/chat/completions',
+        model: 'llama-3.3-70b-versatile',
+        keyUrl: 'https://console.groq.com/keys',
+        badge: 'Free'
+    },
+    openai: {
+        name: 'OpenAI',
+        endpoint: 'https://api.openai.com/v1/chat/completions',
+        model: 'gpt-4o-mini',
+        keyUrl: 'https://platform.openai.com/api-keys',
+        badge: null
+    },
+    gemini: {
+        name: 'Gemini',
+        endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+        model: 'gemini-2.0-flash',
+        keyUrl: 'https://aistudio.google.com/app/apikey',
+        badge: 'Free'
+    },
+    other: {
+        name: 'Other',
+        endpoint: '',
+        model: '',
+        keyUrl: null,
+        badge: null
+    }
+};
 
-/*
-   MODEL_FALLBACK — If MODEL fails with "Unknown Model", the app
-   automatically tries each model in this list until one works.
-   The working model is cached for the rest of the session.
-*/
-var MODEL_FALLBACK = [
-    'glm-4-air', 'glm-4-air-x', 'glm-4-plus', 'glm-4-flash',
-    'glm-4-long', 'glm-4v', 'glm-3-turbo'
-];
-var _workingModel = null; /* cached once a working model is found */
-
-/*
-   API_PROXY — URL of your server-side proxy.
-    Default: '/api/chat' (adjust in Settings for your backend route)
-   This proxy forwards requests to your configured AI provider endpoint.
-*/
 var API_PROXY = '/api/chat';
+var _activeProvider = null;
 
 var STORAGE_KEYS={
     sessions:'voqua_sessions',
@@ -126,7 +126,7 @@ var PS={HIDDEN:'hidden',HINT:'hint',REC:'rec',EVAL:'eval',RESULT:'result'};
 var S={
     screen:'setup',
     activeSetupTab:'home',
-    apiKey:'',apiProxy:API_PROXY,apiEndpoint:'https://open.bigmodel.cn/api/paas/v4/chat/completions',apiModel:'',premiumPlaceholder:false,
+    apiKey:'',apiProxy:API_PROXY,apiEndpoint:'',apiModel:'',aiProvider:'',aiConnected:false,premiumPlaceholder:false,
     systemLanguage:'en',
     language:'en',mode:'practice',
     lines:[],roles:[],userRoles:[],

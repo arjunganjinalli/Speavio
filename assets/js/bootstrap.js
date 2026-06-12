@@ -253,15 +253,15 @@ document.addEventListener('DOMContentLoaded',function(){
         });
     }
 
-    $('api-key').oninput=function(e){
+    if($('api-key'))$('api-key').oninput=function(e){
         S.apiKey=e.target.value.trim();
-        _workingModel=null;
+        S.aiConnected=false;
         refreshAdvancedState();
     };
-    $('model-input').oninput=function(e){S.apiModel=e.target.value.trim();_workingModel=null};
-    $('api-proxy').oninput=function(e){S.apiProxy=e.target.value.trim()||API_PROXY};
-    $('api-endpoint').oninput=function(e){S.apiEndpoint=e.target.value.trim();_workingModel=null};
-    $('premium-toggle').onchange=function(e){S.premiumPlaceholder=!!e.target.checked};
+    if($('model-input'))$('model-input').oninput=function(e){S.apiModel=e.target.value.trim();S.aiConnected=false;refreshAdvancedState()};
+    if($('api-proxy'))$('api-proxy').oninput=function(e){S.apiProxy=e.target.value.trim()||API_PROXY;S.aiConnected=false;refreshAdvancedState()};
+    if($('api-endpoint'))$('api-endpoint').oninput=function(e){S.apiEndpoint=e.target.value.trim();S.aiConnected=false;refreshAdvancedState()};
+    if($('premium-toggle'))$('premium-toggle').onchange=function(e){S.premiumPlaceholder=!!e.target.checked};
     $('system-language-select').onchange=function(e){S.systemLanguage=e.target.value;applySystemLanguage()};
     $('language-select-practice').onchange=function(e){
         S.language=e.target.value;
@@ -285,12 +285,13 @@ document.addEventListener('DOMContentLoaded',function(){
         };
     });
 
-    $('api-key').value=S.apiKey;
-    $('model-input').value=S.apiModel||MODEL;
-    $('api-proxy').value=S.apiProxy||API_PROXY;
-    $('api-endpoint').value=S.apiEndpoint;
+    if($('api-key'))$('api-key').value=S.apiKey||'';
+    if($('model-input'))$('model-input').value=S.apiModel||'';
+    if($('api-proxy'))$('api-proxy').value=S.apiProxy||API_PROXY;
+    if($('api-endpoint'))$('api-endpoint').value=S.apiEndpoint||'';
+    if(S.aiProvider)selectAIProvider(S.aiProvider);
     $('system-language-select').value=S.systemLanguage;
-    $('premium-toggle').checked=!!S.premiumPlaceholder;
+    if($('premium-toggle'))$('premium-toggle').checked=!!S.premiumPlaceholder;
     syncScriptLanguageSelects();
 
     var pt;
