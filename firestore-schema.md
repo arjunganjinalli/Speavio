@@ -1,8 +1,8 @@
-# Voqua Firestore Database Schema
+# Speavio Firestore Database Schema
 
 ## Overview
 
-This document describes the Firestore database structure for the Voqua teacher-student classroom system.
+This document describes the Firestore database structure for the Speavio teacher-student classroom system.
 
 ---
 

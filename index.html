@@ -480,6 +480,10 @@
                     <button id="class-tab-assignments" onclick="showClassPageTab('assignments')" class="action-btn action-btn--copper min-h-[44px] px-5 text-sm" role="tab">Assignments</button>
                     <button id="class-tab-students" onclick="showClassPageTab('students')" class="action-btn min-h-[44px] px-5 text-sm" role="tab">Students</button>
                 </nav>
+                <nav id="class-page-student-tabs" class="hidden mt-5 flex gap-2" role="tablist" aria-label="Student class sections">
+                    <button id="class-tab-student-assignments" onclick="showStudentClassPageTab('assignments')" class="action-btn action-btn--copper min-h-[44px] px-5 text-sm" role="tab" aria-selected="true">Assignments</button>
+                    <button id="class-tab-grades" onclick="showStudentClassPageTab('grades')" class="action-btn min-h-[44px] px-5 text-sm" role="tab" aria-selected="false">Grades</button>
+                </nav>
             </div>
         </header>
         <main class="flex-1 w-full px-4 py-6 sm:py-8">

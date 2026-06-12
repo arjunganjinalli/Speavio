@@ -209,10 +209,11 @@ function openClassPage(classObj, role) {
     $('class-page-code').textContent = classObj.classCode || '';
     $('class-page-code').classList.toggle('hidden', !classObj.classCode);
     $('class-page-teacher-tabs').classList.toggle('hidden', role !== 'teacher');
+    $('class-page-student-tabs').classList.toggle('hidden', role !== 'student');
     ensureClassSettingsTab();
     switchScreen('class');
     if (role === 'teacher') showClassPageTab('assignments');
-    else showStudentAssignments(classObj.id, _clsCtx.className);
+    else showStudentClassPageTab('assignments');
 }
 
 function ensureClassSettingsTab() {
@@ -248,6 +249,24 @@ function showClassPageTab(tab) {
     if (tab === 'settings') showClassSettings();
     else if (tab === 'students') renderClassStudents();
     else showClassAssignments(_clsCtx.classId, _clsCtx.className);
+}
+
+function showStudentClassPageTab(tab) {
+    if (_clsCtx.role !== 'student') return;
+    tab = tab === 'grades' ? 'grades' : 'assignments';
+    _clsCtx.activeTab = tab;
+    var assignmentsTab = $('class-tab-student-assignments');
+    var gradesTab = $('class-tab-grades');
+    if (assignmentsTab) {
+        assignmentsTab.className = 'action-btn min-h-[44px] px-5 text-sm' + (tab === 'assignments' ? ' action-btn--copper' : '');
+        assignmentsTab.setAttribute('aria-selected', tab === 'assignments' ? 'true' : 'false');
+    }
+    if (gradesTab) {
+        gradesTab.className = 'action-btn min-h-[44px] px-5 text-sm' + (tab === 'grades' ? ' action-btn--copper' : '');
+        gradesTab.setAttribute('aria-selected', tab === 'grades' ? 'true' : 'false');
+    }
+    if (tab === 'grades') showStudentGrades(_clsCtx.classId);
+    else showStudentAssignments(_clsCtx.classId, _clsCtx.className);
 }
 
 function showClassSettings(message, isError) {
@@ -400,6 +419,88 @@ function showStudentAssignments(classId, className) {
     }).catch(function(err) {
         list.innerHTML = '<p class="text-coral-400 text-sm">Failed to load assignments.</p>';
         console.error(err);
+    });
+}
+
+function studentGradeScore(submission) {
+    if (!submission || submission.status !== 'graded') return null;
+    var grade = String(submission.teacherGrade || '').trim();
+    var numeric = Number(grade.replace(/%$/, ''));
+    if (grade && !isNaN(numeric)) return Math.max(0, Math.min(100, numeric));
+    var scale = _clsCtx.gradingScale && _clsCtx.gradingScale.length ? _clsCtx.gradingScale : defaultClassGradingScale();
+    var upperGrade = grade.toUpperCase();
+    for (var i = 0; i < scale.length; i++) {
+        if (String(scale[i].letter).toUpperCase() === upperGrade) {
+            return (Number(scale[i].min) + Number(scale[i].max)) / 2;
+        }
+    }
+    return submissionAverage(submission.lineScores);
+}
+
+function studentOverallGrade(rows) {
+    var groups = { practice: [], presentation: [], other: [] };
+    rows.forEach(function(row) {
+        if (row.score == null) return;
+        var type = row.assignment.type === 'practice' || row.assignment.type === 'presentation' ? row.assignment.type : 'other';
+        groups[type].push(row.score);
+    });
+    var activeGroups = Object.keys(groups).filter(function(type) { return groups[type].length; });
+    if (!activeGroups.length) return null;
+    var weights = _clsCtx.weights || { presentation: 50, practice: 50 };
+    var weightedTotal = 0;
+    var totalWeight = 0;
+    activeGroups.forEach(function(type) {
+        var average = groups[type].reduce(function(total, score) { return total + score; }, 0) / groups[type].length;
+        var weight = type === 'other' ? 50 : Number(weights[type]);
+        if (!isFinite(weight) || weight <= 0) weight = 50;
+        weightedTotal += average * weight;
+        totalWeight += weight;
+    });
+    return totalWeight ? Math.round(weightedTotal / totalWeight) : null;
+}
+
+function showStudentGrades(classId) {
+    var list = $('class-page-content');
+    if (!list || !S.authUser) return;
+    list.innerHTML = '<div class="flex items-center gap-3 py-4"><div class="spinner"></div><span class="text-sf-300 text-base">Loading grades...</span></div>';
+    getClassAssignments(classId).then(function(assignments) {
+        return getStudentAssignmentSubmissions(assignments.map(function(a) { return a.id; }), S.authUser.uid).then(function(submissions) {
+            var submissionMap = {};
+            submissions.forEach(function(submission) { submissionMap[submission.assignmentId] = submission; });
+            return assignments.map(function(assignment) {
+                var submission = submissionMap[assignment.id] || null;
+                return { assignment: assignment, submission: submission, score: studentGradeScore(submission) };
+            });
+        });
+    }).then(function(rows) {
+        if (_clsCtx.activeTab !== 'grades') return;
+        var overall = studentOverallGrade(rows);
+        var overallLetter = overall == null ? '' : gradeFromClassScale(overall);
+        var gradedCount = rows.filter(function(row) { return row.score != null; }).length;
+        var html = '<div class="student-grade-summary mini-card mb-6">'
+            + '<div><p class="text-sm font-semibold uppercase tracking-wide text-sf-300">Overall Grade</p>'
+            + '<div class="flex items-end gap-3 mt-2"><span class="student-overall-grade">' + (overall == null ? '—' : overall + '%') + '</span>'
+            + (overallLetter ? '<span class="student-letter-grade">' + esc(overallLetter) + '</span>' : '') + '</div>'
+            + '<p class="text-base text-sf-200 mt-2">Based on ' + gradedCount + ' graded assignment' + (gradedCount === 1 ? '' : 's') + '.</p></div></div>'
+            + '<div class="mb-5"><h2 class="font-display font-bold text-2xl text-sf-50">Assignment Grades</h2>'
+            + '<p class="text-base text-sf-300 mt-1">See the grade received for each assignment.</p></div>'
+            + '<div class="space-y-4">';
+        if (!rows.length) {
+            html += '<div class="mini-card"><p class="text-sf-300 text-base">No assignments yet.</p></div>';
+        } else {
+            html += rows.map(function(row) {
+                var submission = row.submission;
+                var receivedGrade = submission && submission.status === 'graded' ? (submission.teacherGrade || gradeFromClassScale(row.score) || Math.round(row.score)) : 'Not graded';
+                var statusClass = submission && submission.status === 'graded' ? 'student-grade-received' : 'student-grade-pending';
+                return '<div class="mini-card flex items-center justify-between gap-5 flex-wrap">'
+                    + '<div><div class="font-display font-semibold text-xl text-sf-50">' + esc(row.assignment.title || 'Assignment') + '</div>'
+                    + '<div class="text-base text-sf-300 mt-2">' + esc(row.assignment.type === 'presentation' ? 'Presentation' : row.assignment.type === 'practice' ? 'Practice' : 'Assignment') + ' · Due ' + esc(formatAssignmentDue(row.assignment.dueDate)) + '</div></div>'
+                    + '<div class="text-right"><p class="text-sm text-sf-300 mb-1">Grade received</p><span class="' + statusClass + '">' + esc(receivedGrade) + '</span></div></div>';
+            }).join('');
+        }
+        list.innerHTML = html + '</div>';
+    }).catch(function(err) {
+        list.innerHTML = '<p class="text-coral-400 text-base">' + esc(err.message || 'Failed to load grades.') + '</p>';
     });
 }
 
