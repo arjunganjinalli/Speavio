@@ -130,6 +130,7 @@ document.addEventListener('DOMContentLoaded',function(){
         if($('assist-fab'))$('assist-fab').classList.add('hidden');
         if($('navbar-signin-btn'))$('navbar-signin-btn').classList.remove('hidden');
         if($('navbar-auth-chip'))$('navbar-auth-chip').classList.add('hidden');
+        applyRoleTabVisibility();
         initClassesTab();
         switchScreen('login');
     }
@@ -137,8 +138,9 @@ document.addEventListener('DOMContentLoaded',function(){
     function applyRoleTabVisibility(){
         var practiceTab=$('tab-practice');
         var presentationTab=$('tab-presentation');
-        if(practiceTab)practiceTab.classList.remove('hidden');
-        if(presentationTab)presentationTab.classList.remove('hidden');
+        var isTeacher=!!(S.isAuthenticated&&S.userProfile&&S.userProfile.role==='teacher');
+        if(practiceTab)practiceTab.classList.toggle('hidden',isTeacher);
+        if(presentationTab)presentationTab.classList.toggle('hidden',isTeacher);
     }
 
     function runAuthenticatedStartup(){

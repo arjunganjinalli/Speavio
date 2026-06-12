@@ -226,6 +226,9 @@ function navigateAppTab(tab){
 }
 
 function showSetupTab(tab){
+    if(S.isAuthenticated&&S.userProfile&&S.userProfile.role==='teacher'&&(tab==='practice'||tab==='presentation')){
+        tab='home';
+    }
     if(!S.isAuthenticated&&(tab==='practice'||tab==='presentation')&&hasUsedFreeTrial()){
         showTrialWall();
         return false;
