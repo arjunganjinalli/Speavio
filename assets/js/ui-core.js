@@ -917,7 +917,8 @@ function inquireClassroom(){
     var email=S.authUser?S.authUser.email:'';
     var subject=encodeURIComponent('Classroom Features Inquiry — Speavio');
     var body=encodeURIComponent('Hi,\n\nI would like to inquire about classroom features for my organization.\n\nName: '+( S.userProfile&&S.userProfile.fullName||'')+'\nEmail: '+email+'\nSchool/Org: '+(S.userProfile&&S.userProfile.school||'')+'\n\nPlease let me know what information you need.\n\nThank you.');
-    window.open('mailto:arjunganjinalli@gmail.com?subject='+subject+'&body='+body);
+    var gmail='https://mail.google.com/mail/?view=cm&to=arjunganjinalli@gmail.com&su='+subject+'&body='+body;
+    window.open(gmail,'_blank');
     toast('Opening your email client...','info');
 }
 

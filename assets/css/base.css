@@ -694,3 +694,41 @@ html[data-theme='light'] .toast {
     background: #1a1a1a;
     color: #ffffff;
 }
+
+.home-hero-title {
+    font-size: clamp(2.8rem, 7vw, 5rem);
+    animation: hero-breathe 4s ease-in-out infinite;
+    background: linear-gradient(135deg, #f0e6d3, #C8956C, #5BB882);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.home-hero-sub {
+    font-size: clamp(0.95rem, 2vw, 1.2rem);
+    animation: hero-breathe 4s ease-in-out infinite 0.5s;
+}
+
+.home-stat-num {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    animation: stat-glow 3s ease-in-out infinite;
+}
+
+.home-logo-pulse {
+    animation: logo-pulse 3s ease-in-out infinite;
+}
+
+@keyframes hero-breathe {
+    0%, 100% { opacity: 0.85; transform: scale(1); }
+    50%       { opacity: 1;    transform: scale(1.03); }
+}
+
+@keyframes stat-glow {
+    0%, 100% { filter: drop-shadow(0 0 6px currentColor); transform: scale(1); }
+    50%       { filter: drop-shadow(0 0 18px currentColor); transform: scale(1.06); }
+}
+
+@keyframes logo-pulse {
+    0%, 100% { transform: scale(1);    box-shadow: 0 0 20px rgba(200,149,108,0.3); }
+    50%       { transform: scale(1.06); box-shadow: 0 0 40px rgba(200,149,108,0.6); }
+}

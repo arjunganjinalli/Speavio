@@ -149,21 +149,24 @@
             <div class="setup-main-card glass rounded-2xl p-8 sm:p-10 space-y-8">
                 <section id="panel-home" class="setup-panel active flow-bg" role="tabpanel">
                     <div id="home-standard-dashboard">
-                    <div class="flex flex-col items-center justify-center py-12 gap-4">
-                        <img src="assets/img/speavio-logo.png" alt="Speavio" class="w-20 h-20 rounded-2xl shadow-lg">
-                        <div class="text-center">
-                            <h1 class="font-display font-bold text-3xl text-sf-50">Speavio</h1>
-                            <p class="text-sf-300 text-sm mt-1">Your AI-powered speech coach</p>
+                    <div class="flex flex-col items-center justify-center py-16 gap-6 text-center">
+                        <div class="relative">
+                            <img src="assets/img/speavio-logo.png" alt="Speavio" class="w-24 h-24 rounded-3xl shadow-2xl home-logo-pulse">
+                            <div class="absolute inset-0 rounded-3xl bg-copper-500/30 blur-2xl animate-pulse -z-10"></div>
                         </div>
-                        <div class="flex gap-6 mt-2">
+                        <div>
+                            <h1 class="font-display font-bold text-sf-50 home-hero-title">Speavio</h1>
+                            <p class="text-sf-300 mt-2 home-hero-sub">Your AI-powered speech coach</p>
+                        </div>
+                        <div class="flex gap-10 mt-2">
                             <div class="text-center">
-                                <div id="home-sessions" class="font-display font-bold text-2xl text-copper-400">0</div>
-                                <div class="text-xs text-sf-300">Sessions</div>
+                                <div id="home-sessions" class="font-display font-bold text-copper-400 home-stat-num">0</div>
+                                <div class="text-xs text-sf-300 mt-1 uppercase tracking-widest">Sessions</div>
                             </div>
                             <div class="w-px bg-white/10"></div>
                             <div class="text-center">
-                                <div id="home-last-score" class="font-display font-bold text-2xl text-sage-400">—</div>
-                                <div class="text-xs text-sf-300">Last Score</div>
+                                <div id="home-last-score" class="font-display font-bold text-sage-400 home-stat-num">—</div>
+                                <div class="text-xs text-sf-300 mt-1 uppercase tracking-widest">Last Score</div>
                             </div>
                         </div>
                     </div>
