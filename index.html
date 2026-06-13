@@ -52,7 +52,7 @@
     </nav>
 
     <!-- LANDING / SIGNED OUT -->
-    <div id="login-screen" class="screen active min-h-screen items-center justify-center p-4">
+    <div id="login-screen" class="screen active min-h-screen items-center justify-center p-4 flow-bg">
         <main id="landing-content" class="landing-shell">
             <section class="landing-hero">
                 <h1 class="landing-title gradient-text">Speavio</h1>
@@ -60,24 +60,24 @@
                 <p class="landing-copy">Rehearse scripts, strengthen delivery, and get clear feedback as you speak. Practice independently or connect learning through your classroom.</p>
             </section>
             <section class="landing-features" aria-label="Speavio features">
-                <button class="landing-feature-card" data-guest-tab="practice">
+                <button class="landing-feature-card flow-card" data-guest-tab="practice">
                     <i class="fas fa-microphone-lines"></i>
                     <strong>Practice Mode</strong>
                     <span>Build confidence one line at a time.</span>
                 </button>
-                <button class="landing-feature-card" data-guest-tab="presentation">
+                <button class="landing-feature-card flow-card" data-guest-tab="presentation">
                     <i class="fas fa-masks-theater"></i>
                     <strong>Presentation Mode</strong>
                     <span>Rehearse a full delivery from memory.</span>
                 </button>
-                <button class="landing-feature-card" data-app-tab="classes">
+                <button class="landing-feature-card flow-card" data-app-tab="classes">
                     <i class="fas fa-chalkboard"></i>
                     <strong>Classroom</strong>
                     <span>Share assignments and track progress.</span>
                 </button>
             </section>
             <div class="landing-cta">
-                <button data-open-auth="create" class="landing-primary-btn">Get Started Free</button>
+                <button data-open-auth="create" class="landing-primary-btn flow-btn">Get Started Free</button>
                 <button data-open-auth="signin" class="landing-signin-link">Sign In</button>
             </div>
         </main>
@@ -132,10 +132,10 @@
     <div id="setup-screen" class="screen min-h-screen">
         <div class="w-full">
             <div class="setup-main-card glass rounded-2xl p-8 sm:p-10 space-y-8">
-                <section id="panel-home" class="setup-panel active" role="tabpanel">
+                <section id="panel-home" class="setup-panel active flow-bg" role="tabpanel">
                     <div id="home-standard-dashboard">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <div class="mini-card">
+                        <div class="flow-card p-6">
                             <h3 class="text-sf-50 font-display font-semibold mb-1" data-i18n="homeQuickTitle">Get Around Quickly</h3>
                             <p class="text-sm text-sf-300" data-i18n="homeQuickBody">Build confidence one line at a time in Practice, or rehearse your full script in Presentation.</p>
                             <div class="mt-3 flex flex-wrap gap-2">
@@ -144,7 +144,7 @@
                                 <button onclick="showSetupTab('settings')" class="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sf-200 text-xs font-semibold" data-i18n="homeOpenSettings">Open Settings</button>
                             </div>
                         </div>
-                        <div class="mini-card">
+                        <div class="flow-card p-6">
                             <h3 class="text-sf-50 font-display font-semibold mb-1" data-i18n="homeModeTitle">Basic vs Advanced</h3>
                             <p class="text-sm text-sf-300" data-i18n="homeModeBody">Basic mode works without API keys. Add any OpenAI-compatible API key in Settings to unlock advanced AI features.</p>
                             <div id="advanced-badge" class="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-sf-200">
@@ -153,11 +153,11 @@
                             </div>
                         </div>
                     </div>
-                    <div class="mini-card mt-4">
+                    <div class="flow-card mt-4 p-6">
                         <h3 class="text-sf-50 font-display font-semibold mb-1" data-i18n="homeHelpTitle">Need Help?</h3>
                         <p class="text-sm text-sf-300" data-i18n="homeHelpBody">Use the assistant bubble in the bottom-right to ask where features are, what each mode does, and how to configure advanced setup.</p>
                     </div>
-                    <div class="mini-card mt-4">
+                    <div class="flow-card mt-4 p-6">
                         <h3 class="text-sf-50 font-display font-semibold mb-1">Progress Snapshot</h3>
                         <div class="grid grid-cols-3 gap-3 mt-3">
                             <div class="bg-white/3 rounded-lg p-2 text-center">
@@ -174,7 +174,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="mini-card mt-4">
+                    <div class="flow-card mt-4 p-6">
                         <div class="flex items-center justify-between gap-2 mb-2">
                             <h3 class="text-sf-50 font-display font-semibold">Leaderboard</h3>
                             <span class="text-[10px] text-sf-300">Per-script average</span>
@@ -183,7 +183,7 @@
                             <div class="text-sf-300">Complete a session to populate leaderboard rankings.</div>
                         </div>
                     </div>
-                    <div class="mini-card mt-4 p-6 flex flex-col gap-3">
+                    <div class="flow-card mt-4 p-6 flex flex-col gap-3">
                         <div class="flex items-center gap-3">
                             <span class="w-10 h-10 rounded-xl bg-copper-500/15 border border-copper-500/25 flex items-center justify-center">
                                 <i class="fas fa-school text-copper-400"></i>
@@ -208,19 +208,19 @@
                             <button onclick="showSetupTab('classes')" class="action-btn action-btn--copper min-h-[48px] px-6 text-base"><i class="fas fa-chalkboard mr-2"></i>Open Classes</button>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-6">
-                            <div class="mini-card"><p class="text-sm text-sf-300">Classes</p><div id="teacher-home-class-count" class="text-3xl font-display font-bold text-sf-50 mt-2">0</div></div>
-                            <div class="mini-card"><p class="text-sm text-sf-300">Need Grading</p><div id="teacher-home-grading-count" class="text-3xl font-display font-bold text-copper-400 mt-2">0</div></div>
-                            <div class="mini-card"><p class="text-sm text-sf-300">Upcoming Assignments</p><div id="teacher-home-due-count" class="text-3xl font-display font-bold text-sage-400 mt-2">0</div></div>
+                            <div class="flow-card p-6"><p class="text-sm text-sf-300">Classes</p><div id="teacher-home-class-count" class="text-3xl font-display font-bold text-sf-50 mt-2">0</div></div>
+                            <div class="flow-card p-6"><p class="text-sm text-sf-300">Need Grading</p><div id="teacher-home-grading-count" class="text-3xl font-display font-bold text-copper-400 mt-2">0</div></div>
+                            <div class="flow-card p-6"><p class="text-sm text-sf-300">Upcoming Assignments</p><div id="teacher-home-due-count" class="text-3xl font-display font-bold text-sage-400 mt-2">0</div></div>
                         </div>
                         <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                            <section class="mini-card">
+                            <section class="flow-card p-6">
                                 <div class="flex items-center justify-between gap-3 mb-4">
                                     <div><h3 class="text-xl text-sf-50 font-display font-semibold">Assignments Needing Grading</h3><p class="text-sm text-sf-300 mt-1">Submitted work awaiting a grade.</p></div>
                                     <i class="fas fa-clipboard-check text-copper-400 text-xl"></i>
                                 </div>
                                 <div id="teacher-home-grading-list" class="space-y-3"><div class="text-sf-300">Loading submissions...</div></div>
                             </section>
-                            <section class="mini-card">
+                            <section class="flow-card p-6">
                                 <div class="flex items-center justify-between gap-3 mb-4">
                                     <div><h3 class="text-xl text-sf-50 font-display font-semibold">Assignment Due Dates</h3><p class="text-sm text-sf-300 mt-1">Upcoming and recently overdue work.</p></div>
                                     <i class="fas fa-calendar-days text-sage-400 text-xl"></i>

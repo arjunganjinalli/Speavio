@@ -526,3 +526,67 @@
             #class-screen>header,#class-screen>main,#assignment-screen>header,#assignment-screen>main,#complete-screen>header,#complete-screen>main{padding:16px}
             #setup-screen .setup-panel{padding:24px}
         }
+
+/* Flowing animated gradient background */
+.flow-bg {
+    position: relative;
+    overflow: hidden;
+}
+.flow-bg::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background: radial-gradient(ellipse at 20% 50%, rgba(200,149,108,0.18) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(91,184,130,0.15) 0%, transparent 55%),
+                radial-gradient(ellipse at 60% 80%, rgba(212,115,110,0.12) 0%, transparent 50%),
+                #0e0f11;
+    background-size: 200% 200%;
+    animation: flow-gradient 12s ease-in-out infinite alternate;
+    pointer-events: none;
+}
+@keyframes flow-gradient {
+    0%   { background-position: 0% 50%; filter: hue-rotate(0deg); }
+    33%  { background-position: 50% 0%; filter: hue-rotate(8deg); }
+    66%  { background-position: 100% 50%; filter: hue-rotate(-8deg); }
+    100% { background-position: 50% 100%; filter: hue-rotate(0deg); }
+}
+.flow-bg > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* Glassy cards on flow-bg screens */
+.flow-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 20px;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+.flow-card:hover {
+    background: rgba(255,255,255,0.07);
+    transform: translateY(-2px);
+}
+
+/* Animated CTA button */
+.flow-btn {
+    background: linear-gradient(135deg, #C8956C, #E8B88A, #5BB882);
+    background-size: 200% 200%;
+    animation: flow-btn-shift 4s ease infinite;
+    border: none;
+    color: #0e0f11;
+    font-weight: 700;
+    border-radius: 14px;
+    transition: brightness 0.2s ease, transform 0.15s ease;
+}
+.flow-btn:hover {
+    brightness: 1.1;
+    transform: scale(1.02);
+}
+@keyframes flow-btn-shift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
