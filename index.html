@@ -600,40 +600,16 @@
             <div class="mb-6">
                 <div class="flex items-center justify-between mb-1">
                     <h1 class="text-2xl font-display font-bold text-sf-50">Set Up Your Account</h1>
-                    <span id="ob-step-label" class="text-xs text-sf-300">Step 1 of 3</span>
+                    <span id="ob-step-label" class="text-xs text-sf-300">Step 1 of 2</span>
                 </div>
                 <div class="ob-progress-bar mt-3">
-                    <div id="ob-progress-fill" class="ob-progress-fill" style="width:33.33%"></div>
+                    <div id="ob-progress-fill" class="ob-progress-fill" style="width:50%"></div>
                 </div>
             </div>
 
             <div id="ob-step-1">
-                <p class="text-sm text-sf-200 mb-5">How will you use Speavio?</p>
-                <div class="space-y-3">
-                    <button class="onboarding-role-card w-full" data-role="student" onclick="selectOnboardingRole('student')">
-                        <div class="flex items-center gap-4">
-                            <div class="ob-role-icon"><i class="fas fa-user-graduate text-xl"></i></div>
-                            <div class="text-left">
-                                <div class="font-display font-semibold text-sf-50">I'm a Student</div>
-                                <div class="text-xs text-sf-300 mt-0.5">Practice scripts, get AI feedback, track progress</div>
-                            </div>
-                        </div>
-                    </button>
-                    <button class="onboarding-role-card w-full" data-role="teacher" onclick="selectOnboardingRole('teacher')">
-                        <div class="flex items-center gap-4">
-                            <div class="ob-role-icon"><i class="fas fa-chalkboard-teacher text-xl"></i></div>
-                            <div class="text-left">
-                                <div class="font-display font-semibold text-sf-50">I'm a Teacher</div>
-                                <div class="text-xs text-sf-300 mt-0.5">Create assignments, manage classes, review submissions</div>
-                            </div>
-                        </div>
-                    </button>
-                </div>
-                <p id="ob-error-1" class="ob-error hidden mt-3">Please select a role to continue.</p>
-            </div>
-
-            <div id="ob-step-2" class="hidden space-y-4">
-                <p class="text-sm text-sf-200 mb-1">Tell us a bit about yourself.</p>
+                <p class="text-sm text-sf-200 mb-5">Tell us a bit about yourself to get started.</p>
+                <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-sf-200 mb-1.5">Full Name</label>
                     <input id="ob-name" type="text" placeholder="Your full name" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all" autocomplete="name">
@@ -643,17 +619,18 @@
                     <input id="ob-dob" type="date" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 outline-none transition-all">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-sf-200 mb-1.5">School</label>
-                    <input id="ob-school" type="text" placeholder="Your school name" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all" autocomplete="organization">
+                    <label class="block text-sm font-medium text-sf-200 mb-1.5">School or Organization</label>
+                    <input id="ob-school" type="text" placeholder="Your school or organization name" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all" autocomplete="organization">
                 </div>
                 <div>
-                    <label id="ob-grade-label" class="block text-sm font-medium text-sf-200 mb-1.5">Grade</label>
+                    <label class="block text-sm font-medium text-sf-200 mb-1.5">Grade</label>
                     <input id="ob-grade" type="text" placeholder="e.g. Grade 10 / Year 2" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none transition-all">
                 </div>
-                <p id="ob-error-2" class="ob-error hidden">Please fill in all fields.</p>
+                </div>
+                <p id="ob-error-1" class="ob-error hidden mt-3">Please fill in all fields to continue.</p>
             </div>
 
-            <div id="ob-step-3" class="hidden text-center py-4">
+            <div id="ob-step-2" class="hidden text-center py-4">
                 <div class="w-16 h-16 rounded-full bg-sage-500/15 border border-sage-500/25 flex items-center justify-center mx-auto mb-5">
                     <i class="fas fa-circle-check text-3xl text-sage-400"></i>
                 </div>

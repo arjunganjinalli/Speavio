@@ -138,9 +138,8 @@ document.addEventListener('DOMContentLoaded',function(){
     function applyRoleTabVisibility(){
         var practiceTab=$('tab-practice');
         var presentationTab=$('tab-presentation');
-        var isTeacher=!!(S.isAuthenticated&&S.userProfile&&S.userProfile.role==='teacher');
-        if(practiceTab)practiceTab.classList.toggle('hidden',isTeacher);
-        if(presentationTab)presentationTab.classList.toggle('hidden',isTeacher);
+        if(practiceTab)practiceTab.classList.remove('hidden');
+        if(presentationTab)presentationTab.classList.remove('hidden');
     }
 
     function runAuthenticatedStartup(){
@@ -203,7 +202,7 @@ document.addEventListener('DOMContentLoaded',function(){
         }
 
         db.collection('users').doc(S.authUser.uid).get().then(function(doc){
-            var needsOnboarding=!doc.exists||(doc.exists&&!doc.data().role);
+            var needsOnboarding=!doc.exists||(doc.exists&&!doc.data().fullName);
             if(!needsOnboarding){
                 S.userProfile=doc.data();
                 if(!appInitialized){

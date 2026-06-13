@@ -1,19 +1,13 @@
-// ─── Onboarding Wizard ────────────────────────────────────────────────────────
+// Onboarding Wizard
 var _obStep = 1;
-var _obRole = null;
 
 function initOnboardingScreen() {
     _obStep = 1;
-    _obRole = null;
     ['ob-name', 'ob-dob', 'ob-school', 'ob-grade'].forEach(function(id) {
         var el = $(id); if (el) el.value = '';
     });
-    document.querySelectorAll('.onboarding-role-card').forEach(function(c) {
-        c.classList.remove('selected');
-    });
-    ['ob-error-1', 'ob-error-2', 'ob-submit-error'].forEach(function(id) {
-        var el = $(id); if (el) el.classList.add('hidden');
-    });
+    var err = $('ob-error-1');
+    if (err) err.classList.add('hidden');
     var nextBtn = $('ob-next-btn');
     if (nextBtn) { nextBtn.disabled = false; nextBtn.textContent = 'Next'; nextBtn.onclick = obNext; }
     showOnboardingStep(1);
@@ -21,19 +15,19 @@ function initOnboardingScreen() {
 
 function showOnboardingStep(n) {
     _obStep = n;
-    [1, 2, 3].forEach(function(i) {
+    [1, 2].forEach(function(i) {
         var el = $('ob-step-' + i);
         if (el) el.classList.toggle('hidden', i !== n);
     });
     var label = $('ob-step-label');
-    if (label) label.textContent = 'Step ' + n + ' of 3';
+    if (label) label.textContent = 'Step ' + n + ' of 2';
     var fill = $('ob-progress-fill');
-    if (fill) fill.style.width = ((n / 3) * 100).toFixed(2) + '%';
+    if (fill) fill.style.width = ((n / 2) * 100).toFixed(2) + '%';
     var backBtn = $('ob-back-btn');
     if (backBtn) backBtn.classList.toggle('hidden', n === 1);
     var nextBtn = $('ob-next-btn');
     if (nextBtn) {
-        if (n === 3) {
+        if (n === 2) {
             nextBtn.textContent = "Let's get started";
             nextBtn.onclick = submitOnboardingProfile;
         } else {
@@ -43,29 +37,21 @@ function showOnboardingStep(n) {
     }
 }
 
-function selectOnboardingRole(role) {
-    _obRole = role;
-    document.querySelectorAll('.onboarding-role-card').forEach(function(c) {
-        c.classList.toggle('selected', c.dataset.role === role);
-    });
-    var label = $('ob-grade-label');
-    if (label) label.textContent = role === 'teacher' ? 'Subject' : 'Grade';
-    var input = $('ob-grade');
-    if (input) input.placeholder = role === 'teacher' ? 'e.g. English, Mathematics' : 'e.g. Grade 10 / Year 2';
-}
-
 function obNext() {
     if (_obStep === 1) {
-        var err = $('ob-error-1');
-        if (!_obRole) { if (err) err.classList.remove('hidden'); return; }
-        if (err) err.classList.add('hidden');
-        showOnboardingStep(2);
-    } else if (_obStep === 2) {
-        if (!_validateObStep2()) return;
         var name = $('ob-name') ? $('ob-name').value.trim() : '';
+        var dob = $('ob-dob') ? $('ob-dob').value : '';
+        var school = $('ob-school') ? $('ob-school').value.trim() : '';
+        var grade = $('ob-grade') ? $('ob-grade').value.trim() : '';
+        var err = $('ob-error-1');
+        if (!name || !dob || !school || !grade) {
+            if (err) err.classList.remove('hidden');
+            return;
+        }
+        if (err) err.classList.add('hidden');
         var welcome = $('ob-welcome-name');
         if (welcome) welcome.textContent = 'Welcome, ' + name + '!';
-        showOnboardingStep(3);
+        showOnboardingStep(2);
     }
 }
 
@@ -73,76 +59,45 @@ function obBack() {
     if (_obStep > 1) showOnboardingStep(_obStep - 1);
 }
 
-function _validateObStep2() {
-    var name   = $('ob-name')   ? $('ob-name').value.trim()   : '';
-    var dob    = $('ob-dob')    ? $('ob-dob').value            : '';
-    var school = $('ob-school') ? $('ob-school').value.trim()  : '';
-    var grade  = $('ob-grade')  ? $('ob-grade').value.trim()   : '';
-    var err = $('ob-error-2');
-    if (!name || !dob || !school || !grade) {
-        if (err) err.classList.remove('hidden');
-        return false;
-    }
-    if (err) err.classList.add('hidden');
-    return true;
-}
-
 function submitOnboardingProfile() {
     var nextBtn = $('ob-next-btn');
     if (nextBtn) { nextBtn.disabled = true; nextBtn.textContent = 'Saving\u2026'; }
     var data = {
-        role:      _obRole,
-        fullName:  $('ob-name').value.trim(),
-        dob:       $('ob-dob').value,
-        school:    $('ob-school').value.trim(),
+        fullName: $('ob-name') ? $('ob-name').value.trim() : '',
+        dob: $('ob-dob') ? $('ob-dob').value : '',
+        school: $('ob-school') ? $('ob-school').value.trim() : '',
+        grade: $('ob-grade') ? $('ob-grade').value.trim() : '',
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
-    if (_obRole === 'student') {
-        data.grade = $('ob-grade').value.trim();
-    } else {
-        data.subject = $('ob-grade').value.trim();
-    }
-    // Save locally immediately
     localStorage.setItem('voqua_ob_' + S.authUser.uid, '1');
     localStorage.setItem('voqua_profile_' + S.authUser.uid, JSON.stringify(data));
     S.userProfile = data;
-
-    // Go to app immediately
     completeOnboardingAndStartApp();
-
-    // Try Firestore in background
     db.collection('users').doc(S.authUser.uid).set(data)
-      .then(function() { console.log('Profile synced to Firestore'); })
-      .catch(function(err) { console.warn('Profile sync failed, will retry later:', err.message); });
+        .then(function() { console.log('Profile synced to Firestore'); })
+        .catch(function(err) { console.warn('Profile sync failed:', err.message); });
 }
 
-// ─── Settings Profile ─────────────────────────────────────────────────────────
 function loadProfileIntoSettings() {
     if (!S.userProfile) return;
     var p = S.userProfile;
-    if ($('profile-name'))   $('profile-name').value   = p.fullName || '';
-    if ($('profile-dob'))    $('profile-dob').value    = p.dob      || '';
-    if ($('profile-school')) $('profile-school').value = p.school   || '';
-    var isTeacher = p.role === 'teacher';
-    if ($('profile-grade-label'))
-        $('profile-grade-label').textContent = isTeacher ? 'Subject' : 'Grade';
-    if ($('profile-grade'))
-        $('profile-grade').value = (isTeacher ? p.subject : p.grade) || '';
+    if ($('profile-name')) $('profile-name').value = p.fullName || '';
+    if ($('profile-dob')) $('profile-dob').value = p.dob || '';
+    if ($('profile-school')) $('profile-school').value = p.school || '';
+    if ($('profile-grade-label')) $('profile-grade-label').textContent = 'Grade';
+    if ($('profile-grade')) $('profile-grade').value = p.grade || '';
     var statusEl = $('profile-save-status');
     if (statusEl) statusEl.textContent = '';
 }
 
 function saveProfileFromSettings() {
     if (!S.authUser || !S.authUser.uid) return;
-    var name           = $('profile-name')   ? $('profile-name').value.trim()   : '';
-    var dob            = $('profile-dob')    ? $('profile-dob').value            : '';
-    var school         = $('profile-school') ? $('profile-school').value.trim()  : '';
-    var gradeOrSubject = $('profile-grade')  ? $('profile-grade').value.trim()   : '';
-    var role = S.userProfile ? S.userProfile.role : null;
+    var name = $('profile-name') ? $('profile-name').value.trim() : '';
+    var dob = $('profile-dob') ? $('profile-dob').value : '';
+    var school = $('profile-school') ? $('profile-school').value.trim() : '';
+    var grade = $('profile-grade') ? $('profile-grade').value.trim() : '';
     var statusEl = $('profile-save-status');
-    var updateData = { fullName: name, dob: dob, school: school };
-    if (role === 'teacher') { updateData.subject = gradeOrSubject; }
-    else                    { updateData.grade   = gradeOrSubject; }
+    var updateData = { fullName: name, dob: dob, school: school, grade: grade };
     if (statusEl) statusEl.textContent = 'Saving\u2026';
     db.collection('users').doc(S.authUser.uid).update(updateData)
         .then(function() {
