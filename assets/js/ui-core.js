@@ -247,6 +247,21 @@ function showSetupTab(tab){
 
     if(tab==='practice'||tab==='presentation'){
         S.mode=tab;
+        /* Clear script when switching between practice and presentation */
+        var scriptInput=$('script-input');
+        if(scriptInput)scriptInput.value='';
+        S.lines=[];
+        S.roles=[];
+        S.userRoles=[];
+        S.scriptSource='manual';
+        S.scriptLabel='Manual Script';
+        S.scriptRef='';
+        S._langManualOverride=false;
+        var parseStatus=$('parse-status');
+        if(parseStatus)parseStatus.textContent='';
+        var roleSection=$('role-section');
+        if(roleSection)roleSection.classList.add('hidden');
+        updateStartBtn();
         var isPres=tab==='presentation';
         $('mode-title').textContent=isPres?t('modePresentationTitle'):t('modePracticeTitle');
         $('mode-desc').textContent=isPres?t('modePresentationDesc'):t('modePracticeDesc');
