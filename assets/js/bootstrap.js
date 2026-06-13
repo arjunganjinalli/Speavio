@@ -136,11 +136,12 @@ document.addEventListener('DOMContentLoaded',function(){
     }
 
     function applyRoleTabVisibility(){
+        var isOrgTeacher=S.userProfile&&S.userProfile.orgApproved&&S.userProfile.role==='teacher';
         var practiceTab=$('tab-practice');
         var presentationTab=$('tab-presentation');
         var classesTab=$('tab-classes');
-        if(practiceTab)practiceTab.classList.remove('hidden');
-        if(presentationTab)presentationTab.classList.remove('hidden');
+        if(practiceTab)practiceTab.classList.toggle('hidden',!!isOrgTeacher);
+        if(presentationTab)presentationTab.classList.toggle('hidden',!!isOrgTeacher);
         if(classesTab)classesTab.classList.toggle('hidden',!S.userProfile||!S.userProfile.orgApproved);
     }
 
