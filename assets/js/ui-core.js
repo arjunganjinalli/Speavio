@@ -913,3 +913,26 @@ function renderThemeControls(){
     if(q)q.innerHTML='<i class="fas fa-circle-half-stroke mr-1"></i>Theme: '+label;
 }
 
+function inquireClassroom(){
+    var email=S.authUser?S.authUser.email:'';
+    var subject=encodeURIComponent('Classroom Features Inquiry — Speavio');
+    var body=encodeURIComponent('Hi,\n\nI would like to inquire about classroom features for my organization.\n\nName: '+( S.userProfile&&S.userProfile.fullName||'')+'\nEmail: '+email+'\nSchool/Org: '+(S.userProfile&&S.userProfile.school||'')+'\n\nPlease let me know what information you need.\n\nThank you.');
+    window.open('mailto:arjunganjinalli@gmail.com?subject='+subject+'&body='+body);
+    toast('Opening your email client...','info');
+}
+
+function adminApproveOrg(){
+    var email=$('admin-email-input')?$('admin-email-input').value.trim():'';
+    var statusEl=$('admin-status');
+    if(!email){if(statusEl)statusEl.textContent='Enter an email.';return;}
+    if(statusEl)statusEl.textContent='Looking up user...';
+    db.collection('users').where('email','==',email).get().then(function(snap){
+        if(snap.empty){if(statusEl)statusEl.textContent='No user found with that email.';return;}
+        var docRef=snap.docs[0].ref;
+        var current=snap.docs[0].data().orgApproved||false;
+        return docRef.update({orgApproved:!current}).then(function(){
+            if(statusEl)statusEl.textContent=((!current)?'✓ Approved: ':'✗ Revoked: ')+email;
+        });
+    }).catch(function(err){if(statusEl)statusEl.textContent='Error: '+err.message;});
+}
+

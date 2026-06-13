@@ -138,8 +138,10 @@ document.addEventListener('DOMContentLoaded',function(){
     function applyRoleTabVisibility(){
         var practiceTab=$('tab-practice');
         var presentationTab=$('tab-presentation');
+        var classesTab=$('tab-classes');
         if(practiceTab)practiceTab.classList.remove('hidden');
         if(presentationTab)presentationTab.classList.remove('hidden');
+        if(classesTab)classesTab.classList.toggle('hidden',!S.userProfile||!S.userProfile.orgApproved);
     }
 
     function runAuthenticatedStartup(){
@@ -218,6 +220,10 @@ document.addEventListener('DOMContentLoaded',function(){
                 if(doc.exists)S.userProfile=doc.data();
                 switchScreen('onboarding');
                 if(typeof initOnboardingScreen==='function')initOnboardingScreen();
+            }
+            /* Hidden admin route */
+            if(window.location.hash==='#admin'&&S.authUser&&S.authUser.email==='arjunganjinalli@gmail.com'){
+                switchScreen('admin');
             }
         }).catch(function(err){
             console.error('Firestore profile check failed:',err);

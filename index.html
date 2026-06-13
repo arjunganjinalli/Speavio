@@ -35,7 +35,7 @@
         </button>
         <div class="setup-nav navbar-tabs" role="tablist" aria-label="Main navigation">
             <button id="tab-home" class="setup-tab-btn active" data-tab="home" role="tab" aria-selected="true"><i class="fa-solid fa-house"></i><span data-i18n="navHome">Home</span></button>
-            <button id="tab-classes" class="setup-tab-btn" data-tab="classes" role="tab" aria-selected="false"><i class="fa-solid fa-chalkboard"></i><span>Classes</span></button>
+            <button id="tab-classes" class="setup-tab-btn hidden" data-tab="classes" role="tab" aria-selected="false"><i class="fa-solid fa-chalkboard"></i><span>Classes</span></button>
             <button id="tab-practice" class="setup-tab-btn" data-tab="practice" role="tab" aria-selected="false"><i class="fa-solid fa-microphone-lines"></i><span data-i18n="navPractice">Practice</span></button>
             <button id="tab-presentation" class="setup-tab-btn" data-tab="presentation" role="tab" aria-selected="false"><i class="fa-solid fa-masks-theater"></i><span data-i18n="navPresentation">Presentation</span></button>
             <button id="tab-settings" class="setup-tab-btn" data-tab="settings" role="tab" aria-selected="false"><i class="fa-solid fa-gear"></i><span data-i18n="navSettings">Settings</span></button>
@@ -182,6 +182,21 @@
                         <div id="home-leaderboard" class="space-y-3 text-sm">
                             <div class="text-sf-300">Complete a session to populate leaderboard rankings.</div>
                         </div>
+                    </div>
+                    <div class="mini-card mt-4 p-6 flex flex-col gap-3">
+                        <div class="flex items-center gap-3">
+                            <span class="w-10 h-10 rounded-xl bg-copper-500/15 border border-copper-500/25 flex items-center justify-center">
+                                <i class="fas fa-school text-copper-400"></i>
+                            </span>
+                            <div>
+                                <div class="font-display font-bold text-sf-50">For Schools & Organizations</div>
+                                <div class="text-xs text-sf-300 mt-0.5">Unlock classroom features — assignments, grading, student tracking</div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-sf-300">Classroom features are available exclusively for approved educational organizations. Submit an inquiry and we'll get back to you within 48 hours.</p>
+                        <button onclick="inquireClassroom()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-copper-500 to-amber-500 text-sf-900 font-display font-bold text-sm hover:brightness-110 transition-all">
+                            <i class="fas fa-envelope mr-2"></i>Inquire about Classroom Features
+                        </button>
                     </div>
                     </div>
                     <div id="home-teacher-dashboard" class="hidden">
@@ -709,6 +724,16 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <div id="admin-screen" class="screen hidden">
+        <div class="max-w-md mx-auto mt-20 p-8 mini-card">
+            <h2 class="font-display font-bold text-xl text-sf-50 mb-2">Org Approval Admin</h2>
+            <p class="text-xs text-sf-300 mb-6">Type a user's email and press Enter to toggle org approval.</p>
+            <input id="admin-email-input" type="email" placeholder="user@email.com" onkeydown="if(event.key==='Enter')adminApproveOrg()" class="input-glow w-full bg-sf-800/60 border border-white/8 rounded-xl px-4 py-3 text-sm text-sf-50 placeholder-sf-300 outline-none mb-3">
+            <button onclick="adminApproveOrg()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-copper-500 to-amber-500 text-sf-900 font-display font-bold text-sm hover:brightness-110 transition-all">Approve / Revoke</button>
+            <p id="admin-status" class="text-xs text-sf-300 mt-3 min-h-[1rem]"></p>
+        </div>
     </div>
 
     <button id="assist-fab" class="assist-fab no-print hidden" aria-label="Open helper assistant" title="Ask Speavio Assistant">

@@ -67,6 +67,7 @@ function submitOnboardingProfile() {
         dob: $('ob-dob') ? $('ob-dob').value : '',
         school: $('ob-school') ? $('ob-school').value.trim() : '',
         grade: $('ob-grade') ? $('ob-grade').value.trim() : '',
+        email: S.authUser.email,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     localStorage.setItem('voqua_ob_' + S.authUser.uid, '1');
