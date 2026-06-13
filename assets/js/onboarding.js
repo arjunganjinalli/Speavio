@@ -44,7 +44,7 @@ function obNext() {
         var school = $('ob-school') ? $('ob-school').value.trim() : '';
         var grade = $('ob-grade') ? $('ob-grade').value.trim() : '';
         var err = $('ob-error-1');
-        if (!name || !dob || !school || !grade) {
+        if (!name || !dob) {
             if (err) err.classList.remove('hidden');
             return;
         }
