@@ -137,12 +137,16 @@ document.addEventListener('DOMContentLoaded',function(){
 
     function applyRoleTabVisibility(){
         var isOrgTeacher=S.userProfile&&S.userProfile.orgApproved&&S.userProfile.role==='teacher';
+        var isOrgStudent=S.userProfile&&S.userProfile.orgApproved&&S.userProfile.role!=='teacher';
         var practiceTab=$('tab-practice');
         var presentationTab=$('tab-presentation');
         var classesTab=$('tab-classes');
+        var bellWrap=$('notif-bell-wrap');
         if(practiceTab)practiceTab.classList.toggle('hidden',!!isOrgTeacher);
         if(presentationTab)presentationTab.classList.toggle('hidden',!!isOrgTeacher);
         if(classesTab)classesTab.classList.toggle('hidden',!S.userProfile||!S.userProfile.orgApproved);
+        if(bellWrap)bellWrap.classList.toggle('hidden',!isOrgStudent);
+        if(isOrgStudent)initNotifications();
     }
 
     function runAuthenticatedStartup(){

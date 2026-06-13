@@ -936,3 +936,80 @@ function adminApproveOrg(){
     }).catch(function(err){if(statusEl)statusEl.textContent='Error: '+err.message;});
 }
 
+function initNotifications(){
+    if(!S.authUser)return;
+    var seenKey='speavio_notifs_seen_'+S.authUser.uid;
+    var seen=JSON.parse(localStorage.getItem(seenKey)||'{}');
+
+    getStudentAssignments(S.authUser.uid).then(function(assignments){
+        var notifs=[];
+        var assignmentTitles={};
+        assignments.forEach(function(assignment){
+            assignmentTitles[assignment.id]=assignment.title||'Untitled';
+            var nid='assign_'+assignment.id;
+            if(!seen[nid]){
+                notifs.push({id:nid,text:'New assignment: '+(assignment.title||'Untitled'),time:assignment.createdAt});
+            }
+        });
+        return getStudentAssignmentSubmissions(assignments.map(function(assignment){return assignment.id;}),S.authUser.uid)
+            .then(function(submissions){
+                submissions.forEach(function(submission){
+                    if(submission.status!=='graded')return;
+                    var nid='grade_'+submission.id;
+                    if(!seen[nid]){
+                        notifs.push({id:nid,text:'Your submission was graded: '+(assignmentTitles[submission.assignmentId]||'Assignment'),time:submission.gradedAt});
+                    }
+                });
+                renderNotifs(notifs,seen,seenKey);
+            });
+    }).catch(function(e){console.warn('Notifs error:',e);});
+}
+
+function renderNotifs(notifs,seen,seenKey){
+    var list=$('notif-list');
+    var dot=$('notif-dot');
+    if(!list)return;
+    if(!notifs.length){
+        list.innerHTML='<p class="text-xs text-sf-300 text-center py-4">No new notifications.</p>';
+        if(dot)dot.classList.add('hidden');
+        return;
+    }
+    if(dot)dot.classList.remove('hidden');
+    list.innerHTML=notifs.map(function(n){
+        return '<div class="flex items-start gap-3 p-2.5 rounded-xl bg-white/4 border border-white/6">'
+            +'<i class="fas fa-bell text-copper-400 text-xs mt-0.5"></i>'
+            +'<span class="text-xs text-sf-100 leading-snug">'+esc(n.text)+'</span>'
+            +'</div>';
+    }).join('');
+    window._pendingNotifSeen={seen:seen,seenKey:seenKey,notifs:notifs};
+}
+
+function toggleNotifPanel(){
+    var panel=$('notif-panel');
+    if(!panel)return;
+    var isHidden=panel.classList.contains('hidden');
+    panel.classList.toggle('hidden',!isHidden);
+    if(!isHidden)return;
+    /* Mark all as seen when opened */
+    if(window._pendingNotifSeen){
+        var obj=window._pendingNotifSeen;
+        obj.notifs.forEach(function(n){obj.seen[n.id]=true;});
+        localStorage.setItem(obj.seenKey,JSON.stringify(obj.seen));
+        var dot=$('notif-dot');
+        if(dot)dot.classList.add('hidden');
+    }
+}
+
+function clearAllNotifs(){
+    var list=$('notif-list');
+    if(list)list.innerHTML='<p class="text-xs text-sf-300 text-center py-4">No notifications yet.</p>';
+    var dot=$('notif-dot');
+    if(dot)dot.classList.add('hidden');
+    if(window._pendingNotifSeen){
+        var obj=window._pendingNotifSeen;
+        obj.notifs.forEach(function(n){obj.seen[n.id]=true;});
+        localStorage.setItem(obj.seenKey,JSON.stringify(obj.seen));
+    }
+    $('notif-panel').classList.add('hidden');
+}
+
