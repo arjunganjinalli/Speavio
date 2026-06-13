@@ -202,7 +202,7 @@ function startSilenceDetection(stream){
                     /* Clamp noise floor to reasonable range */
                     S._noiseFloor=Math.max(0.003,Math.min(S._noiseFloor,0.05));
                     /* Speech threshold: 3.5x noise floor, clamped */
-                    S.SPEECH_THRESH=Math.max(0.008,Math.min(S._noiseFloor*3.5,0.08));
+                    S.SPEECH_THRESH=Math.max(0.015,Math.min(S._noiseFloor*5.0,0.09));
                     /* Silence threshold: 1.8x noise floor, clamped */
                     S.SILENCE_THRESH=Math.max(0.005,Math.min(S._noiseFloor*1.8,0.045));
                     S._calibrated=true;
@@ -215,7 +215,7 @@ function startSilenceDetection(stream){
             /* ── SPEECH DETECTION using calibrated threshold ── */
             if(rms>=S.SPEECH_THRESH){
                 S._speechFrames++;
-                if(S._speechFrames>=6&&!S._speechDetected){
+                if(S._speechFrames>=14&&!S._speechDetected){
                     S._speechDetected=true;
                     S.speechDetected=true;
                     if(typeof renderIA==='function')renderIA();
@@ -251,6 +251,12 @@ function startSilenceDetection(stream){
     }
 }
 function stopSilenceDetection(){
+    /* If mic detected "sound" but no words were transcribed, reset speech flag */
+    if(S._speechDetected && (!S.userInput || S.userInput.trim().split(/\s+/).filter(Boolean).length < 2)){
+        S._speechDetected=false;
+        S.speechDetected=false;
+        S._speechFrames=0;
+    }
     clearInterval(S.silenceInterval);
     S.silenceInterval=null;
     S.silenceFrames=0;
