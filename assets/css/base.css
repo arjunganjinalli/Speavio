@@ -355,7 +355,8 @@
         .navbar-auth-chip>span{max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .navbar-user-photo{width:28px;height:28px;border-radius:50%;object-fit:cover}
         #login-screen{overflow:visible}
-        #landing-inquire {
+        #landing-inquire,
+        #app-footer {
             width: 100vw;
             position: relative;
             left: 50%;
