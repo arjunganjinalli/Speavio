@@ -58,7 +58,19 @@
         .toast-info{background:rgba(200,149,108,.15);border:1px solid rgba(200,149,108,.3);color:#E8B88A}
         @keyframes ti{from{transform:translateX(100px);opacity:0}to{transform:translateX(0);opacity:1}}
         @keyframes to2{from{transform:translateX(0);opacity:1}to{transform:translateX(100px);opacity:0}}
-        ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(200,149,108,.2);border-radius:3px}
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f0f0f0;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #aaaaaa;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #888888;
+        }
         .line-dot{width:8px;height:8px;border-radius:50%;transition:all .3s ease;background:rgba(255,255,255,.2)}
         .line-dot.done{background:#5BB882}.line-dot.current{background:#C8956C;transform:scale(1.4);box-shadow:0 0 8px rgba(200,149,108,.5)}
         .line-dot.low{background:var(--sf-status-recording)}
