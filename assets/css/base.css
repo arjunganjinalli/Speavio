@@ -382,6 +382,12 @@
             margin: 0;
             flex-shrink: 0;
         }
+        @media(max-width:1023px){
+            .classroom-inquiry-copy{padding-top:28px;padding-left:0!important;border-top:1px solid #ddd;border-left:0!important}
+        }
+        @media(max-width:640px){
+            .classroom-feature-list{grid-template-columns:1fr!important}
+        }
         .landing-shell{width:min(1080px,100%);margin:auto;padding:220px 16px 64px;text-align:center}
         .landing-hero{max-width:720px;margin:0 auto}
         .landing-title{font-size:var(--fs-hero);line-height:.95;font-weight:700;letter-spacing:-.07em;animation:landing-fade .8s ease both}
