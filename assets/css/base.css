@@ -13,7 +13,7 @@
         @keyframes bf{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(35px,-25px) scale(1.06)}66%{transform:translate(-25px,20px) scale(.94)}}
         .dot-grid{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:radial-gradient(var(--sf-dot) 1px,transparent 1px);background-size:32px 32px}
         .screen{display:none;opacity:0;transition:opacity .4s ease;position:relative;z-index:1;padding-top:clamp(56px,6vw,80px);padding-left:clamp(12px,2vw,32px);padding-right:clamp(12px,2vw,32px);overflow-x:hidden}
-        .screen.active{display:flex;opacity:1}
+        .screen.active{display:block;opacity:1}
         #setup-screen{align-items:flex-start;padding-top:clamp(56px,6vw,80px)}
         .glass{background:rgba(var(--sf-glass),.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(var(--sf-glass-border),.18)}
         .gradient-text{background:linear-gradient(135deg,#E8B88A 0%,#C8956C 40%,#5BB882 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
