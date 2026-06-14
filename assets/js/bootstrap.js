@@ -141,6 +141,7 @@ document.addEventListener('DOMContentLoaded',function(){
         var practiceTab=$('tab-practice');
         var presentationTab=$('tab-presentation');
         var classesTab=$('tab-classes');
+        if(classesTab)classesTab.classList.add('hidden');
         var bellWrap=$('notif-bell-wrap');
         if(practiceTab)practiceTab.classList.toggle('hidden',!!isOrgTeacher);
         if(presentationTab)presentationTab.classList.toggle('hidden',!!isOrgTeacher);

@@ -732,3 +732,33 @@ html[data-theme='light'] .toast {
     0%, 100% { transform: scale(1);    box-shadow: 0 0 20px rgba(200,149,108,0.3); }
     50%       { transform: scale(1.06); box-shadow: 0 0 40px rgba(200,149,108,0.6); }
 }
+
+html[data-theme='light'] .flow-bg::before {
+    background: radial-gradient(ellipse at 20% 50%, rgba(200,149,108,0.25) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(91,184,130,0.2) 0%, transparent 55%),
+                radial-gradient(ellipse at 60% 80%, rgba(212,115,110,0.15) 0%, transparent 50%),
+                #f7f3ef;
+}
+
+html[data-theme='light'] #login-screen {
+    color: #1a1a1a;
+}
+
+html[data-theme='light'] #login-screen .landing-tagline,
+html[data-theme='light'] #login-screen p {
+    color: #444444;
+}
+
+html[data-theme='light'] #login-screen .flow-card {
+    background: rgba(255,255,255,0.7);
+    border: 1.5px solid rgba(200,149,108,0.2);
+    color: #1a1a1a;
+}
+
+html[data-theme='light'] #login-screen .flow-card strong {
+    color: #1a1a1a;
+}
+
+html[data-theme='light'] #login-screen .flow-card span {
+    color: #555555;
+}
