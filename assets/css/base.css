@@ -143,6 +143,7 @@
         /* Setup tabs */
         .setup-nav{display:flex;align-items:center;gap:4px;min-width:0}
         .setup-tab-btn{padding:clamp(6px,.8vw,8px) clamp(8px,1.2vw,16px);border-radius:10px;border:0;background:transparent;color:#C8C6C1;font-size:var(--fs-sm);font-weight:600;cursor:pointer;transition:all .2s ease;font-family:'Space Grotesk',sans-serif;white-space:nowrap}
+        .setup-tab-btn.hidden{display:none!important}
         .setup-tab-btn i{margin-right:6px}
         .setup-tab-btn:hover{color:#E8E6E1;background:rgba(255,255,255,.08)}
         .setup-tab-btn.active{color:#E8B88A;background:rgba(200,149,108,.15);border:1px solid rgba(200,149,108,.35)}
