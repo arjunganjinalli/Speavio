@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded',function(){
         var bellWrap=$('notif-bell-wrap');
         if(practiceTab)practiceTab.classList.toggle('hidden',!!isOrgTeacher);
         if(presentationTab)presentationTab.classList.toggle('hidden',!!isOrgTeacher);
-        if(classesTab)classesTab.classList.toggle('hidden',!S.userProfile||!S.userProfile.orgApproved);
+        if(classesTab)classesTab.classList.toggle('hidden',!S.isAuthenticated||!S.userProfile||!S.userProfile.orgApproved);
         if(bellWrap)bellWrap.classList.toggle('hidden',!isOrgStudent);
         if(isOrgStudent)initNotifications();
     }
