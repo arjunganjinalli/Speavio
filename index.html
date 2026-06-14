@@ -21,7 +21,7 @@
     #ai-api-section.open{max-height:1600px}
     </style>
 </head>
-<body class="min-h-screen">
+<body class="light">
     <div class="bg-blob blob-1"></div>
     <div class="bg-blob blob-2"></div>
     <div class="bg-blob blob-3"></div>
@@ -94,16 +94,18 @@
             <div class="landing-cta">
                 <button data-open-auth="create" class="landing-primary-btn flow-btn">Get Started Free</button>
             </div>
-            <div id="landing-inquire" class="mt-16 max-w-xl mx-auto text-center px-4 pb-16">
-                <div class="flow-card p-8 flex flex-col items-center gap-4">
-                    <span class="w-12 h-12 rounded-xl bg-copper-500/15 border border-copper-500/25 flex items-center justify-center">
-                        <i class="fas fa-school text-copper-400 text-xl"></i>
-                    </span>
-                    <h3 class="font-display font-bold text-xl text-sf-50">For Schools & Organizations</h3>
-                    <p class="text-sm text-sf-300">Classroom features are available exclusively for approved educational organizations. Submit an inquiry and we'll get back to you within 48 hours.</p>
-                    <button onclick="inquireClassroom()" class="w-full py-3 rounded-xl bg-gradient-to-r from-copper-500 to-amber-500 text-sf-900 font-display font-bold text-sm hover:brightness-110 transition-all">
-                        <i class="fas fa-envelope mr-2"></i>Inquire about Classroom Features
-                    </button>
+            <div id="landing-inquire" style="width:100vw;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;margin-top:120px;">
+                <div style="background:#ffffff;border-top:1px solid #e8e0d8;padding:80px 24px;">
+                    <div style="max-width:600px;margin:0 auto;text-align:center;display:flex;flex-direction:column;align-items:center;gap:20px;">
+                        <span style="width:48px;height:48px;border-radius:12px;background:rgba(200,149,108,0.15);border:1px solid rgba(200,149,108,0.3);display:flex;align-items:center;justify-content:center;">
+                            <i class="fas fa-school" style="color:#C8956C;font-size:20px;"></i>
+                        </span>
+                        <h3 style="font-size:1.6rem;font-weight:700;color:#1a1a1a;margin:0;">For Schools & Organizations</h3>
+                        <p style="color:#555555;font-size:0.95rem;margin:0;line-height:1.6;">Classroom features are available exclusively for approved educational organizations. Submit an inquiry and we'll get back to you within 48 hours.</p>
+                        <button onclick="inquireClassroom()" style="padding:14px 32px;border-radius:14px;background:linear-gradient(135deg,#C8956C,#E8B88A);color:#1a1a1a;font-weight:700;font-size:0.95rem;border:none;cursor:pointer;transition:filter 0.2s;">
+                            <i class="fas fa-envelope" style="margin-right:8px;"></i>Inquire about Classroom Features
+                        </button>
+                    </div>
                 </div>
             </div>
         </main>
