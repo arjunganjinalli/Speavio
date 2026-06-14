@@ -443,7 +443,7 @@ function writeStoreJSON(key,val){
 function initClassesTab(){
     var btn=$('tab-classes');
     if(!btn)return;
-    var show=!S.isAuthenticated||!!(S.userProfile&&S.userProfile.role);
+    var show=S.isAuthenticated&&!!(S.userProfile&&S.userProfile.orgApproved);
     btn.classList.toggle('hidden',!show);
 }
 
