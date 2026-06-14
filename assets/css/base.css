@@ -354,6 +354,7 @@
         .navbar-auth-chip{max-width:min(62vw,400px);padding:5px 6px 5px 9px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:rgba(255,255,255,.1);color:#E8E6E1;font-size:14px;font-weight:700}
         .navbar-auth-chip>span{max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .navbar-user-photo{width:28px;height:28px;border-radius:50%;object-fit:cover}
+        #login-screen{overflow-x:hidden}
         .landing-shell{width:min(1080px,100%);margin:auto;padding:220px 16px 64px;text-align:center}
         .landing-hero{max-width:720px;margin:0 auto}
         .landing-title{font-size:var(--fs-hero);line-height:.95;font-weight:700;letter-spacing:-.07em;animation:landing-fade .8s ease both}
